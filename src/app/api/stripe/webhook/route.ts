@@ -3,11 +3,15 @@ import Stripe from "stripe";
 import { prisma } from "@/lib/db";
 import { platformFeeBps, stripe } from "@/lib/stripe";
 import {
-  DebitAttemptStatus,
-  InstallmentStatus,
-} from "@/lib/domain";
+  findBusinessByStripeAccount,
+  syncConnectAccountFromStripe,
+} from "@/lib/stripe-connect";
+import { DebitAttemptStatus, InstallmentStatus } from "@/lib/domain";
 
-/** Stripe webhook for ACSS Debit lifecycle on connected accounts. */
+/**
+ * Stripe webhook — Connect + ACSS Debit events.
+ * Enable "Listen to events on Connected accounts" for Direct Charges.
+ */
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
@@ -25,6 +29,22 @@ export async function POST(req: NextRequest) {
       { error: err instanceof Error ? err.message : "Invalid signature" },
       { status: 400 },
     );
+  }
+
+  if (event.type === "account.updated") {
+    const account = event.data.object as Stripe.Account;
+    const business =
+      (await findBusinessByStripeAccount(account.id)) ||
+      (account.metadata?.harbor_business_id
+        ? await prisma.business.findUnique({
+            where: { id: account.metadata.harbor_business_id },
+          })
+        : null);
+
+    if (business) {
+      await syncConnectAccountFromStripe(business.id, account);
+    }
+    return NextResponse.json({ received: true, type: event.type });
   }
 
   if (

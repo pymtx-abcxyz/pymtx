@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PortalNav, SectionHeading } from "@/components/ui";
 
 type Business = {
@@ -12,8 +13,35 @@ type Business = {
   stripeOnboardingComplete: boolean;
 };
 
-export default function BusinessSettingsPage() {
+type ConnectStatus = {
+  businessId: string;
+  stripeAccountId: string | null;
+  onboardingComplete: boolean;
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+  readyForDebits: boolean;
+  demo: boolean;
+  url?: string | null;
+  message?: string;
+};
+
+function Flag({ label, ok }: { label: string; ok: boolean }) {
+  return (
+    <div className="flex items-center justify-between border-t border-ink/10 py-3 text-sm">
+      <span className="text-ink-soft">{label}</span>
+      <span className={ok ? "font-semibold text-success" : "font-semibold text-warning"}>
+        {ok ? "Yes" : "No"}
+      </span>
+    </div>
+  );
+}
+
+function BusinessSettingsInner() {
+  const searchParams = useSearchParams();
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [connect, setConnect] = useState<ConnectStatus | null>(null);
   const [form, setForm] = useState({
     legalName: "",
     tradeName: "",
@@ -23,12 +51,58 @@ export default function BusinessSettingsPage() {
     caslConsent: true,
   });
   const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function loadBusinesses() {
+    const res = await fetch("/api/businesses");
+    const data = await res.json();
+    setBusinesses(data);
+    if (data[0] && !selectedId) setSelectedId(data[0].id);
+  }
+
+  async function loadConnect(businessId: string) {
+    const res = await fetch(`/api/stripe/connect?businessId=${businessId}`);
+    if (res.ok) setConnect(await res.json());
+  }
 
   useEffect(() => {
-    fetch("/api/businesses")
-      .then((r) => r.json())
-      .then(setBusinesses);
+    loadBusinesses();
   }, []);
+
+  useEffect(() => {
+    if (selectedId) loadConnect(selectedId);
+  }, [selectedId]);
+
+  useEffect(() => {
+    const stripeParam = searchParams.get("stripe");
+    const businessId = searchParams.get("businessId") || selectedId;
+    if (!stripeParam || !businessId) return;
+
+    (async () => {
+      setBusy(true);
+      const res = await fetch("/api/stripe/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ businessId, action: "sync" }),
+      });
+      const data = await res.json();
+      setBusy(false);
+      if (!res.ok) {
+        setMessage(data.error || "Sync failed");
+        return;
+      }
+      setConnect(data);
+      setSelectedId(businessId);
+      setMessage(
+        stripeParam === "return"
+          ? data.readyForDebits
+            ? "Bank connected. You are Merchant of Record — ready for ACSS Debit."
+            : "Returned from Stripe. Complete any remaining requirements to enable charges."
+          : "Onboarding link refreshed. Click Start Connect onboarding to continue.",
+      );
+      await loadBusinesses();
+    })();
+  }, [searchParams, selectedId]);
 
   async function register(e: React.FormEvent) {
     e.preventDefault();
@@ -42,8 +116,50 @@ export default function BusinessSettingsPage() {
       setMessage(data.error || "Registration failed");
       return;
     }
-    setMessage(`Registered ${data.tradeName}. Next: connect Stripe on the dashboard.`);
+    setMessage(`Registered ${data.tradeName}. Connect your Canadian bank below.`);
     setBusinesses((prev) => [data, ...prev]);
+    setSelectedId(data.id);
+  }
+
+  async function startOnboarding() {
+    if (!selectedId) return;
+    setBusy(true);
+    setMessage("");
+    const res = await fetch("/api/stripe/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessId: selectedId, action: "onboard" }),
+    });
+    const data = await res.json();
+    setBusy(false);
+    if (!res.ok) {
+      setMessage(data.error || "Connect failed");
+      return;
+    }
+    setConnect(data);
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
+    setMessage(data.message || "Connect ready (demo).");
+    await loadBusinesses();
+  }
+
+  async function openExpressDashboard() {
+    if (!selectedId) return;
+    setBusy(true);
+    const res = await fetch("/api/stripe/connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessId: selectedId, action: "login" }),
+    });
+    const data = await res.json();
+    setBusy(false);
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
+    setMessage(data.message || "Express Dashboard unavailable in demo mode.");
   }
 
   return (
@@ -57,8 +173,8 @@ export default function BusinessSettingsPage() {
       />
       <main className="mx-auto max-w-6xl px-6 py-10">
         <SectionHeading
-          title="Register your Ontario business"
-          subtitle="You remain the legal creditor and Merchant of Record. Harbor is the software layer only."
+          title="Stripe Connect onboarding"
+          subtitle="Connect a Canadian bank. You remain Merchant of Record — Harbor never holds principal. Debits run as Direct Charges with an application fee only."
         />
 
         <form onSubmit={register} className="grid max-w-xl gap-4">
@@ -96,24 +212,75 @@ export default function BusinessSettingsPage() {
           </button>
         </form>
 
-        {message ? (
-          <p className="mt-6 border-l-2 border-pine bg-mist/60 px-4 py-3 text-sm">{message}</p>
-        ) : null}
+        <section className="mt-14 max-w-xl">
+          <h2 className="font-display text-2xl font-bold">Connect Canadian bank</h2>
+          <p className="mt-1 text-sm text-ink-soft/75">
+            Stripe Connect Express · CA · ACSS Debit Direct Charges (zero custody)
+          </p>
 
-        <section className="mt-14">
-          <h2 className="font-display text-2xl font-bold">Registered businesses</h2>
-          <ul className="mt-4 space-y-3 text-sm">
-            {businesses.map((b) => (
-              <li key={b.id} className="border-t border-ink/10 pt-3">
-                <div className="font-semibold">{b.tradeName}</div>
-                <div className="text-ink-soft/75">
-                  {b.email} · Connect {b.stripeOnboardingComplete ? "ready" : "pending"}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <label className="mt-4 block text-sm">
+            <span className="mb-1 block font-semibold text-ink-soft">Business</span>
+            <select
+              className="input"
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+            >
+              {businesses.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.tradeName}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {connect ? (
+            <div className="mt-6">
+              <Flag label="Account created" ok={!!connect.stripeAccountId} />
+              <Flag label="Details submitted" ok={connect.detailsSubmitted} />
+              <Flag label="Charges enabled" ok={connect.chargesEnabled} />
+              <Flag label="Payouts enabled" ok={connect.payoutsEnabled} />
+              <Flag label="Ready for ACSS Debit" ok={connect.readyForDebits} />
+              {connect.stripeAccountId ? (
+                <p className="mt-3 text-xs text-ink-soft/70">
+                  Connected account: {connect.stripeAccountId}
+                  {connect.demo ? " (demo)" : ""}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              className="btn-primary"
+              type="button"
+              disabled={busy || !selectedId}
+              onClick={startOnboarding}
+            >
+              {connect?.readyForDebits ? "Reconnect / update" : "Start Connect onboarding"}
+            </button>
+            <button
+              className="btn-ghost"
+              type="button"
+              disabled={busy || !connect?.readyForDebits}
+              onClick={openExpressDashboard}
+            >
+              Express Dashboard
+            </button>
+          </div>
         </section>
+
+        {message ? (
+          <p className="mt-8 border-l-2 border-pine bg-mist/60 px-4 py-3 text-sm">{message}</p>
+        ) : null}
       </main>
     </div>
+  );
+}
+
+export default function BusinessSettingsPage() {
+  return (
+    <Suspense fallback={<div className="portal-shell p-10">Loading settings…</div>}>
+      <BusinessSettingsInner />
+    </Suspense>
   );
 }

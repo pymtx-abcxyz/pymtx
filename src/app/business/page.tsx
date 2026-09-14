@@ -59,7 +59,7 @@ export default function BusinessPortalPage() {
     const res = await fetch("/api/stripe/connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ businessId: selectedId }),
+      body: JSON.stringify({ businessId: selectedId, action: "onboard" }),
     });
     const data = await res.json();
     setBusy(false);
@@ -67,10 +67,15 @@ export default function BusinessPortalPage() {
       setMessage(data.error || "Connect failed");
       return;
     }
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
     setMessage(
-      data.demo
-        ? `Demo Connect ready: ${data.accountId}. Business is Merchant of Record.`
-        : `Open onboarding: ${data.url}`,
+      data.message ||
+        (data.readyForDebits
+          ? `Demo Connect ready: ${data.stripeAccountId}. You are Merchant of Record.`
+          : "Connect onboarding started."),
     );
     await loadBusinesses();
   }

@@ -248,59 +248,8 @@ async function maybeCompletePlan(planId: string) {
   }
 }
 
-/** Create / resume Stripe Connect Express onboarding for an Ontario business. */
-export async function createConnectAccount(businessId: string) {
-  const business = await prisma.business.findUniqueOrThrow({
-    where: { id: businessId },
-  });
-
-  if (isDemoMode()) {
-    const accountId =
-      business.stripeAccountId || `acct_demo_${businessId.slice(-8)}`;
-    await prisma.business.update({
-      where: { id: businessId },
-      data: {
-        stripeAccountId: accountId,
-        stripeOnboardingComplete: true,
-        stripeChargesEnabled: true,
-        stripePayoutsEnabled: true,
-        stripeDetailsSubmitted: true,
-        stripeOnboardedAt: new Date(),
-      },
-    });
-    return { accountId, url: null, demo: true };
-  }
-
-  const account = business.stripeAccountId
-    ? await stripe.accounts.retrieve(business.stripeAccountId)
-    : await stripe.accounts.create({
-        type: "express",
-        country: "CA",
-        email: business.email,
-        capabilities: {
-          acss_debit_payments: { requested: true },
-          transfers: { requested: true },
-        },
-        business_type: "company",
-        metadata: { harbor_business_id: businessId },
-      });
-
-  if (!business.stripeAccountId) {
-    await prisma.business.update({
-      where: { id: businessId },
-      data: { stripeAccountId: account.id },
-    });
-  }
-
-  const link = await stripe.accountLinks.create({
-    account: account.id,
-    refresh_url: `${process.env.NEXT_PUBLIC_APP_URL}/business/settings?stripe=refresh`,
-    return_url: `${process.env.NEXT_PUBLIC_APP_URL}/business/settings?stripe=return`,
-    type: "account_onboarding",
-  });
-
-  return { accountId: account.id, url: link.url, demo: false };
-}
+/** @deprecated Use startConnectOnboarding from @/lib/stripe-connect */
+export { createConnectAccount, startConnectOnboarding } from "./stripe-connect";
 
 /** Candidates for Inngest daily debit job — uses @@index([status, dueDate]). */
 export async function findDueInstallments(asOf = new Date()) {
