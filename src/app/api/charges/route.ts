@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { chargeInstallment } from "@/lib/payments";
-import { prisma } from "@/lib/db";
 
+/** Manual / admin charge trigger — settlement + NSF handled inside chargeInstallment. */
 export async function POST(req: NextRequest) {
   const { installmentId } = await req.json();
   if (!installmentId) {
@@ -11,14 +11,9 @@ export async function POST(req: NextRequest) {
     const result = await chargeInstallment(installmentId);
     return NextResponse.json(result);
   } catch (e) {
-    // Mark NSF failures distinctly when Stripe returns insufficient_funds
-    const message = e instanceof Error ? e.message : "Charge failed";
-    if (message.toLowerCase().includes("insufficient") || message.toLowerCase().includes("nsf")) {
-      await prisma.installment.update({
-        where: { id: installmentId },
-        data: { status: "FAILED_NSF", lastAttemptAt: new Date() },
-      });
-    }
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Charge failed" },
+      { status: 400 },
+    );
   }
 }

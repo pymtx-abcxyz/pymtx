@@ -1,35 +1,88 @@
 import { addDays, addMonths } from "date-fns";
 import { prisma } from "./db";
-import { businessDaysUntil } from "./compliance";
+import { businessDaysUntil, formatCad, formatDate } from "./compliance";
 import {
+  CaslMessageKind,
   InstallmentStatus,
   PaymentPlanStatus,
   SkipRequestStatus,
 } from "./domain";
 
-const SKIP_NOTICE_BUSINESS_DAYS = 3;
-const SKIP_COOLDOWN_DAYS = 180;
+const DEFAULT_SKIP_NOTICE_BUSINESS_DAYS = 3;
+const DEFAULT_SKIP_COOLDOWN_DAYS = 180;
 
 export type SkipEligibility =
-  | { ok: true; installmentId: string; dueDate: Date }
-  | { ok: false; reason: string };
+  | {
+      ok: true;
+      installmentId: string;
+      dueDate: Date;
+      sequence: number;
+      amountCents: number;
+      businessDaysNotice: number;
+      noticeRequired: number;
+      cooldownDays: number;
+      nextSkipAvailableAt: Date | null;
+    }
+  | {
+      ok: false;
+      reason: string;
+      noticeRequired: number;
+      cooldownDays: number;
+      nextSkipAvailableAt: Date | null;
+    };
+
+async function loadSkipPolicy() {
+  const settings = await prisma.platformSettings.findUnique({
+    where: { id: "platform" },
+  });
+  return {
+    noticeRequired:
+      settings?.skipNoticeBusinessDays ?? DEFAULT_SKIP_NOTICE_BUSINESS_DAYS,
+    cooldownDays: settings?.skipCooldownDays ?? DEFAULT_SKIP_COOLDOWN_DAYS,
+  };
+}
 
 export async function evaluateSkipEligibility(
   paymentPlanId: string,
 ): Promise<SkipEligibility> {
+  const policy = await loadSkipPolicy();
   const plan = await prisma.paymentPlan.findUnique({
     where: { id: paymentPlanId },
     include: { installments: { orderBy: { sequence: "asc" } } },
   });
 
-  if (!plan) return { ok: false, reason: "Payment plan not found." };
+  const baseFail = {
+    noticeRequired: policy.noticeRequired,
+    cooldownDays: policy.cooldownDays,
+    nextSkipAvailableAt: plan?.nextSkipAvailableAt ?? null,
+  };
+
+  if (!plan) {
+    return { ok: false, reason: "Payment plan not found.", ...baseFail };
+  }
   if (plan.status !== PaymentPlanStatus.ACTIVE) {
-    return { ok: false, reason: "Plan is not active." };
+    return { ok: false, reason: "Plan is not active.", ...baseFail };
   }
   if (plan.nextSkipAvailableAt && plan.nextSkipAvailableAt > new Date()) {
     return {
       ok: false,
       reason: `Next skip available on ${plan.nextSkipAvailableAt.toISOString().slice(0, 10)}.`,
+      ...baseFail,
+      nextSkipAvailableAt: plan.nextSkipAvailableAt,
+    };
+  }
+
+  const inFlight = plan.installments.find((i) =>
+    (
+      [InstallmentStatus.QUEUED, InstallmentStatus.PROCESSING] as string[]
+    ).includes(i.status),
+  );
+  if (inFlight) {
+    return {
+      ok: false,
+      reason:
+        "A payment is already queued or processing. Wait for it to finish before skipping.",
+      ...baseFail,
     };
   }
 
@@ -37,18 +90,33 @@ export async function evaluateSkipEligibility(
     (i) => i.status === InstallmentStatus.SCHEDULED,
   );
   if (!next) {
-    return { ok: false, reason: "No upcoming scheduled payment to skip." };
-  }
-
-  const days = businessDaysUntil(new Date(), next.dueDate);
-  if (days < SKIP_NOTICE_BUSINESS_DAYS) {
     return {
       ok: false,
-      reason: `Skip requires at least ${SKIP_NOTICE_BUSINESS_DAYS} business days' notice before the debit date (Rule H1).`,
+      reason: "No upcoming scheduled payment to skip.",
+      ...baseFail,
     };
   }
 
-  return { ok: true, installmentId: next.id, dueDate: next.dueDate };
+  const days = businessDaysUntil(new Date(), next.dueDate);
+  if (days < policy.noticeRequired) {
+    return {
+      ok: false,
+      reason: `Skip requires at least ${policy.noticeRequired} business days' notice before the debit date (Rule H1).`,
+      ...baseFail,
+    };
+  }
+
+  return {
+    ok: true,
+    installmentId: next.id,
+    dueDate: next.dueDate,
+    sequence: next.sequence,
+    amountCents: next.amountCents,
+    businessDaysNotice: days,
+    noticeRequired: policy.noticeRequired,
+    cooldownDays: policy.cooldownDays,
+    nextSkipAvailableAt: plan.nextSkipAvailableAt,
+  };
 }
 
 export async function executeSkip(paymentPlanId: string) {
@@ -57,67 +125,127 @@ export async function executeSkip(paymentPlanId: string) {
     return { success: false as const, error: eligibility.reason };
   }
 
-  const plan = await prisma.paymentPlan.findUniqueOrThrow({
-    where: { id: paymentPlanId },
-    include: { installments: { orderBy: { sequence: "asc" } } },
-  });
-
-  const target = plan.installments.find(
-    (i) => i.id === eligibility.installmentId,
-  )!;
-  const maxSeq = Math.max(...plan.installments.map((i) => i.sequence));
-  const lastDue = plan.installments.reduce(
-    (latest, i) => (i.dueDate > latest ? i.dueDate : latest),
-    plan.installments[0].dueDate,
-  );
-  const appendedSequence = maxSeq + 1;
-  const appendedDue = addMonths(lastDue, 1);
+  const policy = await loadSkipPolicy();
   const now = new Date();
-  const nextSkipAt = addDays(now, SKIP_COOLDOWN_DAYS);
+  const nextSkipAt = addDays(now, policy.cooldownDays);
 
-  await prisma.$transaction(async (tx) => {
-    await tx.installment.update({
-      where: { id: target.id },
-      data: { status: InstallmentStatus.SKIPPED },
-    });
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      const plan = await tx.paymentPlan.findUniqueOrThrow({
+        where: { id: paymentPlanId },
+        include: {
+          installments: { orderBy: { sequence: "asc" } },
+          customer: { include: { business: true } },
+        },
+      });
 
-    const appended = await tx.installment.create({
-      data: {
-        paymentPlanId,
-        sequence: appendedSequence,
-        dueDate: appendedDue,
-        originalDueDate: appendedDue,
+      if (plan.status !== PaymentPlanStatus.ACTIVE) {
+        throw new Error("Plan is not active.");
+      }
+      if (plan.nextSkipAvailableAt && plan.nextSkipAvailableAt > now) {
+        throw new Error(
+          `Next skip available on ${plan.nextSkipAvailableAt.toISOString().slice(0, 10)}.`,
+        );
+      }
+
+      const inFlight = plan.installments.find((i) =>
+        (
+          [InstallmentStatus.QUEUED, InstallmentStatus.PROCESSING] as string[]
+        ).includes(i.status),
+      );
+      if (inFlight) {
+        throw new Error(
+          "A payment is already queued or processing. Wait for it to finish before skipping.",
+        );
+      }
+
+      const target = plan.installments.find(
+        (i) => i.id === eligibility.installmentId,
+      );
+      if (!target || target.status !== InstallmentStatus.SCHEDULED) {
+        throw new Error("That installment is no longer eligible to skip.");
+      }
+
+      const notice = businessDaysUntil(now, target.dueDate);
+      if (notice < policy.noticeRequired) {
+        throw new Error(
+          `Skip requires at least ${policy.noticeRequired} business days' notice before the debit date (Rule H1).`,
+        );
+      }
+
+      const maxSeq = Math.max(...plan.installments.map((i) => i.sequence));
+      const lastDue = plan.installments.reduce(
+        (latest, i) => (i.dueDate > latest ? i.dueDate : latest),
+        plan.installments[0].dueDate,
+      );
+      const appendedSequence = maxSeq + 1;
+      const appendedDue = addMonths(lastDue, 1);
+
+      await tx.installment.update({
+        where: { id: target.id },
+        data: { status: InstallmentStatus.SKIPPED },
+      });
+
+      await tx.installment.create({
+        data: {
+          paymentPlanId,
+          sequence: appendedSequence,
+          dueDate: appendedDue,
+          originalDueDate: target.originalDueDate,
+          amountCents: target.amountCents,
+          status: InstallmentStatus.SCHEDULED,
+          idempotencyKey: `${paymentPlanId}-skip-${appendedSequence}`,
+        },
+      });
+
+      await tx.skipRequest.create({
+        data: {
+          paymentPlanId,
+          installmentId: target.id,
+          status: SkipRequestStatus.APPROVED,
+          appendedSequence,
+          businessDaysNotice: notice,
+        },
+      });
+
+      await tx.paymentPlan.update({
+        where: { id: paymentPlanId },
+        data: {
+          extendedByMonths: { increment: 1 },
+          lastSkipAt: now,
+          nextSkipAvailableAt: nextSkipAt,
+        },
+      });
+
+      const business = plan.customer.business;
+      await tx.caslMessage.create({
+        data: {
+          businessId: business.id,
+          customerId: plan.customerId,
+          kind: CaslMessageKind.SKIP_CONFIRMATION,
+          fromName: business.tradeName,
+          toEmail: plan.customer.email,
+          subject: `Payment skip confirmed — ${business.tradeName}`,
+          bodyPreview: `Your ${formatCad(target.amountCents)} debit due ${formatDate(target.dueDate)} was skipped. A replacement payment (seq ${appendedSequence}) is scheduled for ${formatDate(appendedDue)}. Next skip available ${formatDate(nextSkipAt)}.`,
+        },
+      });
+
+      return {
+        skippedInstallmentId: target.id,
+        skippedSequence: target.sequence,
+        appendedSequence,
+        appendedDue,
         amountCents: target.amountCents,
-        status: InstallmentStatus.SCHEDULED,
-        idempotencyKey: `${paymentPlanId}-skip-${appendedSequence}-${now.getTime()}`,
-      },
-    });
-
-    await tx.skipRequest.create({
-      data: {
-        paymentPlanId,
-        installmentId: target.id,
-        status: SkipRequestStatus.APPROVED,
-        appendedSequence: appended.sequence,
-        businessDaysNotice: businessDaysUntil(now, target.dueDate),
-      },
-    });
-
-    await tx.paymentPlan.update({
-      where: { id: paymentPlanId },
-      data: {
-        extendedByMonths: { increment: 1 },
-        lastSkipAt: now,
         nextSkipAvailableAt: nextSkipAt,
-      },
+        cooldownDays: policy.cooldownDays,
+      };
     });
-  });
 
-  return {
-    success: true as const,
-    skippedInstallmentId: target.id,
-    appendedSequence,
-    appendedDue,
-    nextSkipAvailableAt: nextSkipAt,
-  };
+    return { success: true as const, ...result };
+  } catch (e) {
+    return {
+      success: false as const,
+      error: e instanceof Error ? e.message : "Skip failed",
+    };
+  }
 }

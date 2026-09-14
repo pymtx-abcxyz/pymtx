@@ -1,13 +1,16 @@
 import { addDays } from "date-fns";
 import { prisma } from "./db";
-import { applicationFeeCents, platformFeeBps, stripe } from "./stripe";
+import { applicationFeeCents, stripe } from "./stripe";
 import {
   DebitAttemptKind,
   DebitAttemptStatus,
   InstallmentStatus,
-  InvoiceStatus,
   PaymentPlanStatus,
 } from "./domain";
+import {
+  applyInstallmentFailure,
+  applyInstallmentSuccess,
+} from "./settlement";
 
 function isDemoMode() {
   return (
@@ -20,6 +23,9 @@ function isDemoMode() {
  * Zero-custody Direct Charge on the connected business account.
  * Principal → business; Harbor only takes application_fee_amount.
  * Rail: Canadian ACSS Debit (PAD / EFT).
+ *
+ * Sync success/failure uses the same settlement helpers as Stripe webhooks
+ * so webhook delivery and immediate PI status stay consistent.
  */
 export async function chargeInstallment(installmentId: string) {
   const installment = await prisma.installment.findUnique({
@@ -100,44 +106,12 @@ export async function chargeInstallment(installmentId: string) {
   });
 
   if (isDemoMode()) {
-    await prisma.$transaction([
-      prisma.installment.update({
-        where: { id: installmentId },
-        data: {
-          status: InstallmentStatus.SUCCEEDED,
-          paidAt: new Date(),
-          applicationFeeCents: fee,
-          stripePaymentIntentId: `pi_demo_${installmentId}`,
-          nsfRetryUsed:
-            attemptKind === DebitAttemptKind.NSF_RETRY
-              ? true
-              : installment.nsfRetryUsed,
-        },
-      }),
-      prisma.debitAttempt.update({
-        where: { id: attempt.id },
-        data: {
-          status: DebitAttemptStatus.SUCCEEDED,
-          stripePaymentIntentId: `pi_demo_${installmentId}`,
-          completedAt: new Date(),
-        },
-      }),
-      prisma.transactionMetric.create({
-        data: {
-          businessId: business.id,
-          installmentId,
-          principalCents: installment.amountCents,
-          applicationFeeCents: fee,
-          feeBps: platformFeeBps(),
-        },
-      }),
-      prisma.invoice.update({
-        where: { id: plan.invoiceId },
-        data: { balanceCents: { decrement: installment.amountCents } },
-      }),
-    ]);
-
-    await maybeCompletePlan(plan.id);
+    await applyInstallmentSuccess({
+      installmentId,
+      paymentIntentId: `pi_demo_${installmentId}`,
+      applicationFeeCents: fee,
+      attemptId: attempt.id,
+    });
     return {
       demo: true,
       paymentIntentId: `pi_demo_${installmentId}`,
@@ -146,105 +120,87 @@ export async function chargeInstallment(installmentId: string) {
     };
   }
 
-  const paymentIntent = await stripe.paymentIntents.create(
-    {
-      amount: installment.amountCents,
-      currency: "cad",
-      customer: plan.stripeCustomerId,
-      payment_method: plan.stripePaymentMethodId,
-      payment_method_types: ["acss_debit"],
-      confirm: true,
-      application_fee_amount: fee,
-      mandate: plan.stripeMandateId || undefined,
-      metadata: {
-        harbor_installment_id: installmentId,
-        harbor_plan_id: plan.id,
-        harbor_invoice_id: plan.invoiceId,
-        harbor_attempt_id: attempt.id,
-        zero_custody: "true",
+  try {
+    const paymentIntent = await stripe.paymentIntents.create(
+      {
+        amount: installment.amountCents,
+        currency: "cad",
+        customer: plan.stripeCustomerId,
+        payment_method: plan.stripePaymentMethodId,
+        payment_method_types: ["acss_debit"],
+        confirm: true,
+        application_fee_amount: fee,
+        mandate: plan.stripeMandateId || undefined,
+        metadata: {
+          harbor_installment_id: installmentId,
+          harbor_plan_id: plan.id,
+          harbor_invoice_id: plan.invoiceId,
+          harbor_attempt_id: attempt.id,
+          zero_custody: "true",
+        },
       },
-    },
-    {
-      stripeAccount: business.stripeAccountId,
-      idempotencyKey,
-    },
-  );
+      {
+        stripeAccount: business.stripeAccountId,
+        idempotencyKey,
+      },
+    );
 
-  await prisma.debitAttempt.update({
-    where: { id: attempt.id },
-    data: { stripePaymentIntentId: paymentIntent.id },
-  });
-
-  await prisma.installment.update({
-    where: { id: installmentId },
-    data: {
-      stripePaymentIntentId: paymentIntent.id,
-      applicationFeeCents: fee,
-      status:
-        paymentIntent.status === "succeeded"
-          ? InstallmentStatus.SUCCEEDED
-          : InstallmentStatus.PROCESSING,
-      paidAt: paymentIntent.status === "succeeded" ? new Date() : null,
-      nsfRetryUsed:
-        attemptKind === DebitAttemptKind.NSF_RETRY
-          ? true
-          : installment.nsfRetryUsed,
-    },
-  });
-
-  if (paymentIntent.status === "succeeded") {
     await prisma.debitAttempt.update({
       where: { id: attempt.id },
-      data: { status: DebitAttemptStatus.SUCCEEDED, completedAt: new Date() },
+      data: { stripePaymentIntentId: paymentIntent.id },
     });
-    await prisma.transactionMetric.create({
+
+    await prisma.installment.update({
+      where: { id: installmentId },
       data: {
-        businessId: business.id,
-        installmentId,
-        principalCents: installment.amountCents,
+        stripePaymentIntentId: paymentIntent.id,
         applicationFeeCents: fee,
-        feeBps: platformFeeBps(),
       },
     });
-    await prisma.invoice.update({
-      where: { id: plan.invoiceId },
-      data: { balanceCents: { decrement: installment.amountCents } },
-    });
-    await maybeCompletePlan(plan.id);
-  }
 
-  return {
-    demo: false,
-    paymentIntentId: paymentIntent.id,
-    applicationFeeCents: fee,
-    attemptId: attempt.id,
-  };
-}
+    if (paymentIntent.status === "succeeded") {
+      await applyInstallmentSuccess({
+        installmentId,
+        paymentIntentId: paymentIntent.id,
+        applicationFeeCents: fee,
+        attemptId: attempt.id,
+      });
+    } else if (
+      paymentIntent.status === "canceled" ||
+      paymentIntent.status === "requires_payment_method"
+    ) {
+      await applyInstallmentFailure({
+        installmentId,
+        paymentIntentId: paymentIntent.id,
+        attemptId: attempt.id,
+        failureCode: paymentIntent.last_payment_error?.code || paymentIntent.status,
+        failureMessage:
+          paymentIntent.last_payment_error?.message ||
+          `PaymentIntent ${paymentIntent.status}`,
+      });
+    }
+    // processing / requires_action → leave PROCESSING; webhook completes settlement
 
-async function maybeCompletePlan(planId: string) {
-  const remaining = await prisma.installment.count({
-    where: {
-      paymentPlanId: planId,
-      status: {
-        in: [
-          InstallmentStatus.SCHEDULED,
-          InstallmentStatus.QUEUED,
-          InstallmentStatus.PROCESSING,
-          InstallmentStatus.FAILED_NSF,
-          InstallmentStatus.FAILED,
-        ],
-      },
-    },
-  });
-  if (remaining === 0) {
-    const plan = await prisma.paymentPlan.update({
-      where: { id: planId },
-      data: { status: PaymentPlanStatus.COMPLETED },
+    return {
+      demo: false,
+      paymentIntentId: paymentIntent.id,
+      status: paymentIntent.status,
+      applicationFeeCents: fee,
+      attemptId: attempt.id,
+    };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Charge failed";
+    const code =
+      e && typeof e === "object" && "code" in e
+        ? String((e as { code?: string }).code || "")
+        : "";
+    await applyInstallmentFailure({
+      installmentId,
+      attemptId: attempt.id,
+      failureCode: code || null,
+      failureMessage: message,
     });
-    await prisma.invoice.update({
-      where: { id: plan.invoiceId },
-      data: { status: InvoiceStatus.SETTLED, balanceCents: 0 },
-    });
+    throw e;
   }
 }
 

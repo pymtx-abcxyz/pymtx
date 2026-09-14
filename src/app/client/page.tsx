@@ -93,9 +93,14 @@ function ClientCheckoutInner() {
     accountNumber: "",
     accepted: false,
   });
-  const [skipInfo, setSkipInfo] = useState<{ ok: boolean; reason?: string } | null>(
-    null,
-  );
+  const [skipInfo, setSkipInfo] = useState<{
+    ok: boolean;
+    reason?: string;
+    noticeRequired?: number;
+    cooldownDays?: number;
+    sequence?: number;
+    amountCents?: number;
+  } | null>(null);
 
   async function loadPreview(t: string) {
     setError("");
@@ -233,7 +238,7 @@ function ClientCheckoutInner() {
       return;
     }
     setNotice(
-      `Payment skipped. Month moved to end of schedule (seq ${data.appendedSequence ?? data.appendedSequence}). Next skip locked until ${new Date(data.nextSkipAvailableAt).toLocaleDateString("en-CA")}.`,
+      `Payment skipped (seq ${data.skippedSequence}). Replacement scheduled as seq ${data.appendedSequence} on ${new Date(data.appendedDue).toLocaleDateString("en-CA")}. Next skip locked until ${new Date(data.nextSkipAvailableAt).toLocaleDateString("en-CA")}.`,
     );
     if (token) await loadPlanStatus(token);
   }
@@ -499,8 +504,13 @@ function ClientCheckoutInner() {
                   <p className="mt-3 text-sm text-warning">{skipInfo.reason}</p>
                 ) : (
                   <p className="mt-3 text-sm text-ink-soft/70">
-                    Skips need ≥3 business days&apos; notice. Skipped month moves to the end;
-                    next skip locks for 180 days.
+                    Skips need ≥{skipInfo?.noticeRequired ?? 3} business days&apos;
+                    notice
+                    {skipInfo?.sequence
+                      ? ` (next eligible: seq ${skipInfo.sequence})`
+                      : ""}
+                    . Skipped month moves to the end; next skip locks for{" "}
+                    {skipInfo?.cooldownDays ?? 180} days.
                   </p>
                 )}
 
