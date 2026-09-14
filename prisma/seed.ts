@@ -5,8 +5,10 @@ import {
   PAD_RECOURSE_TERMS,
   agingBucket,
 } from "../src/lib/compliance";
+import { hashPassword } from "../src/lib/auth";
 import {
   CaslMessageKind,
+  UserRole,
   InstallmentStatus,
   InvoiceStatus,
   PadMandateType,
@@ -16,6 +18,8 @@ import {
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.session.deleteMany();
+  await prisma.user.deleteMany();
   await prisma.debitAttempt.deleteMany();
   await prisma.skipRequest.deleteMany();
   await prisma.transactionMetric.deleteMany();
@@ -54,6 +58,30 @@ async function main() {
       stripeDetailsSubmitted: true,
       stripeOnboardedAt: subDays(new Date(), 14),
       caslConsentAt: new Date(),
+    },
+  });
+
+  const [adminHash, businessHash] = await Promise.all([
+    hashPassword("harbor-admin-demo"),
+    hashPassword("harbor-business-demo"),
+  ]);
+
+  await prisma.user.create({
+    data: {
+      email: "admin@harbor.example",
+      passwordHash: adminHash,
+      name: "Harbor Admin",
+      role: UserRole.ADMIN,
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "billing@mapleridgedental.example",
+      passwordHash: businessHash,
+      name: "Maple Ridge Billing",
+      role: UserRole.BUSINESS,
+      businessId: business.id,
     },
   });
 
@@ -224,6 +252,13 @@ async function main() {
           token: c.inviteToken,
         })),
         activePlanId: plan.id,
+        demoLogins: {
+          admin: { email: "admin@harbor.example", password: "harbor-admin-demo" },
+          business: {
+            email: "billing@mapleridgedental.example",
+            password: "harbor-business-demo",
+          },
+        },
       },
       null,
       2,

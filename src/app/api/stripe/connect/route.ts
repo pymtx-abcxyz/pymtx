@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { assertBusinessAccess, isAuthUser, requireUser } from "@/lib/auth";
+import { UserRole } from "@/lib/domain";
 import { prisma } from "@/lib/db";
 import {
   createConnectLoginLink,
@@ -9,9 +11,14 @@ import {
 
 /** GET ?businessId= — current Connect readiness. */
 export async function GET(req: NextRequest) {
+  const user = await requireUser(req, { roles: [UserRole.ADMIN, UserRole.BUSINESS] });
+  if (!isAuthUser(user)) return user;
   const businessId = req.nextUrl.searchParams.get("businessId");
   if (!businessId) {
     return NextResponse.json({ error: "businessId required" }, { status: 400 });
+  }
+  if (!assertBusinessAccess(user, businessId)) {
+    return NextResponse.json({ error: "Forbidden for this business" }, { status: 403 });
   }
 
   const business = await prisma.business.findUnique({ where: { id: businessId } });
@@ -29,12 +36,17 @@ export async function GET(req: NextRequest) {
  * - login: Express Dashboard link
  */
 export async function POST(req: NextRequest) {
+  const user = await requireUser(req, { roles: [UserRole.ADMIN, UserRole.BUSINESS] });
+  if (!isAuthUser(user)) return user;
   const body = await req.json();
   const businessId = body.businessId as string | undefined;
   const action = (body.action as string | undefined) || "onboard";
 
   if (!businessId) {
     return NextResponse.json({ error: "businessId required" }, { status: 400 });
+  }
+  if (!assertBusinessAccess(user, businessId)) {
+    return NextResponse.json({ error: "Forbidden for this business" }, { status: 403 });
   }
 
   try {

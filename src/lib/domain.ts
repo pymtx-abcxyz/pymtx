@@ -98,3 +98,9 @@ export const PadMandateType = {
   PERSONAL_PAD: "PERSONAL_PAD",
 } as const;
 export type PadMandateType = (typeof PadMandateType)[keyof typeof PadMandateType];
+
+export const UserRole = {
+  ADMIN: "ADMIN",
+  BUSINESS: "BUSINESS",
+} as const;
+export type UserRole = (typeof UserRole)[keyof typeof UserRole];

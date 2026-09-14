@@ -61,6 +61,7 @@ model Business {
   invoices                 Invoice[]
   transactionMetrics       TransactionMetric[]
   caslMessages             CaslMessage[]
+  users                    User[]
 
   @@index([status])
   @@index([stripeAccountId])
@@ -287,6 +288,38 @@ model DebitJobRun {
 
   @@unique([runDate])
   @@index([startedAt])
+}
+
+
+/// Portal login (ADMIN platform ops or BUSINESS staff scoped to one creditor).
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  /// ADMIN | BUSINESS
+  role         String
+  businessId   String?
+  business     Business? @relation(fields: [businessId], references: [id])
+  sessions     Session[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([role])
+  @@index([businessId])
+}
+
+/// Opaque session tokens (httpOnly cookie harbor_session).
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 /// CASL white-labeled outbound message log (from = business trade name).

@@ -1,7 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PortalNav, SectionHeading, formatCad } from "@/components/ui";
+
+type AuthUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: "ADMIN" | "BUSINESS";
+  businessId: string | null;
+};
 
 type Business = {
   id: string;
@@ -20,19 +29,50 @@ type Invoice = {
   balanceCents: number;
   agingBucket: string;
   status: string;
-  customer: { firstName: string; lastName: string; email: string; inviteToken: string };
+  customer: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    inviteToken: string;
+  };
 };
 
+const CSV_TEMPLATE = `external_ref,description,amount,due_date,first_name,last_name,email,phone
+INV-9001,Hygiene balance,850.00,2026-06-01,Nora,Singh,nora.singh@example.com,+1-416-555-0199
+INV-9002,Crown residual,2400.50,2026-05-15,Marcus,Lee,marcus.lee@example.com,`;
+
 export default function BusinessPortalPage() {
+  const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [selectedId, setSelectedId] = useState<string>("");
+  const [selectedId, setSelectedId] = useState("");
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [message, setMessage] = useState<string>("");
+  const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+
+  async function loadSession() {
+    const res = await fetch("/api/auth");
+    if (!res.ok) {
+      router.replace("/login?next=/business");
+      return null;
+    }
+    const data = await res.json();
+    setUser(data.user);
+    return data.user as AuthUser;
+  }
 
   async function loadBusinesses() {
     const res = await fetch("/api/businesses");
+    if (res.status === 401) {
+      router.replace("/login?next=/business");
+      return;
+    }
     const data = await res.json();
+    if (!Array.isArray(data)) {
+      setMessage(data.error || "Could not load businesses");
+      return;
+    }
     setBusinesses(data);
     if (data[0] && !selectedId) setSelectedId(data[0].id);
   }
@@ -43,7 +83,9 @@ export default function BusinessPortalPage() {
   }
 
   useEffect(() => {
-    loadBusinesses();
+    loadSession().then((u) => {
+      if (u) loadBusinesses();
+    });
   }, []);
 
   useEffect(() => {
@@ -51,6 +93,11 @@ export default function BusinessPortalPage() {
   }, [selectedId]);
 
   const selected = businesses.find((b) => b.id === selectedId);
+
+  async function logout() {
+    await fetch("/api/auth", { method: "DELETE" });
+    router.replace("/login");
+  }
 
   async function connectStripe() {
     if (!selectedId) return;
@@ -77,6 +124,35 @@ export default function BusinessPortalPage() {
           ? `Demo Connect ready: ${data.stripeAccountId}. You are Merchant of Record.`
           : "Connect onboarding started."),
     );
+    await loadBusinesses();
+  }
+
+  async function onCsvSelected(file: File | null) {
+    if (!file || !selectedId) return;
+    setBusy(true);
+    setMessage("");
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch(`/api/businesses/${selectedId}/invoices/upload`, {
+      method: "POST",
+      body: form,
+    });
+    const data = await res.json();
+    setBusy(false);
+    if (fileRef.current) fileRef.current.value = "";
+    if (!res.ok) {
+      setMessage(data.error || "CSV upload failed");
+      return;
+    }
+    const first = data.items?.[0];
+    setMessage(
+      `Uploaded ${data.uploaded} invoice(s)` +
+        (first
+          ? ` — e.g. ${first.externalRef} invited from ${first.caslFrom} (token ${first.inviteToken})`
+          : "") +
+        (data.errors?.length ? ` · ${data.errors.length} row error(s)` : ""),
+    );
+    await loadInvoices(selectedId);
     await loadBusinesses();
   }
 
@@ -112,9 +188,19 @@ export default function BusinessPortalPage() {
     }
     const invite = data.items?.[0];
     setMessage(
-      `Uploaded & invited via CASL white-label from ${invite?.caslFrom}. Client link token: ${invite?.inviteToken}`,
+      `Uploaded & invited via CASL white-label from ${invite?.caslFrom}. Client token: ${invite?.inviteToken}`,
     );
     await loadInvoices(selectedId);
+  }
+
+  function downloadTemplate() {
+    const blob = new Blob([CSV_TEMPLATE], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "harbor-invoice-upload-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -124,14 +210,19 @@ export default function BusinessPortalPage() {
         links={[
           { href: "/business", label: "Dashboard" },
           { href: "/business/settings", label: "Settings" },
-          { href: "/admin", label: "Admin" },
+          { href: "/login", label: user ? `Sign out (${user.name})` : "Sign in" },
         ]}
       />
       <main className="mx-auto max-w-6xl px-6 py-10">
-        <SectionHeading
-          title="Your receivables, your bank"
-          subtitle="Connect a Canadian bank with Stripe, upload past-due accounts, and track aging — principal never routes through Harbor."
-        />
+        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+          <SectionHeading
+            title="Your receivables, your bank"
+            subtitle="Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through Harbor."
+          />
+          <button className="btn-ghost" type="button" onClick={logout}>
+            Sign out
+          </button>
+        </div>
 
         <div className="mb-8 flex flex-wrap items-end gap-4">
           <label className="block min-w-[240px] flex-1 text-sm">
@@ -140,6 +231,7 @@ export default function BusinessPortalPage() {
               className="input"
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
+              disabled={user?.role === "BUSINESS"}
             >
               {businesses.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -148,12 +240,36 @@ export default function BusinessPortalPage() {
               ))}
             </select>
           </label>
-          <button className="btn-primary" disabled={busy || !selectedId} onClick={connectStripe}>
+          <button
+            className="btn-primary"
+            disabled={busy || !selectedId}
+            onClick={connectStripe}
+            type="button"
+          >
             {selected?.stripeOnboardingComplete ? "Reconnect bank" : "Connect Canadian bank"}
           </button>
-          <button className="btn-ghost" disabled={busy || !selectedId} onClick={uploadSample}>
-            Upload + invite account
+          <button
+            className="btn-ghost"
+            disabled={busy || !selectedId}
+            onClick={uploadSample}
+            type="button"
+          >
+            Quick sample invite
           </button>
+          <button className="btn-ghost" type="button" onClick={downloadTemplate}>
+            CSV template
+          </button>
+          <label className="btn-ghost cursor-pointer">
+            {busy ? "Uploading…" : "Upload CSV"}
+            <input
+              ref={fileRef}
+              className="hidden"
+              type="file"
+              accept=".csv,text/csv"
+              disabled={busy || !selectedId}
+              onChange={(e) => onCsvSelected(e.target.files?.[0] || null)}
+            />
+          </label>
         </div>
 
         {selected ? (
@@ -192,6 +308,10 @@ export default function BusinessPortalPage() {
         ) : null}
 
         <h2 className="font-display text-2xl font-bold text-ink">Aging & settlement</h2>
+        <p className="mt-1 text-sm text-ink-soft/75">
+          CSV columns: external_ref, description, amount (CAD dollars or cents), due_date,
+          first_name, last_name, email, phone.
+        </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
@@ -217,7 +337,10 @@ export default function BusinessPortalPage() {
                     <span className="status-pill">{inv.status}</span>
                   </td>
                   <td className="py-3">
-                    <a className="text-pine underline" href={`/client?token=${inv.customer.inviteToken}`}>
+                    <a
+                      className="text-pine underline"
+                      href={`/client?token=${inv.customer.inviteToken}`}
+                    >
                       Open
                     </a>
                   </td>
@@ -226,7 +349,7 @@ export default function BusinessPortalPage() {
               {invoices.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-ink-soft/70">
-                    No invoices for this business yet.
+                    No invoices yet — upload a CSV or send a sample invite.
                   </td>
                 </tr>
               ) : null}

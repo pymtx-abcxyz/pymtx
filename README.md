@@ -53,3 +53,14 @@ Copy `.env` and set live Stripe keys for non-demo Connect / ACSS flows:
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `STRIPE_WEBHOOK_SECRET`
 - `PLATFORM_FEE_BPS` (default `250` = 2.5%)
+
+## Auth & invoice upload
+
+Portals `/admin` and `/business` require login (`/login`).
+
+Demo (after seed):
+
+- Business: `billing@mapleridgedental.example` / `harbor-business-demo`
+- Admin: `admin@harbor.example` / `harbor-admin-demo`
+
+Upload past-due invoices as CSV from the business portal (template download included). See `docs/STEP-6-AUTH-UPLOAD.md`.
