@@ -1,11 +1,25 @@
 import { addDays } from "date-fns";
 import { prisma } from "./db";
 import { applicationFeeCents, platformFeeBps, stripe } from "./stripe";
+import {
+  DebitAttemptKind,
+  DebitAttemptStatus,
+  InstallmentStatus,
+  InvoiceStatus,
+  PaymentPlanStatus,
+} from "./domain";
+
+function isDemoMode() {
+  return (
+    !process.env.STRIPE_SECRET_KEY ||
+    process.env.STRIPE_SECRET_KEY.includes("placeholder")
+  );
+}
 
 /**
- * Zero-Custody Direct Settlement via Stripe Connect Direct Charges.
- * Funds land on the business connected account; Harbor only takes application_fee_amount.
- * Payment method: Canadian ACSS Debit (PAD / EFT).
+ * Zero-custody Direct Charge on the connected business account.
+ * Principal → business; Harbor only takes application_fee_amount.
+ * Rail: Canadian ACSS Debit (PAD / EFT).
  */
 export async function chargeInstallment(installmentId: string) {
   const installment = await prisma.installment.findUnique({
@@ -21,15 +35,20 @@ export async function chargeInstallment(installmentId: string) {
   });
 
   if (!installment) throw new Error("Installment not found");
-  if (installment.status !== "SCHEDULED" && installment.status !== "FAILED_NSF") {
+
+  const canCharge =
+    installment.status === InstallmentStatus.SCHEDULED ||
+    installment.status === InstallmentStatus.QUEUED ||
+    installment.status === InstallmentStatus.FAILED_NSF;
+  if (!canCharge) {
     throw new Error(`Cannot charge installment in status ${installment.status}`);
   }
 
   const plan = installment.paymentPlan;
   const business = plan.customer.business;
 
-  if (!business.stripeAccountId || !business.stripeOnboardingComplete) {
-    throw new Error("Business Stripe Connect account is not ready");
+  if (!business.stripeAccountId || !business.stripeChargesEnabled) {
+    throw new Error("Business Stripe Connect account is not ready for charges");
   }
   if (!plan.stripeCustomerId || !plan.stripePaymentMethodId) {
     throw new Error("Customer PAD payment method is not on file");
@@ -38,39 +57,69 @@ export async function chargeInstallment(installmentId: string) {
     throw new Error("Rule H1 written confirmation has not been sent before first debit");
   }
 
-  // NSF Rule H1: max 1 retry within 30 days of original attempt
-  if (installment.status === "FAILED_NSF") {
+  if (installment.status === InstallmentStatus.FAILED_NSF) {
     if (installment.nsfRetryUsed) {
       throw new Error("NSF retry already used (Rule H1: max 1 re-try)");
     }
-    if (!installment.lastAttemptAt) {
-      throw new Error("Missing last attempt timestamp for NSF retry");
-    }
-    const windowEnd = addDays(installment.lastAttemptAt, 30);
-    if (new Date() > windowEnd) {
+    const anchor = installment.originalPresentmentAt ?? installment.lastAttemptAt;
+    if (!anchor) throw new Error("Missing presentment timestamp for NSF retry");
+    if (new Date() > addDays(anchor, 30)) {
       throw new Error("NSF retry window expired (Rule H1: within 30 days)");
     }
   }
 
   const fee = applicationFeeCents(installment.amountCents);
-  const isDemo = !process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes("placeholder");
+  const attemptKind =
+    installment.status === InstallmentStatus.FAILED_NSF
+      ? DebitAttemptKind.NSF_RETRY
+      : DebitAttemptKind.PRESENTMENT;
+  const attemptNumber = installment.attemptCount + 1;
+  const idempotencyKey =
+    installment.idempotencyKey ||
+    `inst_${installmentId}_attempt_${attemptNumber}`;
+
+  const attempt = await prisma.debitAttempt.create({
+    data: {
+      installmentId,
+      attemptNumber,
+      kind: attemptKind,
+      status: DebitAttemptStatus.PENDING,
+      applicationFeeCents: fee,
+    },
+  });
 
   await prisma.installment.update({
     where: { id: installmentId },
-    data: { status: "PROCESSING", lastAttemptAt: new Date(), attemptCount: { increment: 1 } },
+    data: {
+      status: InstallmentStatus.PROCESSING,
+      lastAttemptAt: new Date(),
+      attemptCount: attemptNumber,
+      originalPresentmentAt: installment.originalPresentmentAt ?? new Date(),
+      idempotencyKey,
+    },
   });
 
-  if (isDemo) {
-    // Demo mode: simulate successful direct charge without calling Stripe
+  if (isDemoMode()) {
     await prisma.$transaction([
       prisma.installment.update({
         where: { id: installmentId },
         data: {
-          status: "SUCCEEDED",
+          status: InstallmentStatus.SUCCEEDED,
           paidAt: new Date(),
           applicationFeeCents: fee,
           stripePaymentIntentId: `pi_demo_${installmentId}`,
-          nsfRetryUsed: installment.status === "FAILED_NSF" ? true : installment.nsfRetryUsed,
+          nsfRetryUsed:
+            attemptKind === DebitAttemptKind.NSF_RETRY
+              ? true
+              : installment.nsfRetryUsed,
+        },
+      }),
+      prisma.debitAttempt.update({
+        where: { id: attempt.id },
+        data: {
+          status: DebitAttemptStatus.SUCCEEDED,
+          stripePaymentIntentId: `pi_demo_${installmentId}`,
+          completedAt: new Date(),
         },
       }),
       prisma.transactionMetric.create({
@@ -89,10 +138,14 @@ export async function chargeInstallment(installmentId: string) {
     ]);
 
     await maybeCompletePlan(plan.id);
-    return { demo: true, paymentIntentId: `pi_demo_${installmentId}`, applicationFeeCents: fee };
+    return {
+      demo: true,
+      paymentIntentId: `pi_demo_${installmentId}`,
+      applicationFeeCents: fee,
+      attemptId: attempt.id,
+    };
   }
 
-  // Production: Stripe Connect Direct Charge with ACSS Debit
   const paymentIntent = await stripe.paymentIntents.create(
     {
       amount: installment.amountCents,
@@ -102,40 +155,48 @@ export async function chargeInstallment(installmentId: string) {
       payment_method_types: ["acss_debit"],
       confirm: true,
       application_fee_amount: fee,
-      mandate_data: {
-        customer_acceptance: {
-          type: "online",
-          online: {
-            ip_address: "0.0.0.0",
-            user_agent: "Harbor/1.0",
-          },
-        },
-      },
+      mandate: plan.stripeMandateId || undefined,
       metadata: {
         harbor_installment_id: installmentId,
         harbor_plan_id: plan.id,
         harbor_invoice_id: plan.invoiceId,
+        harbor_attempt_id: attempt.id,
         zero_custody: "true",
       },
     },
     {
       stripeAccount: business.stripeAccountId,
+      idempotencyKey,
     },
   );
+
+  await prisma.debitAttempt.update({
+    where: { id: attempt.id },
+    data: { stripePaymentIntentId: paymentIntent.id },
+  });
 
   await prisma.installment.update({
     where: { id: installmentId },
     data: {
       stripePaymentIntentId: paymentIntent.id,
       applicationFeeCents: fee,
-      // ACSS is async; webhook will flip to SUCCEEDED / FAILED_NSF
-      status: paymentIntent.status === "succeeded" ? "SUCCEEDED" : "PROCESSING",
+      status:
+        paymentIntent.status === "succeeded"
+          ? InstallmentStatus.SUCCEEDED
+          : InstallmentStatus.PROCESSING,
       paidAt: paymentIntent.status === "succeeded" ? new Date() : null,
-      nsfRetryUsed: installment.status === "FAILED_NSF" ? true : installment.nsfRetryUsed,
+      nsfRetryUsed:
+        attemptKind === DebitAttemptKind.NSF_RETRY
+          ? true
+          : installment.nsfRetryUsed,
     },
   });
 
   if (paymentIntent.status === "succeeded") {
+    await prisma.debitAttempt.update({
+      where: { id: attempt.id },
+      data: { status: DebitAttemptStatus.SUCCEEDED, completedAt: new Date() },
+    });
     await prisma.transactionMetric.create({
       data: {
         businessId: business.id,
@@ -152,58 +213,77 @@ export async function chargeInstallment(installmentId: string) {
     await maybeCompletePlan(plan.id);
   }
 
-  return { demo: false, paymentIntentId: paymentIntent.id, applicationFeeCents: fee };
+  return {
+    demo: false,
+    paymentIntentId: paymentIntent.id,
+    applicationFeeCents: fee,
+    attemptId: attempt.id,
+  };
 }
 
 async function maybeCompletePlan(planId: string) {
   const remaining = await prisma.installment.count({
     where: {
       paymentPlanId: planId,
-      status: { in: ["SCHEDULED", "PROCESSING", "FAILED_NSF", "FAILED"] },
+      status: {
+        in: [
+          InstallmentStatus.SCHEDULED,
+          InstallmentStatus.QUEUED,
+          InstallmentStatus.PROCESSING,
+          InstallmentStatus.FAILED_NSF,
+          InstallmentStatus.FAILED,
+        ],
+      },
     },
   });
   if (remaining === 0) {
     const plan = await prisma.paymentPlan.update({
       where: { id: planId },
-      data: { status: "COMPLETED" },
+      data: { status: PaymentPlanStatus.COMPLETED },
     });
     await prisma.invoice.update({
       where: { id: plan.invoiceId },
-      data: { status: "SETTLED", balanceCents: 0 },
+      data: { status: InvoiceStatus.SETTLED, balanceCents: 0 },
     });
   }
 }
 
-/**
- * Create Stripe Connect Express account for an Ontario business (Merchant of Record).
- */
+/** Create / resume Stripe Connect Express onboarding for an Ontario business. */
 export async function createConnectAccount(businessId: string) {
-  const business = await prisma.business.findUniqueOrThrow({ where: { id: businessId } });
-  const isDemo = !process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes("placeholder");
+  const business = await prisma.business.findUniqueOrThrow({
+    where: { id: businessId },
+  });
 
-  if (isDemo) {
-    const accountId = `acct_demo_${businessId.slice(-8)}`;
+  if (isDemoMode()) {
+    const accountId =
+      business.stripeAccountId || `acct_demo_${businessId.slice(-8)}`;
     await prisma.business.update({
       where: { id: businessId },
-      data: { stripeAccountId: accountId, stripeOnboardingComplete: true },
+      data: {
+        stripeAccountId: accountId,
+        stripeOnboardingComplete: true,
+        stripeChargesEnabled: true,
+        stripePayoutsEnabled: true,
+        stripeDetailsSubmitted: true,
+        stripeOnboardedAt: new Date(),
+      },
     });
     return { accountId, url: null, demo: true };
   }
 
-  const account =
-    business.stripeAccountId
-      ? await stripe.accounts.retrieve(business.stripeAccountId)
-      : await stripe.accounts.create({
-          type: "express",
-          country: "CA",
-          email: business.email,
-          capabilities: {
-            acss_debit_payments: { requested: true },
-            transfers: { requested: true },
-          },
-          business_type: "company",
-          metadata: { harbor_business_id: businessId },
-        });
+  const account = business.stripeAccountId
+    ? await stripe.accounts.retrieve(business.stripeAccountId)
+    : await stripe.accounts.create({
+        type: "express",
+        country: "CA",
+        email: business.email,
+        capabilities: {
+          acss_debit_payments: { requested: true },
+          transfers: { requested: true },
+        },
+        business_type: "company",
+        metadata: { harbor_business_id: businessId },
+      });
 
   if (!business.stripeAccountId) {
     await prisma.business.update({
@@ -220,4 +300,29 @@ export async function createConnectAccount(businessId: string) {
   });
 
   return { accountId: account.id, url: link.url, demo: false };
+}
+
+/** Candidates for Inngest daily debit job — uses @@index([status, dueDate]). */
+export async function findDueInstallments(asOf = new Date()) {
+  return prisma.installment.findMany({
+    where: {
+      status: {
+        in: [InstallmentStatus.SCHEDULED, InstallmentStatus.QUEUED],
+      },
+      dueDate: { lte: asOf },
+      paymentPlan: {
+        status: PaymentPlanStatus.ACTIVE,
+        padWrittenConfirmSentAt: { not: null },
+        stripePaymentMethodId: { not: null },
+      },
+    },
+    include: {
+      paymentPlan: {
+        include: {
+          customer: { include: { business: true } },
+        },
+      },
+    },
+    orderBy: { dueDate: "asc" },
+  });
 }

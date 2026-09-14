@@ -1,11 +1,13 @@
-# Stripe webhook handler for ACSS Debit lifecycle on connected accounts.
-# Configure Connect webhook endpoint to this route in production.
-
 import { NextRequest, NextResponse } from "next/server";
-import { stripe, platformFeeBps } from "@/lib/stripe";
-import { prisma } from "@/lib/db";
 import Stripe from "stripe";
+import { prisma } from "@/lib/db";
+import { platformFeeBps, stripe } from "@/lib/stripe";
+import {
+  DebitAttemptStatus,
+  InstallmentStatus,
+} from "@/lib/domain";
 
+/** Stripe webhook for ACSS Debit lifecycle on connected accounts. */
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
@@ -31,21 +33,19 @@ export async function POST(req: NextRequest) {
   ) {
     const pi = event.data.object as Stripe.PaymentIntent;
     const installmentId = pi.metadata?.harbor_installment_id;
-    if (!installmentId) {
-      return NextResponse.json({ received: true });
-    }
+    if (!installmentId) return NextResponse.json({ received: true });
 
     if (event.type === "payment_intent.succeeded") {
       const installment = await prisma.installment.findUnique({
         where: { id: installmentId },
-        include: { paymentPlan: true },
+        include: { paymentPlan: { include: { customer: true } } },
       });
-      if (installment && installment.status !== "SUCCEEDED") {
+      if (installment && installment.status !== InstallmentStatus.SUCCEEDED) {
         await prisma.$transaction([
           prisma.installment.update({
             where: { id: installmentId },
             data: {
-              status: "SUCCEEDED",
+              status: InstallmentStatus.SUCCEEDED,
               paidAt: new Date(),
               stripePaymentIntentId: pi.id,
               applicationFeeCents: pi.application_fee_amount || 0,
@@ -53,11 +53,7 @@ export async function POST(req: NextRequest) {
           }),
           prisma.transactionMetric.create({
             data: {
-              businessId: (
-                await prisma.customer.findUniqueOrThrow({
-                  where: { id: installment.paymentPlan.customerId },
-                })
-              ).businessId,
+              businessId: installment.paymentPlan.customer.businessId,
               installmentId,
               principalCents: installment.amountCents,
               applicationFeeCents: pi.application_fee_amount || 0,
@@ -72,14 +68,30 @@ export async function POST(req: NextRequest) {
       }
     } else {
       const code = pi.last_payment_error?.code || "";
-      const nsf = code.includes("insufficient") || code === "debit_not_authorized";
+      const nsf =
+        code.includes("insufficient") || code === "debit_not_authorized";
       await prisma.installment.update({
         where: { id: installmentId },
         data: {
-          status: nsf ? "FAILED_NSF" : "FAILED",
+          status: nsf ? InstallmentStatus.FAILED_NSF : InstallmentStatus.FAILED,
           lastAttemptAt: new Date(),
+          failureCode: code || null,
+          failureMessage: pi.last_payment_error?.message || null,
         },
       });
+      if (pi.metadata?.harbor_attempt_id) {
+        await prisma.debitAttempt.update({
+          where: { id: pi.metadata.harbor_attempt_id },
+          data: {
+            status: nsf
+              ? DebitAttemptStatus.FAILED_NSF
+              : DebitAttemptStatus.FAILED,
+            failureCode: code || null,
+            failureMessage: pi.last_payment_error?.message || null,
+            completedAt: new Date(),
+          },
+        });
+      }
     }
   }
 

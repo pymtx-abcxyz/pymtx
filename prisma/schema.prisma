@@ -7,153 +7,319 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// =============================================================================
+// Harbor schema — Ontario B2C AR Settlement (Path B / Zero-Custody)
+// Money never custodied by Harbor: Business = creditor + Merchant of Record.
+// Stripe Connect Direct Charges + ACSS Debit (Payments Canada Rule H1 PAD).
+// =============================================================================
+
+/// Platform-wide compliance + take-rate knobs (singleton row id = "platform").
 model PlatformSettings {
-  id                    String   @id @default("platform")
-  applicationFeeBps     Int      @default(250) // 2.5% take-rate
-  skipNoticeBusinessDays Int     @default(3)
-  skipCooldownDays      Int      @default(180)
-  nsfRetryMax           Int      @default(1)
-  nsfRetryWindowDays    Int      @default(30)
-  updatedAt             DateTime @updatedAt
+  id                     String   @id @default("platform")
+  /// Software fee in basis points on each Direct Charge (default 250 = 2.50%).
+  applicationFeeBps      Int      @default(250)
+  /// Rule H1-aligned skip notice: request ≥ N business days before debit.
+  skipNoticeBusinessDays Int      @default(3)
+  /// One skip privilege every N calendar days (product: 180).
+  skipCooldownDays       Int      @default(180)
+  /// Rule H1 NSF: max re-presentments after a failed debit.
+  nsfRetryMax            Int      @default(1)
+  /// Rule H1 NSF: re-presentment must occur within N days of original debit.
+  nsfRetryWindowDays     Int      @default(30)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
 
+/// SMB creditor. Remains Merchant of Record on Stripe Connect.
 model Business {
-  id                    String   @id @default(cuid())
-  legalName             String
-  tradeName             String
-  email                 String   @unique
-  phone                 String?
-  ontarioCorpNumber     String?
-  stripeAccountId       String?  @unique
-  stripeOnboardingComplete Boolean @default(false)
-  caslConsentAt         DateTime?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  invoices              Invoice[]
-  customers             Customer[]
+  id                       String    @id @default(cuid())
+  legalName                String
+  tradeName                String
+  email                    String    @unique
+  phone                    String?
+  /// Ontario corporation / business number (optional at signup).
+  ontarioCorpNumber        String?
+  province                 String    @default("ON")
+  /// ACTIVE | SUSPENDED | CLOSED
+  status                   String    @default("ACTIVE")
+
+  /// Stripe Connect Express/Custom account — funds land here (Direct Charges).
+  stripeAccountId          String?   @unique
+  stripeOnboardingComplete Boolean   @default(false)
+  stripeChargesEnabled     Boolean   @default(false)
+  stripePayoutsEnabled     Boolean   @default(false)
+  stripeDetailsSubmitted   Boolean   @default(false)
+  stripeOnboardedAt        DateTime?
+
+  /// CASL: business consents that invites are sent under its identity.
+  caslConsentAt            DateTime?
+
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  customers                Customer[]
+  invoices                 Invoice[]
+  transactionMetrics       TransactionMetric[]
+  caslMessages             CaslMessage[]
+
+  @@index([status])
+  @@index([stripeAccountId])
 }
 
+/// Consumer debtor invited to settle a past-due invoice.
 model Customer {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   businessId      String
-  business        Business @relation(fields: [businessId], references: [id])
+  business        Business  @relation(fields: [businessId], references: [id])
   firstName       String
   lastName        String
   email           String
   phone           String?
-  inviteToken     String   @unique @default(cuid())
+  /// Opaque portal invite token (never guessable sequential ids).
+  inviteToken     String    @unique @default(cuid())
   invitedAt       DateTime?
   activatedAt     DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
   invoices        Invoice[]
   paymentPlans    PaymentPlan[]
+  caslMessages    CaslMessage[]
 
   @@unique([businessId, email])
+  @@index([inviteToken])
+  @@index([businessId])
 }
 
+/// Past-due receivable uploaded by the business (principal owed to Business).
 model Invoice {
-  id              String   @id @default(cuid())
-  businessId      String
-  business        Business @relation(fields: [businessId], references: [id])
-  customerId      String
-  customer        Customer @relation(fields: [customerId], references: [id])
-  externalRef     String
-  description     String
+  id                  String   @id @default(cuid())
+  businessId          String
+  business            Business @relation(fields: [businessId], references: [id])
+  customerId          String
+  customer            Customer @relation(fields: [customerId], references: [id])
+  /// Business's own invoice / account number.
+  externalRef         String
+  description         String
   originalAmountCents Int
-  balanceCents    Int
-  dueDate         DateTime
-  status          String   @default("PAST_DUE") // PAST_DUE | INVITED | PLAN_ACTIVE | SETTLED | WRITTEN_OFF
-  agingBucket     String   // 1-30 | 31-60 | 61-90 | 90+
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  paymentPlans    PaymentPlan[]
+  balanceCents        Int
+  currency            String   @default("cad")
+  dueDate             DateTime
+  /// PAST_DUE | INVITED | PLAN_ACTIVE | SETTLED | WRITTEN_OFF
+  status              String   @default("PAST_DUE")
+  /// 1-30 | 31-60 | 61-90 | 90+
+  agingBucket         String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  paymentPlans        PaymentPlan[]
 
   @@unique([businessId, externalRef])
+  @@index([businessId, status])
+  @@index([customerId])
+  @@index([agingBucket])
 }
 
+/// Installment plan chosen by the consumer (6 / 12 / 18 months).
 model PaymentPlan {
-  id                    String   @id @default(cuid())
-  customerId            String
-  customer              Customer @relation(fields: [customerId], references: [id])
-  invoiceId             String
-  invoice               Invoice  @relation(fields: [invoiceId], references: [id])
-  termMonths            Int      // 6 | 12 | 18
-  monthlyAmountCents    Int
-  totalAmountCents      Int
-  status                String   @default("PENDING_MANDATE") // PENDING_MANDATE | ACTIVE | COMPLETED | DEFAULTED | CANCELLED
-  startDate             DateTime?
-  extendedByMonths      Int      @default(0)
-  lastSkipAt            DateTime?
-  nextSkipAvailableAt   DateTime?
-  stripeCustomerId      String?
-  stripePaymentMethodId String?
-  padMandateAcceptedAt  DateTime?
+  id                      String   @id @default(cuid())
+  customerId              String
+  customer                Customer @relation(fields: [customerId], references: [id])
+  invoiceId               String
+  invoice                 Invoice  @relation(fields: [invoiceId], references: [id])
+
+  /// 6 | 12 | 18
+  termMonths              Int
+  /// Term at signup before skip extensions.
+  originalTermMonths      Int
+  monthlyAmountCents      Int
+  totalAmountCents        Int
+  currency                String   @default("cad")
+
+  /// PENDING_MANDATE | ACTIVE | COMPLETED | DEFAULTED | CANCELLED
+  status                  String   @default("PENDING_MANDATE")
+  startDate               DateTime?
+  extendedByMonths        Int      @default(0)
+  lastSkipAt              DateTime?
+  nextSkipAvailableAt     DateTime?
+
+  /// Stripe objects created on the *connected* account (Direct Charge model).
+  stripeCustomerId        String?
+  stripePaymentMethodId   String?
+  /// ACSS mandate id once bank authorization is complete.
+  stripeMandateId         String?
+
+  padMandateAcceptedAt    DateTime?
+  /// Rule H1: written confirmation must be sent before first debit.
   padWrittenConfirmSentAt DateTime?
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
-  installments          Installment[]
-  skipRequests          SkipRequest[]
-  padMandate            PadMandate?
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  installments            Installment[]
+  skipRequests            SkipRequest[]
+  padMandate              PadMandate?
+
+  @@index([status])
+  @@index([customerId])
+  @@index([invoiceId])
+  @@index([stripeCustomerId])
 }
 
+/// Payments Canada Rule H1 Personal PAD electronic mandate + audit trail.
 model PadMandate {
-  id                String   @id @default(cuid())
-  paymentPlanId     String   @unique
-  paymentPlan       PaymentPlan @relation(fields: [paymentPlanId], references: [id])
-  mandateType       String   @default("PERSONAL_PAD") // Payments Canada Rule H1
-  payorName         String
-  payorEmail        String
-  bankLast4         String?
-  institutionName   String?
-  acceptedAt        DateTime
-  ipAddress         String?
-  userAgent         String?
+  id                 String      @id @default(cuid())
+  paymentPlanId      String      @unique
+  paymentPlan        PaymentPlan @relation(fields: [paymentPlanId], references: [id])
+  /// PERSONAL_PAD (consumer) — Harbor does not use Business PADs for B2C.
+  mandateType        String      @default("PERSONAL_PAD")
+  payorName          String
+  payorEmail         String
+  bankLast4          String?
+  institutionName    String?
+  /// Stripe mandate / payment method snapshot.
+  stripeMandateId    String?
+  acceptedAt         DateTime
+  ipAddress          String?
+  userAgent          String?
   confirmationSentAt DateTime?
-  cancellationTerms String
-  recourseTerms     String
-  createdAt         DateTime @default(now())
+  /// Frozen copy of mandatory H1 disclosure text at acceptance time.
+  cancellationTerms  String
+  recourseTerms      String
+  createdAt          DateTime    @default(now())
 }
 
+/// One scheduled (or skipped/failed) monthly debit.
 model Installment {
-  id                    String   @id @default(cuid())
+  id                    String      @id @default(cuid())
   paymentPlanId         String
   paymentPlan           PaymentPlan @relation(fields: [paymentPlanId], references: [id])
   sequence              Int
   dueDate               DateTime
+  /// Preserved when dueDate moves (skips) or for NSF 30-day window from first presentment.
+  originalDueDate       DateTime
   amountCents           Int
-  status                String   @default("SCHEDULED") // SCHEDULED | SKIPPED | PROCESSING | SUCCEEDED | FAILED_NSF | FAILED | CANCELLED
+  /// SCHEDULED | SKIPPED | QUEUED | PROCESSING | SUCCEEDED | FAILED_NSF | FAILED | CANCELLED
+  status                String      @default("SCHEDULED")
+
   stripePaymentIntentId String?
-  attemptCount          Int      @default(0)
+  /// Idempotency key for Stripe PaymentIntent create (Inngest-safe retries).
+  idempotencyKey        String?     @unique
+
+  attemptCount          Int         @default(0)
   lastAttemptAt         DateTime?
-  nsfRetryUsed          Boolean  @default(false)
+  /// Rule H1: only one NSF re-try allowed within the window.
+  nsfRetryUsed          Boolean     @default(false)
+  /// Timestamp of the *original* presentment used as NSF window anchor.
+  originalPresentmentAt DateTime?
+  failureCode           String?
+  failureMessage        String?
+
   paidAt                DateTime?
-  applicationFeeCents   Int      @default(0)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  applicationFeeCents   Int         @default(0)
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
   skipRequest           SkipRequest?
+  debitAttempts         DebitAttempt[]
 
   @@unique([paymentPlanId, sequence])
+  /// Primary lookup for Inngest daily recurring job.
+  @@index([status, dueDate])
+  @@index([paymentPlanId, status])
 }
 
+/// Consumer skip privilege: 1 every 180 days, ≥3 business days notice.
 model SkipRequest {
-  id              String   @id @default(cuid())
-  paymentPlanId   String
-  paymentPlan     PaymentPlan @relation(fields: [paymentPlanId], references: [id])
-  installmentId   String   @unique
-  installment     Installment @relation(fields: [installmentId], references: [id])
-  requestedAt     DateTime @default(now())
-  status          String   @default("APPROVED") // APPROVED | REJECTED | PENDING
-  rejectionReason String?
+  id               String      @id @default(cuid())
+  paymentPlanId    String
+  paymentPlan      PaymentPlan @relation(fields: [paymentPlanId], references: [id])
+  installmentId    String      @unique
+  installment      Installment @relation(fields: [installmentId], references: [id])
+  requestedAt      DateTime    @default(now())
+  /// APPROVED | REJECTED | PENDING
+  status           String      @default("APPROVED")
+  rejectionReason  String?
+  /// Sequence number of the installment appended at end of schedule.
   appendedSequence Int?
+  businessDaysNotice Int?
+
+  @@index([paymentPlanId, requestedAt])
 }
 
+/// Per-attempt ledger for Direct Charges (supports NSF retry auditing).
+model DebitAttempt {
+  id                    String      @id @default(cuid())
+  installmentId         String
+  installment           Installment @relation(fields: [installmentId], references: [id])
+  attemptNumber         Int
+  /// PRESENTMENT | NSF_RETRY
+  kind                  String      @default("PRESENTMENT")
+  /// PENDING | SUCCEEDED | FAILED_NSF | FAILED
+  status                String      @default("PENDING")
+  stripePaymentIntentId String?
+  applicationFeeCents   Int         @default(0)
+  failureCode           String?
+  failureMessage        String?
+  createdAt             DateTime    @default(now())
+  completedAt           DateTime?
+
+  @@index([installmentId, attemptNumber])
+  @@index([stripePaymentIntentId])
+}
+
+/// Inngest (or cron) daily debit runner audit row.
+model DebitJobRun {
+  id              String    @id @default(cuid())
+  /// Calendar date the job targeted (UTC date string YYYY-MM-DD).
+  runDate         String
+  /// RUNNING | SUCCEEDED | FAILED | PARTIAL
+  status          String    @default("RUNNING")
+  startedAt       DateTime  @default(now())
+  finishedAt      DateTime?
+  scannedCount    Int       @default(0)
+  queuedCount     Int       @default(0)
+  succeededCount  Int       @default(0)
+  failedCount     Int       @default(0)
+  skippedCount    Int       @default(0)
+  errorSummary    String?
+
+  @@unique([runDate])
+  @@index([startedAt])
+}
+
+/// CASL white-labeled outbound message log (from = business trade name).
+model CaslMessage {
+  id           String    @id @default(cuid())
+  businessId   String
+  business     Business  @relation(fields: [businessId], references: [id])
+  customerId   String?
+  customer     Customer? @relation(fields: [customerId], references: [id])
+  /// INVITE | PAD_CONFIRMATION | RECEIPT | SKIP_CONFIRMATION
+  kind         String
+  fromName     String
+  toEmail      String
+  subject      String
+  bodyPreview  String?
+  sentAt       DateTime  @default(now())
+  providerId   String?
+
+  @@index([businessId, sentAt])
+  @@index([customerId])
+}
+
+/// Platform take-rate metrics (application fees only — never principal custody).
 model TransactionMetric {
-  id                    String   @id @default(cuid())
-  businessId            String
-  installmentId         String?
-  principalCents        Int
-  applicationFeeCents   Int
-  feeBps                Int
-  occurredAt            DateTime @default(now())
+  id                  String   @id @default(cuid())
+  businessId          String
+  business            Business @relation(fields: [businessId], references: [id])
+  installmentId       String?
+  principalCents      Int
+  applicationFeeCents Int
+  feeBps              Int
+  occurredAt          DateTime @default(now())
+
+  @@index([businessId, occurredAt])
+  @@index([occurredAt])
 }

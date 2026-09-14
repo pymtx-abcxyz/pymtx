@@ -1,12 +1,26 @@
 import { PrismaClient } from "@prisma/client";
-import { addDays, subDays } from "date-fns";
-import { agingBucket } from "../src/lib/compliance";
+import { addDays, addMonths, subDays } from "date-fns";
+import {
+  PAD_CANCELLATION_TERMS,
+  PAD_RECOURSE_TERMS,
+  agingBucket,
+} from "../src/lib/compliance";
+import {
+  CaslMessageKind,
+  InstallmentStatus,
+  InvoiceStatus,
+  PadMandateType,
+  PaymentPlanStatus,
+} from "../src/lib/domain";
 
 const prisma = new PrismaClient();
 
 async function main() {
+  await prisma.debitAttempt.deleteMany();
   await prisma.skipRequest.deleteMany();
   await prisma.transactionMetric.deleteMany();
+  await prisma.caslMessage.deleteMany();
+  await prisma.debitJobRun.deleteMany();
   await prisma.installment.deleteMany();
   await prisma.padMandate.deleteMany();
   await prisma.paymentPlan.deleteMany();
@@ -35,6 +49,10 @@ async function main() {
       ontarioCorpNumber: "ON-10293847",
       stripeAccountId: "acct_demo_maple",
       stripeOnboardingComplete: true,
+      stripeChargesEnabled: true,
+      stripePayoutsEnabled: true,
+      stripeDetailsSubmitted: true,
+      stripeOnboardedAt: subDays(new Date(), 14),
       caslConsentAt: new Date(),
     },
   });
@@ -70,75 +88,80 @@ async function main() {
     }),
   ]);
 
-  const invoices = [
+  const specs = [
     {
       customerId: customers[0].id,
       externalRef: "INV-88421",
       description: "Orthodontic treatment balance",
-      originalAmountCents: 240000,
-      balanceCents: 240000,
+      originalAmountCents: 240_000,
+      balanceCents: 240_000,
       dueDate: subDays(new Date(), 45),
-      status: "INVITED",
+      status: InvoiceStatus.PLAN_ACTIVE,
     },
     {
       customerId: customers[1].id,
       externalRef: "INV-88455",
       description: "Crown & bridge services",
-      originalAmountCents: 180000,
-      balanceCents: 180000,
+      originalAmountCents: 180_000,
+      balanceCents: 180_000,
       dueDate: subDays(new Date(), 72),
-      status: "PAST_DUE",
+      status: InvoiceStatus.PAST_DUE,
     },
     {
       customerId: customers[2].id,
       externalRef: "INV-88502",
       description: "Emergency dental visit",
-      originalAmountCents: 96000,
-      balanceCents: 96000,
+      originalAmountCents: 96_000,
+      balanceCents: 96_000,
       dueDate: subDays(new Date(), 18),
-      status: "PAST_DUE",
+      status: InvoiceStatus.PAST_DUE,
     },
   ];
 
-  for (const inv of invoices) {
-    await prisma.invoice.create({
-      data: {
-        businessId: business.id,
-        ...inv,
-        agingBucket: agingBucket(inv.dueDate),
-      },
-    });
+  const invoices = [];
+  for (const spec of specs) {
+    invoices.push(
+      await prisma.invoice.create({
+        data: {
+          businessId: business.id,
+          ...spec,
+          agingBucket: agingBucket(spec.dueDate),
+        },
+      }),
+    );
   }
 
-  // Active plan for Aisha with skip available
-  const aishaInvoice = await prisma.invoice.findFirstOrThrow({
-    where: { externalRef: "INV-88421" },
-  });
-
-  const startDate = addDays(new Date(), 10); // far enough for skip notice
-  const monthly = Math.floor(240000 / 12);
-  const remainder = 240000 - monthly * 12;
+  const startDate = addDays(new Date(), 10);
+  const monthly = Math.floor(240_000 / 12);
+  const remainder = 240_000 - monthly * 12;
 
   const plan = await prisma.paymentPlan.create({
     data: {
       customerId: customers[0].id,
-      invoiceId: aishaInvoice.id,
+      invoiceId: invoices[0].id,
       termMonths: 12,
+      originalTermMonths: 12,
       monthlyAmountCents: monthly,
-      totalAmountCents: 240000,
-      status: "ACTIVE",
+      totalAmountCents: 240_000,
+      status: PaymentPlanStatus.ACTIVE,
       startDate,
       padMandateAcceptedAt: subDays(new Date(), 1),
       padWrittenConfirmSentAt: subDays(new Date(), 1),
       stripeCustomerId: "cus_demo_aisha",
       stripePaymentMethodId: "pm_demo_aisha",
+      stripeMandateId: "mandate_demo_aisha",
       installments: {
-        create: Array.from({ length: 12 }, (_, i) => ({
-          sequence: i + 1,
-          dueDate: addDays(startDate, i * 30),
-          amountCents: monthly + (i === 11 ? remainder : 0),
-          status: "SCHEDULED",
-        })),
+        create: Array.from({ length: 12 }, (_, i) => {
+          const due = addMonths(startDate, i);
+          return {
+            sequence: i + 1,
+            dueDate: due,
+            originalDueDate: due,
+            amountCents: monthly + (i === 11 ? remainder : 0),
+            status: InstallmentStatus.SCHEDULED,
+            idempotencyKey: `demo-aisha-${i + 1}`,
+          };
+        }),
       },
     },
   });
@@ -146,35 +169,43 @@ async function main() {
   await prisma.padMandate.create({
     data: {
       paymentPlanId: plan.id,
+      mandateType: PadMandateType.PERSONAL_PAD,
       payorName: "Aisha Rahman",
       payorEmail: "aisha.rahman@example.com",
       bankLast4: "4821",
       institutionName: "TD Canada Trust",
+      stripeMandateId: "mandate_demo_aisha",
       acceptedAt: subDays(new Date(), 1),
       confirmationSentAt: subDays(new Date(), 1),
-      cancellationTerms: "Rule H1 cancellation terms",
-      recourseTerms: "Rule H1 recourse terms",
+      cancellationTerms: PAD_CANCELLATION_TERMS,
+      recourseTerms: PAD_RECOURSE_TERMS,
     },
   });
 
-  await prisma.invoice.update({
-    where: { id: aishaInvoice.id },
-    data: { status: "PLAN_ACTIVE" },
+  await prisma.caslMessage.create({
+    data: {
+      businessId: business.id,
+      customerId: customers[0].id,
+      kind: CaslMessageKind.INVITE,
+      fromName: business.tradeName,
+      toEmail: customers[0].email,
+      subject: `Settle your balance with ${business.tradeName}`,
+      bodyPreview: "White-labeled invite under business identity (CASL).",
+    },
   });
 
-  // Sample take-rate metrics
   await prisma.transactionMetric.createMany({
     data: [
       {
         businessId: business.id,
-        principalCents: 20000,
+        principalCents: 20_000,
         applicationFeeCents: 500,
         feeBps: 250,
         occurredAt: subDays(new Date(), 20),
       },
       {
         businessId: business.id,
-        principalCents: 20000,
+        principalCents: 20_000,
         applicationFeeCents: 500,
         feeBps: 250,
         occurredAt: subDays(new Date(), 10),
@@ -182,17 +213,22 @@ async function main() {
     ],
   });
 
-  console.log("Seeded Harbor demo data");
-  console.log({
-    businessId: business.id,
-    tradeName: business.tradeName,
-    customerInviteTokens: customers.map((c) => ({
-      name: `${c.firstName} ${c.lastName}`,
-      token: c.inviteToken,
-      email: c.email,
-    })),
-    activePlanId: plan.id,
-  });
+  console.log("Seeded Harbor database schema (Step 1)");
+  console.log(
+    JSON.stringify(
+      {
+        businessId: business.id,
+        tradeName: business.tradeName,
+        inviteTokens: customers.map((c) => ({
+          name: `${c.firstName} ${c.lastName}`,
+          token: c.inviteToken,
+        })),
+        activePlanId: plan.id,
+      },
+      null,
+      2,
+    ),
+  );
 }
 
 main()

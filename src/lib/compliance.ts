@@ -6,8 +6,9 @@ import {
   isBefore,
   startOfDay,
 } from "date-fns";
+import { AgingBucket } from "./domain";
 
-/** Ontario business-day helper (excludes Sat/Sun; statutory holidays approximated as weekends-only for MVP). */
+/** Ontario business-day helper (excludes Sat/Sun; statutory holidays approximated weekends-only for MVP). */
 export function addBusinessDays(from: Date, days: number): Date {
   let cursor = startOfDay(from);
   let remaining = days;
@@ -33,12 +34,12 @@ export function businessDaysUntil(from: Date, to: Date): number {
   return count;
 }
 
-export function agingBucket(dueDate: Date, asOf = new Date()): string {
+export function agingBucket(dueDate: Date, asOf = new Date()): AgingBucket {
   const days = differenceInCalendarDays(asOf, dueDate);
-  if (days <= 30) return "1-30";
-  if (days <= 60) return "31-60";
-  if (days <= 90) return "61-90";
-  return "90+";
+  if (days <= 30) return AgingBucket.D1_30;
+  if (days <= 60) return AgingBucket.D31_60;
+  if (days <= 90) return AgingBucket.D61_90;
+  return AgingBucket.D90_PLUS;
 }
 
 export function buildInstallmentSchedule(params: {

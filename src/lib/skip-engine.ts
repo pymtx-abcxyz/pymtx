@@ -1,6 +1,11 @@
 import { addDays, addMonths } from "date-fns";
 import { prisma } from "./db";
 import { businessDaysUntil } from "./compliance";
+import {
+  InstallmentStatus,
+  PaymentPlanStatus,
+  SkipRequestStatus,
+} from "./domain";
 
 const SKIP_NOTICE_BUSINESS_DAYS = 3;
 const SKIP_COOLDOWN_DAYS = 180;
@@ -9,23 +14,18 @@ export type SkipEligibility =
   | { ok: true; installmentId: string; dueDate: Date }
   | { ok: false; reason: string };
 
-/**
- * Rule H1–aware skip eligibility:
- * - 1 skip every 180 days
- * - request ≥ 3 business days before debit date
- * - only SCHEDULED installments can be skipped
- */
-export async function evaluateSkipEligibility(paymentPlanId: string): Promise<SkipEligibility> {
+export async function evaluateSkipEligibility(
+  paymentPlanId: string,
+): Promise<SkipEligibility> {
   const plan = await prisma.paymentPlan.findUnique({
     where: { id: paymentPlanId },
-    include: {
-      installments: { orderBy: { sequence: "asc" } },
-    },
+    include: { installments: { orderBy: { sequence: "asc" } } },
   });
 
   if (!plan) return { ok: false, reason: "Payment plan not found." };
-  if (plan.status !== "ACTIVE") return { ok: false, reason: "Plan is not active." };
-
+  if (plan.status !== PaymentPlanStatus.ACTIVE) {
+    return { ok: false, reason: "Plan is not active." };
+  }
   if (plan.nextSkipAvailableAt && plan.nextSkipAvailableAt > new Date()) {
     return {
       ok: false,
@@ -33,8 +33,12 @@ export async function evaluateSkipEligibility(paymentPlanId: string): Promise<Sk
     };
   }
 
-  const next = plan.installments.find((i) => i.status === "SCHEDULED");
-  if (!next) return { ok: false, reason: "No upcoming scheduled payment to skip." };
+  const next = plan.installments.find(
+    (i) => i.status === InstallmentStatus.SCHEDULED,
+  );
+  if (!next) {
+    return { ok: false, reason: "No upcoming scheduled payment to skip." };
+  }
 
   const days = businessDaysUntil(new Date(), next.dueDate);
   if (days < SKIP_NOTICE_BUSINESS_DAYS) {
@@ -47,10 +51,6 @@ export async function evaluateSkipEligibility(paymentPlanId: string): Promise<Sk
   return { ok: true, installmentId: next.id, dueDate: next.dueDate };
 }
 
-/**
- * Skip moves the installment to the end of the schedule (extends term by 1 month)
- * and locks the next skip for 180 days.
- */
 export async function executeSkip(paymentPlanId: string) {
   const eligibility = await evaluateSkipEligibility(paymentPlanId);
   if (!eligibility.ok) {
@@ -62,7 +62,9 @@ export async function executeSkip(paymentPlanId: string) {
     include: { installments: { orderBy: { sequence: "asc" } } },
   });
 
-  const target = plan.installments.find((i) => i.id === eligibility.installmentId)!;
+  const target = plan.installments.find(
+    (i) => i.id === eligibility.installmentId,
+  )!;
   const maxSeq = Math.max(...plan.installments.map((i) => i.sequence));
   const lastDue = plan.installments.reduce(
     (latest, i) => (i.dueDate > latest ? i.dueDate : latest),
@@ -76,7 +78,7 @@ export async function executeSkip(paymentPlanId: string) {
   await prisma.$transaction(async (tx) => {
     await tx.installment.update({
       where: { id: target.id },
-      data: { status: "SKIPPED" },
+      data: { status: InstallmentStatus.SKIPPED },
     });
 
     const appended = await tx.installment.create({
@@ -84,8 +86,10 @@ export async function executeSkip(paymentPlanId: string) {
         paymentPlanId,
         sequence: appendedSequence,
         dueDate: appendedDue,
+        originalDueDate: appendedDue,
         amountCents: target.amountCents,
-        status: "SCHEDULED",
+        status: InstallmentStatus.SCHEDULED,
+        idempotencyKey: `${paymentPlanId}-skip-${appendedSequence}-${now.getTime()}`,
       },
     });
 
@@ -93,8 +97,9 @@ export async function executeSkip(paymentPlanId: string) {
       data: {
         paymentPlanId,
         installmentId: target.id,
-        status: "APPROVED",
+        status: SkipRequestStatus.APPROVED,
         appendedSequence: appended.sequence,
+        businessDaysNotice: businessDaysUntil(now, target.dueDate),
       },
     });
 

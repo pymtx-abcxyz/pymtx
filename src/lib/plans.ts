@@ -4,61 +4,66 @@ import {
   PAD_RECOURSE_TERMS,
   buildInstallmentSchedule,
 } from "./compliance";
+import {
+  InstallmentStatus,
+  InvoiceStatus,
+  PadMandateType,
+  PaymentPlanStatus,
+  type PlanTermMonths,
+} from "./domain";
 
 export async function createPaymentPlan(params: {
   invoiceId: string;
-  termMonths: 6 | 12 | 18;
+  termMonths: PlanTermMonths;
   startDate: Date;
 }) {
-  const invoice = await prisma.invoice.findUniqueOrThrow({
-    where: { id: params.invoiceId },
-    include: { customer: true },
-  });
-
-  if (invoice.balanceCents <= 0) throw new Error("Invoice has no balance");
   if (![6, 12, 18].includes(params.termMonths)) {
     throw new Error("Term must be 6, 12, or 18 months");
   }
 
+  const invoice = await prisma.invoice.findUniqueOrThrow({
+    where: { id: params.invoiceId },
+  });
+  if (invoice.balanceCents <= 0) throw new Error("Invoice has no balance");
+
   const schedule = buildInstallmentSchedule({
     totalCents: invoice.balanceCents,
-    termMonths: params.termMonths,
+    termMonths: params.termMonths as 6 | 12 | 18,
     startDate: params.startDate,
   });
 
-  const monthlyAmountCents = schedule[0].amountCents;
-
-  const plan = await prisma.$transaction(async (tx) => {
-    const created = await tx.paymentPlan.create({
+  return prisma.$transaction(async (tx) => {
+    const plan = await tx.paymentPlan.create({
       data: {
         customerId: invoice.customerId,
         invoiceId: invoice.id,
         termMonths: params.termMonths,
-        monthlyAmountCents,
+        originalTermMonths: params.termMonths,
+        monthlyAmountCents: schedule[0].amountCents,
         totalAmountCents: invoice.balanceCents,
-        status: "PENDING_MANDATE",
+        status: PaymentPlanStatus.PENDING_MANDATE,
         startDate: params.startDate,
         installments: {
           create: schedule.map((s) => ({
             sequence: s.sequence,
             dueDate: s.dueDate,
+            originalDueDate: s.dueDate,
             amountCents: s.amountCents,
-            status: "SCHEDULED",
+            status: InstallmentStatus.SCHEDULED,
+            idempotencyKey: `${invoice.id}-${params.termMonths}-${s.sequence}`,
           })),
         },
       },
-      include: { installments: true },
+      include: { installments: { orderBy: { sequence: "asc" } } },
     });
 
     await tx.invoice.update({
       where: { id: invoice.id },
-      data: { status: "PLAN_ACTIVE" },
+      data: { status: InvoiceStatus.PLAN_ACTIVE },
     });
 
-    return created;
+    return plan;
   });
-
-  return plan;
 }
 
 export async function acceptPadMandate(params: {
@@ -71,22 +76,29 @@ export async function acceptPadMandate(params: {
   userAgent?: string;
   stripeCustomerId?: string;
   stripePaymentMethodId?: string;
+  stripeMandateId?: string;
 }) {
   const now = new Date();
-  const isDemo = !process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes("placeholder");
+  const isDemo =
+    !process.env.STRIPE_SECRET_KEY ||
+    process.env.STRIPE_SECRET_KEY.includes("placeholder");
 
-  const plan = await prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx) => {
     await tx.padMandate.create({
       data: {
         paymentPlanId: params.paymentPlanId,
+        mandateType: PadMandateType.PERSONAL_PAD,
         payorName: params.payorName,
         payorEmail: params.payorEmail,
         bankLast4: params.bankLast4,
         institutionName: params.institutionName,
+        stripeMandateId:
+          params.stripeMandateId ||
+          (isDemo ? `mandate_demo_${params.paymentPlanId.slice(-8)}` : undefined),
         acceptedAt: now,
         ipAddress: params.ipAddress,
         userAgent: params.userAgent,
-        confirmationSentAt: now, // written confirmation before first debit (Rule H1)
+        confirmationSentAt: now,
         cancellationTerms: PAD_CANCELLATION_TERMS,
         recourseTerms: PAD_RECOURSE_TERMS,
       },
@@ -95,16 +107,23 @@ export async function acceptPadMandate(params: {
     return tx.paymentPlan.update({
       where: { id: params.paymentPlanId },
       data: {
-        status: "ACTIVE",
+        status: PaymentPlanStatus.ACTIVE,
         padMandateAcceptedAt: now,
         padWrittenConfirmSentAt: now,
-        stripeCustomerId: params.stripeCustomerId || (isDemo ? `cus_demo_${params.paymentPlanId.slice(-8)}` : undefined),
+        stripeCustomerId:
+          params.stripeCustomerId ||
+          (isDemo ? `cus_demo_${params.paymentPlanId.slice(-8)}` : undefined),
         stripePaymentMethodId:
-          params.stripePaymentMethodId || (isDemo ? `pm_demo_${params.paymentPlanId.slice(-8)}` : undefined),
+          params.stripePaymentMethodId ||
+          (isDemo ? `pm_demo_${params.paymentPlanId.slice(-8)}` : undefined),
+        stripeMandateId:
+          params.stripeMandateId ||
+          (isDemo ? `mandate_demo_${params.paymentPlanId.slice(-8)}` : undefined),
       },
-      include: { installments: { orderBy: { sequence: "asc" } }, padMandate: true },
+      include: {
+        installments: { orderBy: { sequence: "asc" } },
+        padMandate: true,
+      },
     });
   });
-
-  return plan;
 }
