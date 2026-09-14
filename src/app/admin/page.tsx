@@ -22,6 +22,10 @@ export default async function AdminPage() {
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { invoices: true, customers: true } } },
   });
+  const debitRuns = await prisma.debitJobRun.findMany({
+    take: 7,
+    orderBy: { startedAt: "desc" },
+  });
 
   const feeBps = settings?.applicationFeeBps ?? platformFeeBps();
   const health = businesses ? Math.round((connectReady / businesses) * 100) : 0;
@@ -81,6 +85,50 @@ export default async function AdminPage() {
                   <tr>
                     <td colSpan={3} className="py-6 text-ink-soft/70">
                       No invoices yet — seed demo data or upload from the business portal.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section className="mt-14">
+          <h2 className="font-display text-2xl font-bold text-ink">Daily debit runs</h2>
+          <p className="mt-1 text-sm text-ink-soft/75">
+            Inngest cron (America/Toronto midnight) and inline{" "}
+            <code className="text-xs">POST /api/jobs/daily-debit</code>.
+          </p>
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead>
+                <tr className="text-xs uppercase tracking-[0.1em] text-ink-soft/60">
+                  <th className="pb-3 font-semibold">Run date</th>
+                  <th className="pb-3 font-semibold">Status</th>
+                  <th className="pb-3 font-semibold">Scanned</th>
+                  <th className="pb-3 font-semibold">OK</th>
+                  <th className="pb-3 font-semibold">Failed</th>
+                  <th className="pb-3 font-semibold">Skipped</th>
+                </tr>
+              </thead>
+              <tbody>
+                {debitRuns.map((r) => (
+                  <tr key={r.id} className="table-row">
+                    <td className="py-3 font-medium">{r.runDate}</td>
+                    <td className="py-3">
+                      <span className="status-pill">{r.status}</span>
+                    </td>
+                    <td className="py-3">{r.scannedCount}</td>
+                    <td className="py-3">{r.succeededCount}</td>
+                    <td className="py-3">{r.failedCount}</td>
+                    <td className="py-3">{r.skippedCount}</td>
+                  </tr>
+                ))}
+                {debitRuns.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-ink-soft/70">
+                      No debit job runs yet — trigger via Inngest or{" "}
+                      <code className="text-xs">npm run job:daily-debit</code>.
                     </td>
                   </tr>
                 ) : null}

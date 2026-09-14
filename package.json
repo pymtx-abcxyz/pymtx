@@ -11,7 +11,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset --force",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "inngest:dev": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
+    "job:daily-debit": "curl -s -X POST http://localhost:3000/api/jobs/daily-debit -H 'Content-Type: application/json' -d '{\"mode\":\"inline\"}'"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -20,6 +22,7 @@
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.4.0",
+    "inngest": "^4.20.0",
     "nanoid": "^6.0.1",
     "next": "16.3.5",
     "react": "19.2.8",
