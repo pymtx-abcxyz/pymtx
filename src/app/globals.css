@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+:root {
+  --ink: #102a2a;
+  --ink-soft: #1e3d3c;
+  --pine: #1b6b5a;
+  --pine-deep: #0f4a3f;
+  --mist: #eef3f2;
+  --fog: #d7e4e1;
+  --paper: #f4f7f6;
+  --gold: #c4a35a;
+  --coral: #c45c4a;
+  --success: #2f7d5b;
+  --warning: #b8860b;
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-pine: var(--pine);
+  --color-pine-deep: var(--pine-deep);
+  --color-mist: var(--mist);
+  --color-fog: var(--fog);
+  --color-paper: var(--paper);
+  --color-gold: var(--gold);
+  --color-coral: var(--coral);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --font-display: var(--font-syne);
+  --font-sans: var(--font-figtree);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-figtree), system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-syne), system-ui, sans-serif;
+}
+
+/* Atmospheric paper: soft vertical wash + fine grain */
+.harbor-atmosphere {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(27, 107, 90, 0.18), transparent 55%),
+    radial-gradient(900px 500px at 10% 20%, rgba(196, 163, 90, 0.12), transparent 50%),
+    linear-gradient(165deg, #f7faf9 0%, #e8f0ee 45%, #dfe9e6 100%);
+}
+
+.harbor-grain::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes draw-line {
+  from {
+    stroke-dashoffset: 240;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-rise {
+  animation: rise-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-rise-delay-1 {
+  animation: rise-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.animate-rise-delay-2 {
+  animation: rise-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.24s both;
+}
+
+.animate-drift {
+  animation: drift 7s ease-in-out infinite;
+}
+
+.draw-path {
+  stroke-dasharray: 240;
+  animation: draw-line 1.6s ease forwards 0.4s;
+}
+
+.portal-shell {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, #f4f7f6 0%, #e9efed 100%);
+}
+
+.portal-nav {
+  border-bottom: 1px solid rgba(16, 42, 42, 0.08);
+  background: rgba(244, 247, 246, 0.85);
+  backdrop-filter: blur(10px);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--pine-deep);
+  color: #f4f7f6;
+  padding: 0.85rem 1.4rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: var(--pine);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(16, 42, 42, 0.2);
+  color: var(--ink);
+  padding: 0.85rem 1.4rem;
+  font-weight: 600;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--pine);
+  background: rgba(27, 107, 90, 0.06);
+}
+
+.status-pill {
+  display: inline-block;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--pine-deep);
+}
+
+.table-row {
+  border-bottom: 1px solid rgba(16, 42, 42, 0.08);
+}
+
+.input {
+  width: 100%;
+  border: 1px solid rgba(16, 42, 42, 0.15);
+  background: #fff;
+  padding: 0.75rem 0.9rem;
+  color: var(--ink);
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--pine);
+}

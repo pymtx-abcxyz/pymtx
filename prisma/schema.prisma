@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model PlatformSettings {
+  id                    String   @id @default("platform")
+  applicationFeeBps     Int      @default(250) // 2.5% take-rate
+  skipNoticeBusinessDays Int     @default(3)
+  skipCooldownDays      Int      @default(180)
+  nsfRetryMax           Int      @default(1)
+  nsfRetryWindowDays    Int      @default(30)
+  updatedAt             DateTime @updatedAt
+}
+
+model Business {
+  id                    String   @id @default(cuid())
+  legalName             String
+  tradeName             String
+  email                 String   @unique
+  phone                 String?
+  ontarioCorpNumber     String?
+  stripeAccountId       String?  @unique
+  stripeOnboardingComplete Boolean @default(false)
+  caslConsentAt         DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  invoices              Invoice[]
+  customers             Customer[]
+}
+
+model Customer {
+  id              String   @id @default(cuid())
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id])
+  firstName       String
+  lastName        String
+  email           String
+  phone           String?
+  inviteToken     String   @unique @default(cuid())
+  invitedAt       DateTime?
+  activatedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  invoices        Invoice[]
+  paymentPlans    PaymentPlan[]
+
+  @@unique([businessId, email])
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  businessId      String
+  business        Business @relation(fields: [businessId], references: [id])
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id])
+  externalRef     String
+  description     String
+  originalAmountCents Int
+  balanceCents    Int
+  dueDate         DateTime
+  status          String   @default("PAST_DUE") // PAST_DUE | INVITED | PLAN_ACTIVE | SETTLED | WRITTEN_OFF
+  agingBucket     String   // 1-30 | 31-60 | 61-90 | 90+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  paymentPlans    PaymentPlan[]
+
+  @@unique([businessId, externalRef])
+}
+
+model PaymentPlan {
+  id                    String   @id @default(cuid())
+  customerId            String
+  customer              Customer @relation(fields: [customerId], references: [id])
+  invoiceId             String
+  invoice               Invoice  @relation(fields: [invoiceId], references: [id])
+  termMonths            Int      // 6 | 12 | 18
+  monthlyAmountCents    Int
+  totalAmountCents      Int
+  status                String   @default("PENDING_MANDATE") // PENDING_MANDATE | ACTIVE | COMPLETED | DEFAULTED | CANCELLED
+  startDate             DateTime?
+  extendedByMonths      Int      @default(0)
+  lastSkipAt            DateTime?
+  nextSkipAvailableAt   DateTime?
+  stripeCustomerId      String?
+  stripePaymentMethodId String?
+  padMandateAcceptedAt  DateTime?
+  padWrittenConfirmSentAt DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  installments          Installment[]
+  skipRequests          SkipRequest[]
+  padMandate            PadMandate?
+}
+
+model PadMandate {
+  id                String   @id @default(cuid())
+  paymentPlanId     String   @unique
+  paymentPlan       PaymentPlan @relation(fields: [paymentPlanId], references: [id])
+  mandateType       String   @default("PERSONAL_PAD") // Payments Canada Rule H1
+  payorName         String
+  payorEmail        String
+  bankLast4         String?
+  institutionName   String?
+  acceptedAt        DateTime
+  ipAddress         String?
+  userAgent         String?
+  confirmationSentAt DateTime?
+  cancellationTerms String
+  recourseTerms     String
+  createdAt         DateTime @default(now())
+}
+
+model Installment {
+  id                    String   @id @default(cuid())
+  paymentPlanId         String
+  paymentPlan           PaymentPlan @relation(fields: [paymentPlanId], references: [id])
+  sequence              Int
+  dueDate               DateTime
+  amountCents           Int
+  status                String   @default("SCHEDULED") // SCHEDULED | SKIPPED | PROCESSING | SUCCEEDED | FAILED_NSF | FAILED | CANCELLED
+  stripePaymentIntentId String?
+  attemptCount          Int      @default(0)
+  lastAttemptAt         DateTime?
+  nsfRetryUsed          Boolean  @default(false)
+  paidAt                DateTime?
+  applicationFeeCents   Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  skipRequest           SkipRequest?
+
+  @@unique([paymentPlanId, sequence])
+}
+
+model SkipRequest {
+  id              String   @id @default(cuid())
+  paymentPlanId   String
+  paymentPlan     PaymentPlan @relation(fields: [paymentPlanId], references: [id])
+  installmentId   String   @unique
+  installment     Installment @relation(fields: [installmentId], references: [id])
+  requestedAt     DateTime @default(now())
+  status          String   @default("APPROVED") // APPROVED | REJECTED | PENDING
+  rejectionReason String?
+  appendedSequence Int?
+}
+
+model TransactionMetric {
+  id                    String   @id @default(cuid())
+  businessId            String
+  installmentId         String?
+  principalCents        Int
+  applicationFeeCents   Int
+  feeBps                Int
+  occurredAt            DateTime @default(now())
+}
