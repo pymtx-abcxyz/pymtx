@@ -1,12 +1,12 @@
-# Harbor
+# Pymtx
 
 Zero-custody B2C Accounts Receivable settlement SaaS for Ontario small businesses.
 
 ## Compliance posture (Path B)
 
 - **Business** remains legal creditor and Merchant of Record
-- **Stripe Connect Direct Charges** (`stripeAccount: connectedAccountId`) — principal never touches Harbor
-- Harbor monetizes via `application_fee_amount` only
+- **Stripe Connect Direct Charges** (`stripeAccount: connectedAccountId`) — principal never touches Pymtx
+- Pymtx monetizes via `application_fee_amount` only
 - **ACSS Debit** (Canadian PAD / EFT) with Payments Canada Rule H1 Personal PAD mandates
 - **CASL** white-labeled invites from the business trade name
 - Designed to operate as pure SaaS under CDSSA first-party exemption (not legal advice)
@@ -60,8 +60,8 @@ Portals `/admin` and `/business` require login (`/login`).
 
 Demo (after seed):
 
-- Business: `billing@mapleridgedental.example` / `harbor-business-demo`
-- Admin: `admin@harbor.example` / `harbor-admin-demo`
+- Business: `billing@mapleridgedental.example` / `pymtx-business-demo`
+- Admin: `admin@pymtx.example` / `pymtx-admin-demo`
 
 Upload past-due invoices as CSV from the business portal (template download included). See `docs/STEP-6-AUTH-UPLOAD.md`.
 

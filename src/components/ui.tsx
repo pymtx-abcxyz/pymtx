@@ -12,7 +12,7 @@ export function PortalNav({
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <div className="flex items-baseline gap-3">
           <Link href="/" className="font-display text-xl font-bold text-ink">
-            Harbor
+            Pymtx
           </Link>
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-pine">
             {portal}

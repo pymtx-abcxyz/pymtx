@@ -229,7 +229,7 @@ function BusinessSettingsInner() {
       <main className="mx-auto max-w-6xl px-6 py-10">
         <SectionHeading
           title="Stripe Connect onboarding"
-          subtitle="Connect a Canadian bank. You remain Merchant of Record — Harbor never holds principal. Debits run as Direct Charges with an application fee only."
+          subtitle="Connect a Canadian bank. You remain Merchant of Record — Pymtx never holds principal. Debits run as Direct Charges with an application fee only."
         />
 
         <form onSubmit={register} className="grid max-w-xl gap-4">

@@ -115,7 +115,7 @@ export async function syncConnectAccountFromStripe(
  *
  * Path B:
  * - Business = Merchant of Record / legal creditor
- * - Harbor never holds principal (application_fee_amount only)
+ * - Pymtx never holds principal (application_fee_amount only)
  * - Rail: Canadian ACSS Debit via `acss_debit_payments`
  */
 export async function startConnectOnboarding(businessId: string) {
@@ -154,8 +154,8 @@ export async function startConnectOnboarding(businessId: string) {
         mcc: "8099",
       },
       metadata: {
-        harbor_business_id: businessId,
-        harbor_path: "B_zero_custody",
+        pymtx_business_id: businessId,
+        pymtx_path: "B_zero_custody",
         province: business.province,
         ontario_corp_number: business.ontarioCorpNumber || "",
       },

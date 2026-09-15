@@ -9,7 +9,7 @@ function LoginForm() {
   const search = useSearchParams();
   const next = search.get("next") || "";
   const [email, setEmail] = useState("billing@mapleridgedental.example");
-  const [password, setPassword] = useState("harbor-business-demo");
+  const [password, setPassword] = useState("pymtx-business-demo");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -40,7 +40,7 @@ function LoginForm() {
     <div className="portal-shell min-h-screen">
       <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
         <Link href="/" className="font-display text-2xl font-bold text-ink">
-          Harbor
+          Pymtx
         </Link>
         <h1 className="mt-6 font-display text-3xl font-bold text-ink">Sign in</h1>
         <p className="mt-2 text-sm text-ink-soft/80">
@@ -83,10 +83,10 @@ function LoginForm() {
         <div className="mt-8 border-t border-ink/10 pt-6 text-xs leading-relaxed text-ink-soft/70">
           <p className="font-semibold text-ink-soft">Demo accounts</p>
           <p className="mt-2">
-            Owner: billing@mapleridgedental.example / harbor-business-demo
+            Owner: billing@mapleridgedental.example / pymtx-business-demo
           </p>
-          <p>Clerk: clerk@mapleridgedental.example / harbor-clerk-demo</p>
-          <p>Admin: admin@harbor.example / harbor-admin-demo</p>
+          <p>Clerk: clerk@mapleridgedental.example / pymtx-clerk-demo</p>
+          <p>Admin: admin@pymtx.example / pymtx-admin-demo</p>
         </div>
       </main>
     </div>

@@ -10,7 +10,7 @@ import {
   normalizeUserRole,
 } from "./domain";
 
-export const SESSION_COOKIE = "harbor_session";
+export const SESSION_COOKIE = "pymtx_session";
 const SESSION_DAYS = 14;
 
 export type AuthUser = {

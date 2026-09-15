@@ -67,7 +67,7 @@ export async function rateLimit(opts: {
   const client = getRedis();
   if (!client) return memoryRateLimit(opts);
 
-  const redisKey = `harbor:rl:${opts.key}`;
+  const redisKey = `pymtx:rl:${opts.key}`;
   try {
     if (client.status !== "ready") {
       await client.connect().catch(() => undefined);

@@ -61,7 +61,7 @@ export async function requestCustomerMagicLink(
       fromName: customer.business.tradeName,
       toEmail: normalized,
       subject: `Sign in to settle with ${customer.business.tradeName}`,
-      bodyPreview: `Your secure Harbor sign-in link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.`,
+      bodyPreview: `Your secure Pymtx sign-in link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.`,
     },
   });
 

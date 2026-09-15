@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE } from "@/lib/auth";
 
 /**
- * Edge middleware — gate /admin and /business portals behind harbor_session.
+ * Edge middleware — gate /admin and /business portals behind pymtx_session.
  * API routes enforce role checks themselves (need DB). Client portal stays public (invite token).
  */
 export function middleware(req: NextRequest) {

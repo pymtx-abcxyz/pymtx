@@ -53,14 +53,14 @@ body {
 }
 
 /* Atmospheric paper: soft vertical wash + fine grain */
-.harbor-atmosphere {
+.pymtx-atmosphere {
   background:
     radial-gradient(1200px 600px at 80% -10%, rgba(27, 107, 90, 0.18), transparent 55%),
     radial-gradient(900px 500px at 10% 20%, rgba(196, 163, 90, 0.12), transparent 50%),
     linear-gradient(165deg, #f7faf9 0%, #e8f0ee 45%, #dfe9e6 100%);
 }
 
-.harbor-grain::before {
+.pymtx-grain::before {
   content: "";
   pointer-events: none;
   position: absolute;

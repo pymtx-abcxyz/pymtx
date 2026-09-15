@@ -2,7 +2,7 @@
 
 ## Goal
 
-Every day at midnight (America/Toronto), present due ACSS Debits as **Direct Charges** on each business’s Connect account. Harbor never holds principal.
+Every day at midnight (America/Toronto), present due ACSS Debits as **Direct Charges** on each business’s Connect account. Pymtx never holds principal.
 
 ## What runs
 
@@ -28,7 +28,7 @@ npx inngest-cli@latest dev -u http://localhost:3000/api/inngest
 ```
 
 Cron: `TZ=America/Toronto 0 0 * * *`  
-Event: `harbor/debits.run`
+Event: `pymtx/debits.run`
 
 ## Demo without Inngest Cloud
 

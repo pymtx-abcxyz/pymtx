@@ -2,8 +2,8 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen overflow-hidden harbor-atmosphere">
-      <div className="absolute inset-0 harbor-grain" aria-hidden />
+    <main className="relative min-h-screen overflow-hidden pymtx-atmosphere">
+      <div className="absolute inset-0 pymtx-grain" aria-hidden />
 
       {/* Full-bleed visual plane: abstracted Ontario shoreline / payment flow */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden>
@@ -38,7 +38,7 @@ export default function HomePage() {
       </div>
 
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-        <div className="font-display text-2xl font-extrabold tracking-tight text-ink">Harbor</div>
+        <div className="font-display text-2xl font-extrabold tracking-tight text-ink">Pymtx</div>
         <nav className="flex items-center gap-3 text-sm font-medium">
           <Link href="/admin" className="hidden sm:inline text-ink-soft hover:text-pine">
             Admin
@@ -54,14 +54,14 @@ export default function HomePage() {
 
       <section className="relative z-10 mx-auto flex min-h-[calc(100vh-5.5rem)] w-full max-w-6xl flex-col justify-center px-6 pb-20 pt-8">
         <p className="animate-rise font-display text-5xl font-extrabold leading-[0.95] tracking-tight text-ink sm:text-7xl md:text-8xl">
-          Harbor
+          Pymtx
         </p>
         <h1 className="animate-rise-delay-1 mt-6 max-w-xl text-2xl font-medium leading-snug text-ink-soft sm:text-3xl">
           Past-due balances, settled directly — your business stays the creditor.
         </h1>
         <p className="animate-rise-delay-1 mt-4 max-w-lg text-base leading-relaxed text-ink-soft/80">
           Zero-custody AR settlement for Ontario SMBs. Customers choose 6, 12, or 18-month PADs.
-          Funds flow straight to your bank via Stripe Connect. Harbor never holds the debt.
+          Funds flow straight to your bank via Stripe Connect. Pymtx never holds the debt.
         </p>
         <div className="animate-rise-delay-2 mt-10 flex flex-wrap gap-3">
           <Link href="/business" className="btn-primary">

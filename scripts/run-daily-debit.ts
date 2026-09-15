@@ -7,8 +7,8 @@ import { createSession, verifyPassword } from "../src/lib/auth";
 import { runDailyDebitJob } from "../src/lib/debit-job";
 
 async function main() {
-  const email = process.env.ADMIN_EMAIL || "admin@harbor.example";
-  const password = process.env.ADMIN_PASSWORD || "harbor-admin-demo";
+  const email = process.env.ADMIN_EMAIL || "admin@pymtx.example";
+  const password = process.env.ADMIN_PASSWORD || "pymtx-admin-demo";
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user || user.role !== "ADMIN") {
     throw new Error(`Admin user ${email} not found — run npm run db:seed`);

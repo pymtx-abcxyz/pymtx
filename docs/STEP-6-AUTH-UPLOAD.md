@@ -3,7 +3,7 @@
 ## Auth
 
 - `User` + `Session` models (ADMIN | BUSINESS)
-- Cookie: `harbor_session` (httpOnly, SameSite=Lax)
+- Cookie: `pymtx_session` (httpOnly, SameSite=Lax)
 - `POST /api/auth` login · `GET /api/auth` me · `DELETE /api/auth` logout
 - Middleware gates `/admin` and `/business` → `/login`
 - Business APIs require session; BUSINESS role scoped to own `businessId`
@@ -13,8 +13,8 @@
 
 | Role | Email | Password |
 |------|-------|----------|
-| Business | billing@mapleridgedental.example | harbor-business-demo |
-| Admin | admin@harbor.example | harbor-admin-demo |
+| Business | billing@mapleridgedental.example | pymtx-business-demo |
+| Admin | admin@pymtx.example | pymtx-admin-demo |
 
 ## Invoice upload
 

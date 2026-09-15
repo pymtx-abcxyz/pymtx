@@ -251,13 +251,13 @@ function ClientCheckoutInner() {
         portal="Client"
         links={[
           { href: "/client", label: "Checkout" },
-          { href: "/", label: "About Harbor" },
+          { href: "/", label: "About Pymtx" },
         ]}
       />
       <main className="mx-auto max-w-3xl px-6 py-10">
         <SectionHeading
           title="Settle your balance"
-          subtitle="Choose a plan and authorize a Personal PAD. Communications come from your creditor — Harbor never holds your payment."
+          subtitle="Choose a plan and authorize a Personal PAD. Communications come from your creditor — Pymtx never holds your payment."
         />
 
         {!preview ? (
@@ -390,7 +390,7 @@ function ClientCheckoutInner() {
                   Payments Canada Rule H1 requires an electronic Personal PAD mandate with
                   recourse and cancellation terms, plus written confirmation before the first
                   debit. Debits are drawn by{" "}
-                  <strong>{preview.businessTradeName}</strong> (not Harbor).
+                  <strong>{preview.businessTradeName}</strong> (not Pymtx).
                 </p>
 
                 <div className="mt-4 space-y-3 border-t border-ink/10 pt-4 text-sm leading-relaxed text-ink-soft/90">

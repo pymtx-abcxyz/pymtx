@@ -24,15 +24,15 @@ REDIS_URL="redis://127.0.0.1:6379"
 - Staff API: `GET/POST /api/businesses/:id/staff` (OWNER/ADMIN)
 - Business settings UI includes a Team invite form for owners
 - Seeded demos:
-  - Owner: `billing@mapleridgedental.example` / `harbor-business-demo`
-  - Clerk: `clerk@mapleridgedental.example` / `harbor-clerk-demo`
+  - Owner: `billing@mapleridgedental.example` / `pymtx-business-demo`
+  - Clerk: `clerk@mapleridgedental.example` / `pymtx-clerk-demo`
 
 ## Customer magic-link login
 
 1. Customer visits `/login/customer` and submits email
 2. `POST /api/auth/magic-link` creates a one-time `MagicLink` (20 min TTL)
 3. Demo mode returns `demoUrl`; production would email the link (CASL `MAGIC_LINK` log)
-4. `GET /api/auth/magic-link/verify?token=` sets `harbor_session` (customer session) and redirects to `/client?token=<inviteToken>`
+4. `GET /api/auth/magic-link/verify?token=` sets `pymtx_session` (customer session) and redirects to `/client?token=<inviteToken>`
 
 Anti-enumeration: unknown emails still return a generic success message.
 

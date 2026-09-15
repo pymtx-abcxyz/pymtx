@@ -2,7 +2,7 @@
 
 ## Goal
 
-Consumer settles a past-due invoice via 6/12/18-month ACSS Debit (Personal PAD) on the **creditor’s** Stripe Connect account (Direct Charges). Harbor never holds principal.
+Consumer settles a past-due invoice via 6/12/18-month ACSS Debit (Personal PAD) on the **creditor’s** Stripe Connect account (Direct Charges). Pymtx never holds principal.
 
 ## Flow
 

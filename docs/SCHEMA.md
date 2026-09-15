@@ -1,10 +1,10 @@
-# Harbor Database Schema
+# Pymtx Database Schema
 
 Step 1 of the Ontario B2C AR settlement implementation.
 
 ## Design principles
 
-1. **Zero custody** — Harbor never stores bank account numbers or holds principal. Stripe Connect Direct Charges send funds to the business connected account; Harbor only records `applicationFeeCents`.
+1. **Zero custody** — Pymtx never stores bank account numbers or holds principal. Stripe Connect Direct Charges send funds to the business connected account; Pymtx only records `applicationFeeCents`.
 2. **Business = Merchant of Record** — `Business.stripeAccountId` is the charge destination.
 3. **Rule H1 PAD** — `PadMandate` freezes recourse/cancellation text; `padWrittenConfirmSentAt` must be set before first debit.
 4. **Inngest-ready** — `Installment @@index([status, dueDate])` + `DebitJobRun` audit table + `idempotencyKey` on each installment.

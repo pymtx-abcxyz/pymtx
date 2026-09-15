@@ -3,7 +3,7 @@
 ## Goal
 
 Ontario SMB becomes **Merchant of Record** on Stripe Connect Express (Canada).
-Harbor never holds principal; Direct Charges land on the connected account with `application_fee_amount` only.
+Pymtx never holds principal; Direct Charges land on the connected account with `application_fee_amount` only.
 
 ## Flow
 
@@ -44,7 +44,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 STRIPE_WEBHOOK_SECRET=
 ```
 
-Without a real secret key, Harbor runs **demo mode** (marks Connect ready locally).
+Without a real secret key, Pymtx runs **demo mode** (marks Connect ready locally).
 
 ## Next
 

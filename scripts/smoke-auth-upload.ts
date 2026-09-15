@@ -4,7 +4,7 @@ import { parseInvoiceCsv, uploadInvoicesForBusiness } from "../src/lib/invoice-u
 
 async function main() {
   const admin = await prisma.user.findUnique({
-    where: { email: "admin@harbor.example" },
+    where: { email: "admin@pymtx.example" },
   });
   const bizUser = await prisma.user.findUnique({
     where: { email: "billing@mapleridgedental.example" },
@@ -13,10 +13,10 @@ async function main() {
     throw new Error("Seed users missing — run npm run db:seed");
   }
 
-  console.log("admin password", await verifyPassword("harbor-admin-demo", admin.passwordHash));
+  console.log("admin password", await verifyPassword("pymtx-admin-demo", admin.passwordHash));
   console.log(
     "business password",
-    await verifyPassword("harbor-business-demo", bizUser.passwordHash),
+    await verifyPassword("pymtx-business-demo", bizUser.passwordHash),
   );
 
   const session = await createSession(bizUser.id);

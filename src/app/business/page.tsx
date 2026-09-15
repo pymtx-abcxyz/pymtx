@@ -206,7 +206,7 @@ export default function BusinessPortalPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "harbor-invoice-upload-template.csv";
+    a.download = "pymtx-invoice-upload-template.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -228,7 +228,7 @@ export default function BusinessPortalPage() {
             subtitle={
               user?.role === "CLERK"
                 ? "Upload past-due accounts and track aging. Connect and staff settings are owner-only."
-                : "Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through Harbor."
+                : "Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through Pymtx."
             }
           />
           <button className="btn-ghost" type="button" onClick={logout}>

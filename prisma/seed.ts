@@ -64,16 +64,16 @@ async function main() {
   });
 
   const [adminHash, ownerHash, clerkHash] = await Promise.all([
-    hashPassword("harbor-admin-demo"),
-    hashPassword("harbor-business-demo"),
-    hashPassword("harbor-clerk-demo"),
+    hashPassword("pymtx-admin-demo"),
+    hashPassword("pymtx-business-demo"),
+    hashPassword("pymtx-clerk-demo"),
   ]);
 
   await prisma.user.create({
     data: {
-      email: "admin@harbor.example",
+      email: "admin@pymtx.example",
       passwordHash: adminHash,
-      name: "Harbor Admin",
+      name: "Pymtx Admin",
       role: UserRole.ADMIN,
     },
   });
@@ -254,7 +254,7 @@ async function main() {
     ],
   });
 
-  console.log("Seeded Harbor database (Step 8 roles + magic link)");
+  console.log("Seeded Pymtx database (Step 8 roles + magic link)");
   console.log(
     JSON.stringify(
       {
@@ -267,14 +267,14 @@ async function main() {
         })),
         activePlanId: plan.id,
         demoLogins: {
-          admin: { email: "admin@harbor.example", password: "harbor-admin-demo" },
+          admin: { email: "admin@pymtx.example", password: "pymtx-admin-demo" },
           owner: {
             email: "billing@mapleridgedental.example",
-            password: "harbor-business-demo",
+            password: "pymtx-business-demo",
           },
           clerk: {
             email: "clerk@mapleridgedental.example",
-            password: "harbor-clerk-demo",
+            password: "pymtx-clerk-demo",
           },
           customerMagicLink: {
             email: "aisha.rahman@example.com",

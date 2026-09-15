@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   try {
     if (mode === "inngest") {
       await inngest.send({
-        name: "harbor/debits.run",
+        name: "pymtx/debits.run",
         data: {
           asOf: asOf.toISOString(),
           source: "api",
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       });
       return NextResponse.json({
         queued: true,
-        message: "Event harbor/debits.run sent to Inngest",
+        message: "Event pymtx/debits.run sent to Inngest",
       });
     }
 

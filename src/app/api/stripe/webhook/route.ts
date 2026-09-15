@@ -76,9 +76,9 @@ export async function POST(req: NextRequest) {
       const account = event.data.object as Stripe.Account;
       const business =
         (await findBusinessByStripeAccount(account.id)) ||
-        (account.metadata?.harbor_business_id
+        (account.metadata?.pymtx_business_id
           ? await prisma.business.findUnique({
-              where: { id: account.metadata.harbor_business_id },
+              where: { id: account.metadata.pymtx_business_id },
             })
           : null);
       if (business) {
@@ -92,11 +92,11 @@ export async function POST(req: NextRequest) {
       event.type === "payment_intent.payment_failed"
     ) {
       const pi = event.data.object as Stripe.PaymentIntent;
-      const installmentId = pi.metadata?.harbor_installment_id;
+      const installmentId = pi.metadata?.pymtx_installment_id;
       if (!installmentId) {
-        summary = "payment_intent without harbor_installment_id";
+        summary = "payment_intent without pymtx_installment_id";
       } else {
-        const attemptId = pi.metadata?.harbor_attempt_id || null;
+        const attemptId = pi.metadata?.pymtx_attempt_id || null;
         if (event.type === "payment_intent.succeeded") {
           const result = await applyInstallmentSuccess({
             installmentId,

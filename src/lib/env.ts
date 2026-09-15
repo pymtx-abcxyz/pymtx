@@ -1,5 +1,5 @@
 /**
- * Runtime environment guards for Harbor.
+ * Runtime environment guards for Pymtx.
  * Demo mode (placeholder Stripe keys) is allowed locally;
  * production must set real secrets unless ALLOW_DEMO_MODE=true.
  */

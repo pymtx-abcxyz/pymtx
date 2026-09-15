@@ -160,8 +160,8 @@ export async function createCheckoutPlan(params: {
         email: invoice.customer.email,
         name: `${invoice.customer.firstName} ${invoice.customer.lastName}`,
         metadata: {
-          harbor_customer_id: invoice.customerId,
-          harbor_invoice_id: invoice.id,
+          pymtx_customer_id: invoice.customerId,
+          pymtx_invoice_id: invoice.id,
         },
       },
       { stripeAccount: business.stripeAccountId },
@@ -282,7 +282,7 @@ export async function completeCheckoutPad(params: {
             type: "online",
             online: {
               ip_address: params.ipAddress || "0.0.0.0",
-              user_agent: params.userAgent || "Harbor/1.0",
+              user_agent: params.userAgent || "Pymtx/1.0",
             },
           },
         },
@@ -298,8 +298,8 @@ export async function completeCheckoutPad(params: {
           },
         },
         metadata: {
-          harbor_plan_id: plan.id,
-          harbor_path: "B_zero_custody",
+          pymtx_plan_id: plan.id,
+          pymtx_path: "B_zero_custody",
         },
       },
       { stripeAccount: business.stripeAccountId },

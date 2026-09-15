@@ -21,7 +21,7 @@ function isDemoMode() {
 
 /**
  * Zero-custody Direct Charge on the connected business account.
- * Principal → business; Harbor only takes application_fee_amount.
+ * Principal → business; Pymtx only takes application_fee_amount.
  * Rail: Canadian ACSS Debit (PAD / EFT).
  *
  * Sync success/failure uses the same settlement helpers as Stripe webhooks
@@ -132,10 +132,10 @@ export async function chargeInstallment(installmentId: string) {
         application_fee_amount: fee,
         mandate: plan.stripeMandateId || undefined,
         metadata: {
-          harbor_installment_id: installmentId,
-          harbor_plan_id: plan.id,
-          harbor_invoice_id: plan.invoiceId,
-          harbor_attempt_id: attempt.id,
+          pymtx_installment_id: installmentId,
+          pymtx_plan_id: plan.id,
+          pymtx_invoice_id: plan.invoiceId,
+          pymtx_attempt_id: attempt.id,
           zero_custody: "true",
         },
       },

@@ -8,8 +8,8 @@ datasource db {
 }
 
 // =============================================================================
-// Harbor schema — Ontario B2C AR Settlement (Path B / Zero-Custody)
-// Money never custodied by Harbor: Business = creditor + Merchant of Record.
+// Pymtx schema — Ontario B2C AR Settlement (Path B / Zero-Custody)
+// Money never custodied by Pymtx: Business = creditor + Merchant of Record.
 // Stripe Connect Direct Charges + ACSS Debit (Payments Canada Rule H1 PAD).
 // =============================================================================
 
@@ -175,7 +175,7 @@ model PadMandate {
   id                 String      @id @default(cuid())
   paymentPlanId      String      @unique
   paymentPlan        PaymentPlan @relation(fields: [paymentPlanId], references: [id])
-  /// PERSONAL_PAD (consumer) — Harbor does not use Business PADs for B2C.
+  /// PERSONAL_PAD (consumer) — Pymtx does not use Business PADs for B2C.
   mandateType        String      @default("PERSONAL_PAD")
   payorName          String
   payorEmail         String
@@ -312,7 +312,7 @@ model User {
   @@index([businessId])
 }
 
-/// Opaque session tokens (httpOnly cookie harbor_session).
+/// Opaque session tokens (httpOnly cookie pymtx_session).
 /// Exactly one of userId / customerId is set.
 model Session {
   id         String    @id @default(cuid())

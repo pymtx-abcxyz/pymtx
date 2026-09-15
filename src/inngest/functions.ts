@@ -7,7 +7,7 @@ import { runDailyDebitJob } from "@/lib/debit-job";
  */
 export const dailyDebitJob = inngest.createFunction(
   {
-    id: "harbor-daily-debits",
+    id: "pymtx-daily-debits",
     retries: 2,
     triggers: [{ cron: "TZ=America/Toronto 0 0 * * *" }],
   },
@@ -22,9 +22,9 @@ export const dailyDebitJob = inngest.createFunction(
 /** Manual / event-triggered run (admin API or Inngest invoke). */
 export const manualDebitJob = inngest.createFunction(
   {
-    id: "harbor-manual-debits",
+    id: "pymtx-manual-debits",
     retries: 1,
-    triggers: [{ event: "harbor/debits.run" }],
+    triggers: [{ event: "pymtx/debits.run" }],
   },
   async ({ event, step }) => {
     const asOf = event.data?.asOf ? new Date(String(event.data.asOf)) : new Date();

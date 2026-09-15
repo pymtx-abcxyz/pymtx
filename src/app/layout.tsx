@@ -15,7 +15,7 @@ const figtree = Figtree({
 });
 
 export const metadata: Metadata = {
-  title: "Harbor — Zero-Custody AR Settlement",
+  title: "Pymtx — Zero-Custody AR Settlement",
   description:
     "Ontario B2C accounts receivable settlement SaaS. Businesses stay Merchant of Record; customers settle via Rule H1 PADs.",
 };
