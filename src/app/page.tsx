@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { PymtxLogotype, PymtxWordmark } from "@/components/pymtx-mark";
 
 export default function HomePage() {
   return (
@@ -7,10 +7,7 @@ export default function HomePage() {
       <div className="absolute inset-0 pymtx-grain" aria-hidden />
 
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-        <span className="sr-only">pymtx</span>
-        <div className="font-display text-lg font-bold lowercase tracking-tight text-sage-bright">
-          pymtx
-        </div>
+        <PymtxLogotype className="text-lg text-sage-bright" />
         <nav className="flex items-center gap-3 text-sm font-medium">
           <Link
             href="/login"
@@ -28,18 +25,11 @@ export default function HomePage() {
       </header>
 
       <section className="relative z-10 mx-auto flex min-h-[calc(100vh-5.5rem)] w-full max-w-6xl flex-col justify-center px-6 pb-16 pt-4">
-        <div className="animate-mark relative w-full max-w-4xl">
-          <Image
-            src="/brand/pymtx-wordmark.jpg"
-            alt="pymtx"
-            width={1408}
-            height={768}
-            priority
-            className="h-auto w-full select-none"
-          />
+        <div className="animate-mark animate-drift relative w-full max-w-4xl">
+          <PymtxWordmark className="h-auto w-full select-none" />
         </div>
 
-        <h1 className="animate-rise-delay-1 mt-10 max-w-xl font-display text-2xl font-medium leading-snug text-mist sm:text-3xl">
+        <h1 className="animate-rise-delay-1 mt-8 max-w-xl font-display text-2xl font-medium leading-snug text-mist sm:text-3xl">
           Past-due balances, settled directly — your business stays the creditor.
         </h1>
         <p className="animate-rise-delay-1 mt-4 max-w-lg text-base leading-relaxed text-sage/85">

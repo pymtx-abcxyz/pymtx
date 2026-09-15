@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PymtxLogotype } from "@/components/pymtx-mark";
 
 export function PortalNav({
   portal,
@@ -11,8 +12,8 @@ export function PortalNav({
     <header className="portal-nav sticky top-0 z-20">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <div className="flex items-baseline gap-3">
-          <Link href="/" className="font-display text-xl font-bold lowercase tracking-tight text-ink">
-            pymtx
+          <Link href="/" className="text-xl text-ink">
+            <PymtxLogotype />
           </Link>
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-pine">
             {portal}
