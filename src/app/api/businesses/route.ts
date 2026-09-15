@@ -5,19 +5,20 @@ import {
   requireUser,
 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { UserRole } from "@/lib/domain";
+import { UserRole, isBusinessStaffRole } from "@/lib/domain";
 import {
   invoiceUploadRowSchema,
   uploadInvoicesForBusiness,
 } from "@/lib/invoice-upload";
+import { businessStaffRoles, canUploadInvoices } from "@/lib/permissions";
 
 export async function GET(req: NextRequest) {
   const user = await requireUser(req, {
-    roles: [UserRole.ADMIN, UserRole.BUSINESS],
+    roles: [UserRole.ADMIN, ...businessStaffRoles()],
   });
   if (!isAuthUser(user)) return user;
 
-  if (user.role === UserRole.BUSINESS) {
+  if (isBusinessStaffRole(user.role)) {
     if (!user.businessId) {
       return NextResponse.json({ error: "No business linked" }, { status: 403 });
     }
@@ -56,9 +57,12 @@ export async function POST(req: NextRequest) {
 /** JSON invoice upload (legacy) — prefers POST …/invoices/upload for CSV. */
 export async function PUT(req: NextRequest) {
   const user = await requireUser(req, {
-    roles: [UserRole.ADMIN, UserRole.BUSINESS],
+    roles: [UserRole.ADMIN, ...businessStaffRoles()],
   });
   if (!isAuthUser(user)) return user;
+  if (!canUploadInvoices(user)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const body = await req.json();
   const businessId = String(body.businessId || "");

@@ -9,6 +9,7 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { normalizeUserRole } from "@/lib/domain";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET() {
@@ -16,7 +17,9 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ user: null }, { status: 401 });
   }
-  return NextResponse.json({ user });
+  return NextResponse.json({
+    user: { ...user, role: normalizeUserRole(user.role) },
+  });
 }
 
 export async function POST(req: NextRequest) {
@@ -37,7 +40,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const limited = rateLimit({
+  const limited = await rateLimit({
     key: `login:${ip}:${email}`,
     limit: 10,
     windowMs: 15 * 60 * 1000,
@@ -66,7 +69,7 @@ export async function POST(req: NextRequest) {
       id: record.id,
       email: record.email,
       name: record.name,
-      role: record.role,
+      role: normalizeUserRole(record.role),
       businessId: record.businessId,
     },
   });

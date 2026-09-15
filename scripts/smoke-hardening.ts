@@ -40,9 +40,9 @@ async function main() {
   }
 
   const key = `smoke:${Date.now()}`;
-  const a = rateLimit({ key, limit: 2, windowMs: 60_000 });
-  const b = rateLimit({ key, limit: 2, windowMs: 60_000 });
-  const c = rateLimit({ key, limit: 2, windowMs: 60_000 });
+  const a = await rateLimit({ key, limit: 2, windowMs: 60_000 });
+  const b = await rateLimit({ key, limit: 2, windowMs: 60_000 });
+  const c = await rateLimit({ key, limit: 2, windowMs: 60_000 });
   if (!a.ok || !b.ok || c.ok) throw new Error("rate limit expected 3rd to fail");
   console.log("rate limit: ok");
 

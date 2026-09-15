@@ -8,7 +8,7 @@ type AuthUser = {
   id: string;
   email: string;
   name: string;
-  role: "ADMIN" | "BUSINESS";
+  role: "ADMIN" | "OWNER" | "CLERK" | "BUSINESS";
   businessId: string | null;
 };
 
@@ -93,6 +93,14 @@ export default function BusinessPortalPage() {
   }, [selectedId]);
 
   const selected = businesses.find((b) => b.id === selectedId);
+  const isStaff =
+    user?.role === "OWNER" ||
+    user?.role === "CLERK" ||
+    user?.role === "BUSINESS";
+  const canConnect =
+    user?.role === "ADMIN" ||
+    user?.role === "OWNER" ||
+    user?.role === "BUSINESS";
 
   async function logout() {
     await fetch("/api/auth", { method: "DELETE" });
@@ -217,7 +225,11 @@ export default function BusinessPortalPage() {
         <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
           <SectionHeading
             title="Your receivables, your bank"
-            subtitle="Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through Harbor."
+            subtitle={
+              user?.role === "CLERK"
+                ? "Upload past-due accounts and track aging. Connect and staff settings are owner-only."
+                : "Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through Harbor."
+            }
           />
           <button className="btn-ghost" type="button" onClick={logout}>
             Sign out
@@ -231,7 +243,7 @@ export default function BusinessPortalPage() {
               className="input"
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
-              disabled={user?.role === "BUSINESS"}
+              disabled={!!isStaff}
             >
               {businesses.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -240,14 +252,16 @@ export default function BusinessPortalPage() {
               ))}
             </select>
           </label>
-          <button
-            className="btn-primary"
-            disabled={busy || !selectedId}
-            onClick={connectStripe}
-            type="button"
-          >
-            {selected?.stripeOnboardingComplete ? "Reconnect bank" : "Connect Canadian bank"}
-          </button>
+          {canConnect ? (
+            <button
+              className="btn-primary"
+              disabled={busy || !selectedId}
+              onClick={connectStripe}
+              type="button"
+            >
+              {selected?.stripeOnboardingComplete ? "Reconnect bank" : "Connect Canadian bank"}
+            </button>
+          ) : null}
           <button
             className="btn-ghost"
             disabled={busy || !selectedId}

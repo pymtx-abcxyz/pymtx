@@ -13,6 +13,14 @@ type Business = {
   stripeOnboardingComplete: boolean;
 };
 
+type StaffMember = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  createdAt: string;
+};
+
 type ConnectStatus = {
   businessId: string;
   stripeAccountId: string | null;
@@ -52,6 +60,22 @@ function BusinessSettingsInner() {
   });
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [staff, setStaff] = useState<StaffMember[]>([]);
+  const [staffForm, setStaffForm] = useState({
+    email: "",
+    name: "",
+    password: "",
+    role: "CLERK",
+  });
+  const [canManageTeam, setCanManageTeam] = useState(false);
+
+  async function loadSessionRole() {
+    const res = await fetch("/api/auth");
+    if (!res.ok) return;
+    const data = await res.json();
+    const role = data.user?.role as string;
+    setCanManageTeam(role === "ADMIN" || role === "OWNER" || role === "BUSINESS");
+  }
 
   async function loadBusinesses() {
     const res = await fetch("/api/businesses");
@@ -65,13 +89,23 @@ function BusinessSettingsInner() {
     if (res.ok) setConnect(await res.json());
   }
 
+  async function loadStaff(businessId: string) {
+    const res = await fetch(`/api/businesses/${businessId}/staff`);
+    if (res.ok) setStaff(await res.json());
+    else setStaff([]);
+  }
+
   useEffect(() => {
+    loadSessionRole();
     loadBusinesses();
   }, []);
 
   useEffect(() => {
-    if (selectedId) loadConnect(selectedId);
-  }, [selectedId]);
+    if (selectedId) {
+      loadConnect(selectedId);
+      if (canManageTeam) loadStaff(selectedId);
+    }
+  }, [selectedId, canManageTeam]);
 
   useEffect(() => {
     const stripeParam = searchParams.get("stripe");
@@ -160,6 +194,27 @@ function BusinessSettingsInner() {
       return;
     }
     setMessage(data.message || "Express Dashboard unavailable in demo mode.");
+  }
+
+  async function inviteStaff(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedId) return;
+    setBusy(true);
+    setMessage("");
+    const res = await fetch(`/api/businesses/${selectedId}/staff`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(staffForm),
+    });
+    const data = await res.json();
+    setBusy(false);
+    if (!res.ok) {
+      setMessage(data.error || "Could not invite staff");
+      return;
+    }
+    setMessage(`Invited ${data.name} as ${data.role}`);
+    setStaffForm({ email: "", name: "", password: "", role: "CLERK" });
+    await loadStaff(selectedId);
   }
 
   return (
@@ -268,6 +323,82 @@ function BusinessSettingsInner() {
             </button>
           </div>
         </section>
+
+        {canManageTeam ? (
+          <section className="mt-14 max-w-xl">
+            <h2 className="font-display text-2xl font-bold">Team</h2>
+            <p className="mt-1 text-sm text-ink-soft/75">
+              Owners manage Connect and staff. Clerks can upload invoices and view aging.
+            </p>
+
+            <ul className="mt-4 space-y-2 text-sm">
+              {staff.map((s) => (
+                <li
+                  key={s.id}
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-ink/10 py-3"
+                >
+                  <span>
+                    <span className="font-medium text-ink">{s.name}</span>
+                    <span className="text-ink-soft/70"> · {s.email}</span>
+                  </span>
+                  <span className="status-pill">{s.role}</span>
+                </li>
+              ))}
+              {staff.length === 0 ? (
+                <li className="py-3 text-ink-soft/70">No staff yet.</li>
+              ) : null}
+            </ul>
+
+            <form onSubmit={inviteStaff} className="mt-6 grid gap-3">
+              <label className="block text-sm">
+                <span className="mb-1 block font-semibold text-ink-soft">Name</span>
+                <input
+                  className="input"
+                  required
+                  value={staffForm.name}
+                  onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-semibold text-ink-soft">Email</span>
+                <input
+                  className="input"
+                  type="email"
+                  required
+                  value={staffForm.email}
+                  onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-semibold text-ink-soft">Temp password</span>
+                <input
+                  className="input"
+                  type="password"
+                  required
+                  minLength={8}
+                  value={staffForm.password}
+                  onChange={(e) =>
+                    setStaffForm({ ...staffForm, password: e.target.value })
+                  }
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block font-semibold text-ink-soft">Role</span>
+                <select
+                  className="input"
+                  value={staffForm.role}
+                  onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value })}
+                >
+                  <option value="CLERK">Clerk</option>
+                  <option value="OWNER">Owner</option>
+                </select>
+              </label>
+              <button className="btn-primary w-fit" type="submit" disabled={busy || !selectedId}>
+                {busy ? "Inviting…" : "Invite staff"}
+              </button>
+            </form>
+          </section>
+        ) : null}
 
         {message ? (
           <p className="mt-8 border-l-2 border-pine bg-mist/60 px-4 py-3 text-sm">{message}</p>

@@ -90,6 +90,7 @@ export const CaslMessageKind = {
   PAD_CONFIRMATION: "PAD_CONFIRMATION",
   RECEIPT: "RECEIPT",
   SKIP_CONFIRMATION: "SKIP_CONFIRMATION",
+  MAGIC_LINK: "MAGIC_LINK",
 } as const;
 export type CaslMessageKind =
   (typeof CaslMessageKind)[keyof typeof CaslMessageKind];
@@ -99,8 +100,29 @@ export const PadMandateType = {
 } as const;
 export type PadMandateType = (typeof PadMandateType)[keyof typeof PadMandateType];
 
+/**
+ * ADMIN — platform ops
+ * OWNER — business admin (Connect, staff invites, uploads)
+ * CLERK — business staff (uploads + read; no Connect / staff mgmt)
+ * BUSINESS — legacy alias treated as OWNER
+ */
 export const UserRole = {
   ADMIN: "ADMIN",
+  OWNER: "OWNER",
+  CLERK: "CLERK",
   BUSINESS: "BUSINESS",
 } as const;
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+
+export function normalizeUserRole(role: string): UserRole {
+  if (role === UserRole.BUSINESS) return UserRole.OWNER;
+  if (role === UserRole.ADMIN || role === UserRole.OWNER || role === UserRole.CLERK) {
+    return role;
+  }
+  return UserRole.CLERK;
+}
+
+export function isBusinessStaffRole(role: string): boolean {
+  const r = normalizeUserRole(role);
+  return r === UserRole.OWNER || r === UserRole.CLERK;
+}

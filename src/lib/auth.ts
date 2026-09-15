@@ -4,7 +4,11 @@ import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { addDays } from "date-fns";
 import { prisma } from "./db";
-import { UserRole } from "./domain";
+import {
+  UserRole,
+  isBusinessStaffRole,
+  normalizeUserRole,
+} from "./domain";
 
 export const SESSION_COOKIE = "harbor_session";
 const SESSION_DAYS = 14;
@@ -15,7 +19,19 @@ export type AuthUser = {
   name: string;
   role: UserRole;
   businessId: string | null;
+  kind: "user";
 };
+
+export type AuthCustomer = {
+  id: string;
+  email: string;
+  name: string;
+  businessId: string;
+  inviteToken: string;
+  kind: "customer";
+};
+
+export type AuthSubject = AuthUser | AuthCustomer;
 
 export async function hashPassword(password: string) {
   return bcrypt.hash(password, 10);
@@ -34,18 +50,27 @@ export async function createSession(userId: string) {
   return { token, expiresAt };
 }
 
+export async function createCustomerSession(customerId: string) {
+  const token = nanoid(48);
+  const expiresAt = addDays(new Date(), SESSION_DAYS);
+  await prisma.session.create({
+    data: { token, customerId, expiresAt },
+  });
+  return { token, expiresAt };
+}
+
 export async function destroySession(token: string | undefined | null) {
   if (!token) return;
   await prisma.session.deleteMany({ where: { token } });
 }
 
-export async function getUserBySessionToken(
+export async function getSubjectBySessionToken(
   token: string | undefined | null,
-): Promise<AuthUser | null> {
+): Promise<AuthSubject | null> {
   if (!token) return null;
   const session = await prisma.session.findUnique({
     where: { token },
-    include: { user: true },
+    include: { user: true, customer: true },
   });
   if (!session || session.expiresAt < new Date()) {
     if (session) {
@@ -53,19 +78,44 @@ export async function getUserBySessionToken(
     }
     return null;
   }
-  return {
-    id: session.user.id,
-    email: session.user.email,
-    name: session.user.name,
-    role: session.user.role as UserRole,
-    businessId: session.user.businessId,
-  };
+  if (session.user) {
+    return {
+      kind: "user",
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.name,
+      role: normalizeUserRole(session.user.role),
+      businessId: session.user.businessId,
+    };
+  }
+  if (session.customer) {
+    return {
+      kind: "customer",
+      id: session.customer.id,
+      email: session.customer.email,
+      name: `${session.customer.firstName} ${session.customer.lastName}`,
+      businessId: session.customer.businessId,
+      inviteToken: session.customer.inviteToken,
+    };
+  }
+  return null;
 }
 
-/** Server Components / Route Handlers — read cookie jar. */
+export async function getUserBySessionToken(
+  token: string | undefined | null,
+): Promise<AuthUser | null> {
+  const subject = await getSubjectBySessionToken(token);
+  return subject?.kind === "user" ? subject : null;
+}
+
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const jar = await cookies();
   return getUserBySessionToken(jar.get(SESSION_COOKIE)?.value);
+}
+
+export async function getCurrentSubject(): Promise<AuthSubject | null> {
+  const jar = await cookies();
+  return getSubjectBySessionToken(jar.get(SESSION_COOKIE)?.value);
 }
 
 export function getSessionTokenFromRequest(req: NextRequest) {
@@ -76,24 +126,36 @@ export async function requireUser(
   req: NextRequest,
   opts?: { roles?: UserRole[] },
 ): Promise<AuthUser | NextResponse> {
-  const user = await getUserBySessionToken(getSessionTokenFromRequest(req));
-  if (!user) {
+  const subject = await getSubjectBySessionToken(
+    getSessionTokenFromRequest(req),
+  );
+  if (!subject || subject.kind !== "user") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  if (opts?.roles && !opts.roles.includes(user.role)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (opts?.roles?.length) {
+    const userRole = normalizeUserRole(subject.role);
+    const allowed = new Set(opts.roles.map(normalizeUserRole));
+    if (!allowed.has(userRole)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
   }
-  return user;
+  return subject;
 }
 
 export function isAuthUser(value: AuthUser | NextResponse): value is AuthUser {
   return !(value instanceof NextResponse);
 }
 
+export function isAuthCustomer(
+  value: AuthSubject | null,
+): value is AuthCustomer {
+  return !!value && value.kind === "customer";
+}
+
 /** Business users may only act on their own businessId; admins may act on any. */
 export function assertBusinessAccess(user: AuthUser, businessId: string): boolean {
-  if (user.role === UserRole.ADMIN) return true;
-  return user.role === UserRole.BUSINESS && user.businessId === businessId;
+  if (normalizeUserRole(user.role) === UserRole.ADMIN) return true;
+  return isBusinessStaffRole(user.role) && user.businessId === businessId;
 }
 
 export function setSessionCookie(

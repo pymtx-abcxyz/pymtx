@@ -19,6 +19,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   await prisma.stripeWebhookEvent.deleteMany();
+  await prisma.magicLink.deleteMany();
   await prisma.session.deleteMany();
   await prisma.user.deleteMany();
   await prisma.debitAttempt.deleteMany();
@@ -62,9 +63,10 @@ async function main() {
     },
   });
 
-  const [adminHash, businessHash] = await Promise.all([
+  const [adminHash, ownerHash, clerkHash] = await Promise.all([
     hashPassword("harbor-admin-demo"),
     hashPassword("harbor-business-demo"),
+    hashPassword("harbor-clerk-demo"),
   ]);
 
   await prisma.user.create({
@@ -79,9 +81,19 @@ async function main() {
   await prisma.user.create({
     data: {
       email: "billing@mapleridgedental.example",
-      passwordHash: businessHash,
-      name: "Maple Ridge Billing",
-      role: UserRole.BUSINESS,
+      passwordHash: ownerHash,
+      name: "Maple Ridge Owner",
+      role: UserRole.OWNER,
+      businessId: business.id,
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "clerk@mapleridgedental.example",
+      passwordHash: clerkHash,
+      name: "Maple Ridge Clerk",
+      role: UserRole.CLERK,
       businessId: business.id,
     },
   });
@@ -242,7 +254,7 @@ async function main() {
     ],
   });
 
-  console.log("Seeded Harbor database schema (Step 1)");
+  console.log("Seeded Harbor database (Step 8 roles + magic link)");
   console.log(
     JSON.stringify(
       {
@@ -250,14 +262,23 @@ async function main() {
         tradeName: business.tradeName,
         inviteTokens: customers.map((c) => ({
           name: `${c.firstName} ${c.lastName}`,
+          email: c.email,
           token: c.inviteToken,
         })),
         activePlanId: plan.id,
         demoLogins: {
           admin: { email: "admin@harbor.example", password: "harbor-admin-demo" },
-          business: {
+          owner: {
             email: "billing@mapleridgedental.example",
             password: "harbor-business-demo",
+          },
+          clerk: {
+            email: "clerk@mapleridgedental.example",
+            password: "harbor-clerk-demo",
+          },
+          customerMagicLink: {
+            email: "aisha.rahman@example.com",
+            note: "POST /api/auth/magic-link — no password",
           },
         },
       },

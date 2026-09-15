@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "inngest:dev": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
     "job:daily-debit": "tsx scripts/run-daily-debit.ts",
-    "smoke:hardening": "tsx scripts/smoke-hardening.ts"
+    "smoke:hardening": "tsx scripts/smoke-hardening.ts",
+    "smoke:step8": "tsx scripts/smoke-step8.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -24,6 +25,7 @@
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.4.0",
     "inngest": "^4.20.0",
+    "ioredis": "^6.0.0",
     "nanoid": "^6.0.1",
     "next": "16.3.5",
     "react": "19.2.8",
@@ -34,6 +36,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
+    "@types/ioredis": "^4.28.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

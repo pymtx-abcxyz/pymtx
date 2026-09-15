@@ -86,10 +86,13 @@ model Customer {
   invoices        Invoice[]
   paymentPlans    PaymentPlan[]
   caslMessages    CaslMessage[]
+  sessions        Session[]
+  magicLinks      MagicLink[]
 
   @@unique([businessId, email])
   @@index([inviteToken])
   @@index([businessId])
+  @@index([email])
 }
 
 /// Past-due receivable uploaded by the business (principal owed to Business).
@@ -291,13 +294,13 @@ model DebitJobRun {
 }
 
 
-/// Portal login (ADMIN platform ops or BUSINESS staff scoped to one creditor).
+/// Portal login — ADMIN platform ops, or OWNER/CLERK staff scoped to one creditor.
 model User {
   id           String    @id @default(cuid())
   email        String    @unique
   passwordHash String
   name         String
-  /// ADMIN | BUSINESS
+  /// ADMIN | OWNER | CLERK  (legacy BUSINESS treated as OWNER)
   role         String
   businessId   String?
   business     Business? @relation(fields: [businessId], references: [id])
@@ -310,15 +313,35 @@ model User {
 }
 
 /// Opaque session tokens (httpOnly cookie harbor_session).
+/// Exactly one of userId / customerId is set.
 model Session {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id         String    @id @default(cuid())
+  token      String    @unique
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
 
   @@index([userId])
+  @@index([customerId])
+  @@index([expiresAt])
+}
+
+/// One-time customer magic-link tokens (email login without password).
+model MagicLink {
+  id         String    @id @default(cuid())
+  token      String    @unique
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  email      String
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([customerId])
+  @@index([email, createdAt])
   @@index([expiresAt])
 }
 
@@ -329,7 +352,7 @@ model CaslMessage {
   business     Business  @relation(fields: [businessId], references: [id])
   customerId   String?
   customer     Customer? @relation(fields: [customerId], references: [id])
-  /// INVITE | PAD_CONFIRMATION | RECEIPT | SKIP_CONFIRMATION
+  /// INVITE | PAD_CONFIRMATION | RECEIPT | SKIP_CONFIRMATION | MAGIC_LINK
   kind         String
   fromName     String
   toEmail      String

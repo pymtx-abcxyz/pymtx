@@ -6,15 +6,19 @@ import {
 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { UserRole } from "@/lib/domain";
+import { businessStaffRoles, canViewInvoices } from "@/lib/permissions";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await requireUser(req, {
-    roles: [UserRole.ADMIN, UserRole.BUSINESS],
+    roles: [UserRole.ADMIN, ...businessStaffRoles()],
   });
   if (!isAuthUser(user)) return user;
+  if (!canViewInvoices(user)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { id } = await params;
   if (!assertBusinessAccess(user, id)) {

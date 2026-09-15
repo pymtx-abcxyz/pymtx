@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { assertBusinessAccess, isAuthUser, requireUser } from "@/lib/auth";
 import { UserRole } from "@/lib/domain";
 import { prisma } from "@/lib/db";
+import { canManageConnect } from "@/lib/permissions";
 import {
   createConnectLoginLink,
   startConnectOnboarding,
@@ -9,10 +10,13 @@ import {
   toConnectStatus,
 } from "@/lib/stripe-connect";
 
-/** GET ?businessId= — current Connect readiness. */
+/** GET ?businessId= — current Connect readiness. OWNER (or ADMIN) only. */
 export async function GET(req: NextRequest) {
-  const user = await requireUser(req, { roles: [UserRole.ADMIN, UserRole.BUSINESS] });
+  const user = await requireUser(req, { roles: [UserRole.ADMIN, UserRole.OWNER] });
   if (!isAuthUser(user)) return user;
+  if (!canManageConnect(user)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const businessId = req.nextUrl.searchParams.get("businessId");
   if (!businessId) {
     return NextResponse.json({ error: "businessId required" }, { status: 400 });
@@ -34,10 +38,14 @@ export async function GET(req: NextRequest) {
  * - onboard (default): create/resume Express AccountLink
  * - sync: pull charges/payouts/details flags from Stripe
  * - login: Express Dashboard link
+ * OWNER (or ADMIN) only — clerks cannot manage Connect.
  */
 export async function POST(req: NextRequest) {
-  const user = await requireUser(req, { roles: [UserRole.ADMIN, UserRole.BUSINESS] });
+  const user = await requireUser(req, { roles: [UserRole.ADMIN, UserRole.OWNER] });
   if (!isAuthUser(user)) return user;
+  if (!canManageConnect(user)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
   const body = await req.json();
   const businessId = body.businessId as string | undefined;
   const action = (body.action as string | undefined) || "onboard";

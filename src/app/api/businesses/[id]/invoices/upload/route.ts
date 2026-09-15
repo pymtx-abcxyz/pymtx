@@ -10,19 +10,23 @@ import {
   parseInvoiceCsv,
   uploadInvoicesForBusiness,
 } from "@/lib/invoice-upload";
+import { businessStaffRoles, canUploadInvoices } from "@/lib/permissions";
 
 /**
  * POST multipart CSV or JSON invoice rows for a business.
- * Auth: ADMIN or BUSINESS (own business only).
+ * Auth: ADMIN, OWNER, or CLERK (own business only).
  */
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await requireUser(req, {
-    roles: [UserRole.ADMIN, UserRole.BUSINESS],
+    roles: [UserRole.ADMIN, ...businessStaffRoles()],
   });
   if (!isAuthUser(user)) return user;
+  if (!canUploadInvoices(user)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { id: businessId } = await params;
   if (!assertBusinessAccess(user, businessId)) {

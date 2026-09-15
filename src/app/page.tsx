@@ -67,7 +67,7 @@ export default function HomePage() {
           <Link href="/business" className="btn-primary">
             Open business portal
           </Link>
-          <Link href="/client" className="btn-ghost">
+          <Link href="/login/customer" className="btn-ghost">
             Settle as a customer
           </Link>
         </div>

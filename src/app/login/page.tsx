@@ -44,7 +44,11 @@ function LoginForm() {
         </Link>
         <h1 className="mt-6 font-display text-3xl font-bold text-ink">Sign in</h1>
         <p className="mt-2 text-sm text-ink-soft/80">
-          Business staff and platform admins. Customers use their invite link — no password.
+          Owners, clerks, and platform admins. Customers use{" "}
+          <Link className="text-pine underline" href="/login/customer">
+            magic-link sign-in
+          </Link>
+          .
         </p>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
@@ -79,8 +83,9 @@ function LoginForm() {
         <div className="mt-8 border-t border-ink/10 pt-6 text-xs leading-relaxed text-ink-soft/70">
           <p className="font-semibold text-ink-soft">Demo accounts</p>
           <p className="mt-2">
-            Business: billing@mapleridgedental.example / harbor-business-demo
+            Owner: billing@mapleridgedental.example / harbor-business-demo
           </p>
+          <p>Clerk: clerk@mapleridgedental.example / harbor-clerk-demo</p>
           <p>Admin: admin@harbor.example / harbor-admin-demo</p>
         </div>
       </main>
