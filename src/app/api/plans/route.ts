@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAuthUser, requireUser } from "@/lib/auth";
+import { UserRole } from "@/lib/domain";
 import { acceptPadMandate, createPaymentPlan } from "@/lib/plans";
 import { prisma } from "@/lib/db";
 
+/**
+ * Legacy plans API — ADMIN only.
+ * Client flows use /api/checkout with invite token.
+ */
 export async function POST(req: NextRequest) {
+  const user = await requireUser(req, { roles: [UserRole.ADMIN] });
+  if (!isAuthUser(user)) return user;
+
   const body = await req.json();
   const { action } = body;
 

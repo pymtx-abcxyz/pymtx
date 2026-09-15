@@ -347,7 +347,8 @@ model TransactionMetric {
   id                  String   @id @default(cuid())
   businessId          String
   business            Business @relation(fields: [businessId], references: [id])
-  installmentId       String?
+  /// Unique when set — prevents double-count on webhook retries.
+  installmentId       String?  @unique
   principalCents      Int
   applicationFeeCents Int
   feeBps              Int
@@ -355,4 +356,16 @@ model TransactionMetric {
 
   @@index([businessId, occurredAt])
   @@index([occurredAt])
+}
+
+/// Stripe webhook delivery idempotency (event.id is globally unique).
+model StripeWebhookEvent {
+  id          String   @id @default(cuid())
+  /// Stripe event id (evt_...).
+  eventId     String   @unique
+  type        String
+  processedAt DateTime @default(now())
+  summary     String?
+
+  @@index([type, processedAt])
 }

@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "inngest:dev": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
-    "job:daily-debit": "curl -s -X POST http://localhost:3000/api/jobs/daily-debit -H 'Content-Type: application/json' -d '{\"mode\":\"inline\"}'"
+    "job:daily-debit": "tsx scripts/run-daily-debit.ts",
+    "smoke:hardening": "tsx scripts/smoke-hardening.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

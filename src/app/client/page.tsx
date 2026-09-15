@@ -150,7 +150,7 @@ function ClientCheckoutInner() {
       setSkipInfo(null);
       return;
     }
-    fetch(`/api/skip?paymentPlanId=${plan.id}`)
+    fetch(`/api/skip?paymentPlanId=${plan.id}&token=${encodeURIComponent(token || "")}`)
       .then((r) => r.json())
       .then(setSkipInfo);
   }, [plan?.id, plan?.status, notice]);
@@ -174,6 +174,7 @@ function ClientCheckoutInner() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "create_plan",
+        token,
         invoiceId: preview.invoiceId,
         termMonths: term,
       }),
@@ -199,6 +200,7 @@ function ClientCheckoutInner() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         action: "accept_pad",
+        token,
         paymentPlanId: plan.id,
         payorName: pad.payorName,
         payorEmail: preview.email,
@@ -229,7 +231,7 @@ function ClientCheckoutInner() {
     const res = await fetch("/api/skip", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ paymentPlanId: plan.id }),
+      body: JSON.stringify({ paymentPlanId: plan.id, token }),
     });
     const data = await res.json();
     setBusy(false);

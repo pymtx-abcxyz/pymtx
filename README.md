@@ -64,3 +64,19 @@ Demo (after seed):
 - Admin: `admin@harbor.example` / `harbor-admin-demo`
 
 Upload past-due invoices as CSV from the business portal (template download included). See `docs/STEP-6-AUTH-UPLOAD.md`.
+
+## Hardening (Step 7)
+
+- Privileged APIs (`/api/jobs/*`, `/api/charges`, `/api/admin/*`, `/api/plans`) require an **ADMIN** session
+- Client checkout/skip require invite `token` ownership checks
+- Stripe webhooks are signature-verified in non-demo mode and deduped by `event.id`
+- Login is rate-limited; sessions rotate on sign-in
+- Security headers via `next.config.ts`
+- Production refuses placeholder Stripe secrets unless `ALLOW_DEMO_MODE=true`
+
+```bash
+npm run smoke:hardening
+npm run job:daily-debit
+```
+
+See `docs/STEP-7-HARDENING.md`.

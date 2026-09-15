@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import {
+  assertInviteOwnsInvoice,
+  assertInviteOwnsPlan,
+} from "@/lib/invite-access";
+import {
   completeCheckoutPad,
   createCheckoutPlan,
   getCheckoutByInvite,
 } from "@/lib/checkout";
 
 /**
- * Client checkout API (Step 3)
- * GET  ?token= — preview balance + plan options + Connect readiness
- * POST create_plan | accept_pad | status
+ * Client checkout — invite-token bound.
+ * GET  ?token=
+ * POST create_plan | accept_pad | status (token required)
  */
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
@@ -17,8 +21,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "token required" }, { status: 400 });
   }
   try {
-    const preview = await getCheckoutByInvite(token);
-    return NextResponse.json(preview);
+    return NextResponse.json(await getCheckoutByInvite(token));
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Checkout unavailable" },
@@ -30,9 +33,14 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const action = body.action as string;
+  const token = String(body.token || "");
 
   try {
     if (action === "create_plan") {
+      if (!token) {
+        return NextResponse.json({ error: "token required" }, { status: 401 });
+      }
+      await assertInviteOwnsInvoice(token, body.invoiceId);
       const plan = await createCheckoutPlan({
         invoiceId: body.invoiceId,
         termMonths: body.termMonths,
@@ -42,6 +50,10 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "accept_pad") {
+      if (!token) {
+        return NextResponse.json({ error: "token required" }, { status: 401 });
+      }
+      await assertInviteOwnsPlan(token, body.paymentPlanId);
       const plan = await completeCheckoutPad({
         paymentPlanId: body.paymentPlanId,
         payorName: body.payorName,
@@ -58,8 +70,11 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "status") {
+      if (!token) {
+        return NextResponse.json({ error: "token required" }, { status: 401 });
+      }
       const customer = await prisma.customer.findUnique({
-        where: { inviteToken: body.token },
+        where: { inviteToken: token },
         include: {
           business: true,
           invoices: {
@@ -86,9 +101,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Checkout failed" },
-      { status: 400 },
-    );
+    const message = e instanceof Error ? e.message : "Checkout failed";
+    const status =
+      /belong|Invalid invite/i.test(message) ? 403 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }

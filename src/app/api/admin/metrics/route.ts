@@ -1,9 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { isAuthUser, requireUser } from "@/lib/auth";
+import { UserRole } from "@/lib/domain";
 import { prisma } from "@/lib/db";
 import { platformFeeBps } from "@/lib/stripe";
 
-export async function GET() {
-  const settings = await prisma.platformSettings.findUnique({ where: { id: "platform" } });
+/** Platform metrics — ADMIN only. */
+export async function GET(req: NextRequest) {
+  const user = await requireUser(req, { roles: [UserRole.ADMIN] });
+  if (!isAuthUser(user)) return user;
+
+  const settings = await prisma.platformSettings.findUnique({
+    where: { id: "platform" },
+  });
   const businesses = await prisma.business.count();
   const invoices = await prisma.invoice.groupBy({
     by: ["status"],
@@ -23,7 +31,9 @@ export async function GET() {
     onboarding: {
       businesses,
       connectReady,
-      connectHealthPct: businesses ? Math.round((connectReady / businesses) * 100) : 0,
+      connectHealthPct: businesses
+        ? Math.round((connectReady / businesses) * 100)
+        : 0,
     },
     invoices,
     takeRate: {

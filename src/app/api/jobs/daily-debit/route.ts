@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isAuthUser, requireUser } from "@/lib/auth";
+import { UserRole } from "@/lib/domain";
+import { assertLiveStripeOrDemoAllowed } from "@/lib/env";
 import { inngest } from "@/inngest/client";
 import { runDailyDebitJob } from "@/lib/debit-job";
 import { prisma } from "@/lib/db";
 
 /**
- * Daily debit job control plane.
- * GET  — recent DebitJobRun rows
- * POST { mode: "inline" | "inngest", asOf?: ISO } — run now or enqueue
+ * Daily debit job control plane — ADMIN only.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const user = await requireUser(req, { roles: [UserRole.ADMIN] });
+  if (!isAuthUser(user)) return user;
+
   const runs = await prisma.debitJobRun.findMany({
     orderBy: { startedAt: "desc" },
     take: 14,
@@ -17,6 +21,18 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const user = await requireUser(req, { roles: [UserRole.ADMIN] });
+  if (!isAuthUser(user)) return user;
+
+  try {
+    assertLiveStripeOrDemoAllowed("daily-debit job");
+  } catch (e) {
+    return NextResponse.json(
+      { error: e instanceof Error ? e.message : "Misconfigured" },
+      { status: 503 },
+    );
+  }
+
   const body = await req.json().catch(() => ({}));
   const mode = (body.mode as string) || "inline";
   const asOf = body.asOf ? new Date(body.asOf) : new Date();
@@ -25,7 +41,11 @@ export async function POST(req: NextRequest) {
     if (mode === "inngest") {
       await inngest.send({
         name: "harbor/debits.run",
-        data: { asOf: asOf.toISOString(), source: "api" },
+        data: {
+          asOf: asOf.toISOString(),
+          source: "api",
+          actor: user.email,
+        },
       });
       return NextResponse.json({
         queued: true,
@@ -33,8 +53,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const result = await runDailyDebitJob(asOf);
-    return NextResponse.json(result);
+    return NextResponse.json(await runDailyDebitJob(asOf));
   } catch (e) {
     return NextResponse.json(
       { error: e instanceof Error ? e.message : "Debit job failed" },
