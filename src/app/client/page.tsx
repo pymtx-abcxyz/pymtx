@@ -251,7 +251,7 @@ function ClientCheckoutInner() {
         portal="Client"
         links={[
           { href: "/client", label: "Checkout" },
-          { href: "/", label: "About Pymtx" },
+          { href: "/", label: "About pymtx" },
         ]}
       />
       <main className="mx-auto max-w-3xl px-6 py-10">

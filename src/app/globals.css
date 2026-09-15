@@ -1,13 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #102a2a;
-  --ink-soft: #1e3d3c;
-  --pine: #1b6b5a;
-  --pine-deep: #0f4a3f;
-  --mist: #eef3f2;
-  --fog: #d7e4e1;
-  --paper: #f4f7f6;
+  /* Banknote / patch mark inspired */
+  --navy: #0b1c33;
+  --navy-deep: #071426;
+  --ink: #0f1f33;
+  --ink-soft: #3a4d63;
+  --sage: #9fb89a;
+  --sage-bright: #b7cdb2;
+  --pine: #2f5d4a;
+  --pine-deep: #1e4335;
+  --mist: #e8eee9;
+  --fog: #d4ddd6;
+  --paper: #f3f6f4;
   --gold: #c4a35a;
   --coral: #c45c4a;
   --success: #2f7d5b;
@@ -19,8 +24,12 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
+  --color-sage: var(--sage);
+  --color-sage-bright: var(--sage-bright);
   --color-pine: var(--pine);
   --color-pine-deep: var(--pine-deep);
   --color-mist: var(--mist);
@@ -52,12 +61,13 @@ body {
   font-family: var(--font-syne), system-ui, sans-serif;
 }
 
-/* Atmospheric paper: soft vertical wash + fine grain */
+/* Landing: deep navy field from the wordmark */
 .pymtx-atmosphere {
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(27, 107, 90, 0.18), transparent 55%),
-    radial-gradient(900px 500px at 10% 20%, rgba(196, 163, 90, 0.12), transparent 50%),
-    linear-gradient(165deg, #f7faf9 0%, #e8f0ee 45%, #dfe9e6 100%);
+    radial-gradient(900px 520px at 85% 15%, rgba(159, 184, 154, 0.16), transparent 55%),
+    radial-gradient(700px 480px at 8% 80%, rgba(47, 93, 74, 0.22), transparent 50%),
+    linear-gradient(165deg, #0b1c33 0%, #0a182c 48%, #071426 100%);
+  color: #e8eee9;
 }
 
 .pymtx-grain::before {
@@ -65,9 +75,9 @@ body {
   pointer-events: none;
   position: absolute;
   inset: 0;
-  opacity: 0.35;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
+  opacity: 0.28;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
 }
 
 @keyframes rise-in {
@@ -81,22 +91,24 @@ body {
   }
 }
 
+@keyframes mark-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 @keyframes drift {
   0%,
   100% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes draw-line {
-  from {
-    stroke-dashoffset: 240;
-  }
-  to {
-    stroke-dashoffset: 0;
+    transform: translateY(-8px);
   }
 }
 
@@ -112,24 +124,24 @@ body {
   animation: rise-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.24s both;
 }
 
-.animate-drift {
-  animation: drift 7s ease-in-out infinite;
+.animate-mark {
+  animation: mark-in 1s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
 }
 
-.draw-path {
-  stroke-dasharray: 240;
-  animation: draw-line 1.6s ease forwards 0.4s;
+.animate-drift {
+  animation: drift 8s ease-in-out infinite;
 }
 
 .portal-shell {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, #f4f7f6 0%, #e9efed 100%);
+    radial-gradient(900px 400px at 100% 0%, rgba(159, 184, 154, 0.14), transparent 55%),
+    linear-gradient(180deg, #f3f6f4 0%, #e7eee9 100%);
 }
 
 .portal-nav {
-  border-bottom: 1px solid rgba(16, 42, 42, 0.08);
-  background: rgba(244, 247, 246, 0.85);
+  border-bottom: 1px solid rgba(15, 31, 51, 0.08);
+  background: rgba(243, 246, 244, 0.88);
   backdrop-filter: blur(10px);
 }
 
@@ -138,16 +150,16 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: var(--pine-deep);
-  color: #f4f7f6;
+  background: var(--sage);
+  color: var(--navy-deep);
   padding: 0.85rem 1.4rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.01em;
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .btn-primary:hover {
-  background: var(--pine);
+  background: var(--sage-bright);
   transform: translateY(-1px);
 }
 
@@ -156,16 +168,35 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 1px solid rgba(16, 42, 42, 0.2);
-  color: var(--ink);
+  border: 1px solid rgba(232, 238, 233, 0.35);
+  color: #e8eee9;
   padding: 0.85rem 1.4rem;
   font-weight: 600;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .btn-ghost:hover {
+  border-color: var(--sage);
+  background: rgba(159, 184, 154, 0.1);
+}
+
+.portal-shell .btn-ghost {
+  border-color: rgba(15, 31, 51, 0.18);
+  color: var(--ink);
+}
+
+.portal-shell .btn-ghost:hover {
   border-color: var(--pine);
-  background: rgba(27, 107, 90, 0.06);
+  background: rgba(47, 93, 74, 0.06);
+}
+
+.portal-shell .btn-primary {
+  background: var(--pine-deep);
+  color: #f3f6f4;
+}
+
+.portal-shell .btn-primary:hover {
+  background: var(--pine);
 }
 
 .status-pill {
@@ -178,12 +209,12 @@ body {
 }
 
 .table-row {
-  border-bottom: 1px solid rgba(16, 42, 42, 0.08);
+  border-bottom: 1px solid rgba(15, 31, 51, 0.08);
 }
 
 .input {
   width: 100%;
-  border: 1px solid rgba(16, 42, 42, 0.15);
+  border: 1px solid rgba(15, 31, 51, 0.14);
   background: #fff;
   padding: 0.75rem 0.9rem;
   color: var(--ink);
