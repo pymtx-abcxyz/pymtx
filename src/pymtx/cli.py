@@ -11,7 +11,6 @@ from typing import Any, Mapping, Sequence, TextIO
 from pymtx.engine import settle
 from pymtx.errors import SettlementError
 from pymtx.models import (
-    ZERO,
     Allocation,
     Invoice,
     Receipt,
@@ -19,6 +18,7 @@ from pymtx.models import (
     SettlementResult,
     Strategy,
 )
+from pymtx.report import format_csv, format_text, result_to_dict
 
 
 def main(argv: Sequence[str] | None = None, stream: TextIO | None = None) -> int:
@@ -40,6 +40,17 @@ def main(argv: Sequence[str] | None = None, stream: TextIO | None = None) -> int
         "--allocations",
         help="Optional JSON file of explicit allocations (skips auto-match)",
     )
+    settle_parser.add_argument(
+        "--format",
+        choices=("json", "text", "csv"),
+        default="json",
+        help="Output format (default: json)",
+    )
+    settle_parser.add_argument(
+        "--output",
+        "-o",
+        help="Write the settlement report to a file instead of stdout",
+    )
 
     args = parser.parse_args(argv)
     out = stream or sys.stdout
@@ -57,6 +68,7 @@ def main(argv: Sequence[str] | None = None, stream: TextIO | None = None) -> int
             strategy=args.strategy,
             allocations=allocations,
         )
+        rendered = _render(result, invoices=invoices, receipts=receipts, fmt=args.format)
     except (
         OSError,
         json.JSONDecodeError,
@@ -68,9 +80,32 @@ def main(argv: Sequence[str] | None = None, stream: TextIO | None = None) -> int
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    json.dump(_result_to_dict(result), out, indent=2)
-    out.write("\n")
+    if args.output:
+        Path(args.output).write_text(rendered, encoding="utf-8")
+        if stream is None and out is sys.stdout:
+            print(f"wrote {args.output}", file=sys.stderr)
+    else:
+        out.write(rendered)
+        if not rendered.endswith("\n"):
+            out.write("\n")
     return 0
+
+
+def _render(
+    result: SettlementResult,
+    *,
+    invoices: Sequence[Invoice],
+    receipts: Sequence[Receipt],
+    fmt: str,
+) -> str:
+    if fmt == "text":
+        return format_text(result, invoices=invoices, receipts=receipts)
+    if fmt == "csv":
+        return format_csv(result, invoices=invoices, receipts=receipts)
+    return json.dumps(
+        result_to_dict(result, invoices=invoices, receipts=receipts),
+        indent=2,
+    ) + "\n"
 
 
 def _load_json_array(path: str) -> list[dict[str, Any]]:
@@ -139,34 +174,6 @@ def _optional_date(value: Any) -> date | None:
     if value in (None, ""):
         return None
     return _as_date(value)
-
-
-def _result_to_dict(result: SettlementResult) -> dict[str, Any]:
-    return {
-        "allocations": [
-            {
-                "receipt_id": allocation.receipt_id,
-                "invoice_id": allocation.invoice_id,
-                "amount": str(allocation.amount),
-            }
-            for allocation in result.allocations
-        ],
-        "invoice_balances": {
-            invoice_id: str(remaining)
-            for invoice_id, remaining in result.invoice_balances.items()
-        },
-        "unapplied_receipts": {
-            receipt_id: str(remaining)
-            for receipt_id, remaining in result.unapplied_receipts.items()
-        },
-        "fully_settled_invoices": list(result.fully_settled_invoices),
-        "total_applied": str(result.total_applied),
-        "open_invoices": [
-            invoice_id
-            for invoice_id, remaining in result.invoice_balances.items()
-            if remaining > ZERO
-        ],
-    }
 
 
 if __name__ == "__main__":

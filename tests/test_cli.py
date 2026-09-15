@@ -107,3 +107,95 @@ def test_cli_reports_errors(tmp_path: Path, capsys) -> None:
     captured = capsys.readouterr()
     assert code == 1
     assert captured.err.startswith("error:")
+
+
+def test_cli_text_and_csv_output(tmp_path: Path, capsys) -> None:
+    invoices = tmp_path / "invoices.json"
+    receipts = tmp_path / "receipts.json"
+    invoices.write_text(
+        json.dumps(
+            [
+                {
+                    "id": "INV-1",
+                    "customer_id": "C1",
+                    "amount": "100.00",
+                    "due_date": "2026-01-10",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    receipts.write_text(
+        json.dumps(
+            [
+                {
+                    "id": "PMT-1",
+                    "customer_id": "C1",
+                    "amount": "40.00",
+                    "date": "2026-01-25",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    code = main(["settle", str(invoices), str(receipts), "--format", "text"])
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "Applied: 40.00" in captured.out
+    assert "INV-1  60.00" in captured.out
+
+    out_file = tmp_path / "settlement.csv"
+    code = main(
+        [
+            "settle",
+            str(invoices),
+            str(receipts),
+            "--format",
+            "csv",
+            "--output",
+            str(out_file),
+        ]
+    )
+    captured = capsys.readouterr()
+    assert code == 0
+    assert "wrote" in captured.err
+    csv_text = out_file.read_text(encoding="utf-8")
+    assert "allocation,PMT-1,INV-1,40.00,C1,USD" in csv_text
+    assert "open_invoice,,INV-1,60.00,C1,USD" in csv_text
+
+
+def test_cli_json_includes_customer_summary(tmp_path: Path, capsys) -> None:
+    invoices = tmp_path / "invoices.json"
+    receipts = tmp_path / "receipts.json"
+    invoices.write_text(
+        json.dumps(
+            [
+                {
+                    "id": "INV-1",
+                    "customer_id": "C1",
+                    "amount": "25.00",
+                    "due_date": "2026-01-10",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    receipts.write_text(
+        json.dumps(
+            [
+                {
+                    "id": "PMT-1",
+                    "customer_id": "C1",
+                    "amount": "25.00",
+                    "date": "2026-01-25",
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    code = main(["settle", str(invoices), str(receipts)])
+    payload = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert payload["by_customer"][0]["applied"] == "25.00"
+    assert payload["open_invoices"] == []

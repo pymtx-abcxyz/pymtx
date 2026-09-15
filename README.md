@@ -5,6 +5,8 @@ Settle **accounts receivable**: apply customer payments and credit memos to open
 ```bash
 pip install -e ".[dev]"
 pymtx settle invoices.json receipts.json
+pymtx settle invoices.json receipts.json --format text
+pymtx settle invoices.json receipts.json --format csv -o settlement.csv
 ```
 
 ## Library
@@ -25,11 +27,14 @@ result = settle(invoices, receipts, strategy=Strategy.OLDEST_DUE)
 result.allocations          # PMT-1 -> INV-100 120.00
 result.invoice_balances     # INV-100 30.00, INV-101 50.00
 result.unapplied_receipts   # PMT-1 0.00
+result.open_invoices        # INV-100, INV-101
 ```
 
 Default auto-match uses **oldest due date**, then invoice id. `Strategy.LARGEST_FIRST` and `Strategy.DOCUMENT_ORDER` are also available. Pass `allocations=` to apply an explicit list instead of auto-matching.
 
 Credit memos are receipts with `ReceiptType.CREDIT_MEMO`. They settle invoices the same way payments do.
+
+CLI reports support `--format json|text|csv`. JSON includes a `by_customer` summary (open AR, unapplied cash, applied) per customer and currency.
 
 ## JSON files
 
