@@ -4,9 +4,7 @@ import json
 from pathlib import Path
 
 from pymtx.cli import main
-
-from .conftest import write_vscdb
-from .test_history import COMPOSER_ID, _seed_user_dir
+from tests.helpers import COMPOSER_ID, seed_user_dir, write_vscdb
 
 
 def test_cli_paths(tmp_path: Path, capsys) -> None:
@@ -20,7 +18,7 @@ def test_cli_paths(tmp_path: Path, capsys) -> None:
 
 def test_cli_list_and_show(tmp_path: Path, capsys) -> None:
     user_dir = tmp_path / "User"
-    _seed_user_dir(user_dir)
+    seed_user_dir(user_dir)
     assert main(["--user-dir", str(user_dir), "list"]) == 0
     listed = capsys.readouterr().out
     assert COMPOSER_ID in listed
@@ -35,7 +33,7 @@ def test_cli_list_and_show(tmp_path: Path, capsys) -> None:
 
 def test_cli_json_list(tmp_path: Path, capsys) -> None:
     user_dir = tmp_path / "User"
-    _seed_user_dir(user_dir)
+    seed_user_dir(user_dir)
     assert main(["--user-dir", str(user_dir), "list", "--json"]) == 0
     payload = json.loads(capsys.readouterr().out)
     assert payload[0]["id"] == COMPOSER_ID
