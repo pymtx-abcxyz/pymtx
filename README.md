@@ -54,6 +54,17 @@ CLI reports support `--format json|text|csv`. JSON includes a `by_customer` summ
 ]
 ```
 
+## Web (Vercel)
+
+A FastAPI workspace is included for browser settlement:
+
+```bash
+pip install -e ".[web]"
+uvicorn app.main:app --reload
+```
+
+Open `/` for the UI and `POST /api/settle` for JSON settlement.
+
 ## Development
 
 ```bash

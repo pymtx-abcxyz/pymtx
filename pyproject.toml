@@ -25,6 +25,7 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
+web = ["fastapi>=0.115", "pydantic>=2"]
 
 [project.scripts]
 pymtx = "pymtx.cli:main"
@@ -35,6 +36,9 @@ Issues = "https://github.com/pymtx-abcxyz/pymtx/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.vercel]
+entrypoint = "app.main:app"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

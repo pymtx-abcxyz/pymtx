@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>pymtx — AR settlement</title>
+    <meta
+      name="description"
+      content="Settle accounts receivable: apply payments and credit memos to open invoices."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #07141c;
+        --panel: #0d2130;
+        --line: rgba(200, 245, 66, 0.18);
+        --text: #e8f0f5;
+        --muted: #8aa0ae;
+        --accent: #c8f542;
+        --accent-ink: #10200a;
+        --warn: #ffb454;
+        --danger: #ff6b6b;
+        --ok: #6ee7b7;
+        --radius: 2px;
+        --font-display: "Syne", sans-serif;
+        --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--ink);
+        color: var(--text);
+        font-family: var(--font-mono);
+      }
+
+      body {
+        background-image:
+          linear-gradient(180deg, rgba(7, 20, 28, 0.2), rgba(7, 20, 28, 0.92)),
+          repeating-linear-gradient(
+            90deg,
+            transparent 0,
+            transparent 79px,
+            rgba(200, 245, 66, 0.05) 79px,
+            rgba(200, 245, 66, 0.05) 80px
+          ),
+          radial-gradient(ellipse 80% 50% at 20% -10%, rgba(200, 245, 66, 0.16), transparent 55%),
+          radial-gradient(ellipse 60% 40% at 100% 0%, rgba(56, 189, 248, 0.12), transparent 50%);
+      }
+
+      .shell {
+        width: min(1120px, calc(100% - 2rem));
+        margin: 0 auto;
+        padding: 1.25rem 0 4rem;
+      }
+
+      .hero {
+        min-height: calc(100vh - 2.5rem);
+        display: grid;
+        align-content: center;
+        gap: 1.25rem;
+        padding: 2rem 0 3rem;
+        animation: rise 700ms ease-out both;
+      }
+
+      .brand {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: clamp(3.5rem, 12vw, 7.5rem);
+        line-height: 0.9;
+        letter-spacing: -0.04em;
+        margin: 0;
+        color: var(--text);
+      }
+
+      .brand span {
+        color: var(--accent);
+      }
+
+      .lede {
+        max-width: 34rem;
+        margin: 0;
+        color: var(--muted);
+        font-size: 1rem;
+        line-height: 1.55;
+      }
+
+      .cta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+      }
+
+      .btn {
+        appearance: none;
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        padding: 0.85rem 1.15rem;
+        font: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+        text-decoration: none;
+        transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: var(--accent-ink);
+        font-weight: 500;
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--text);
+        border-color: rgba(232, 240, 245, 0.25);
+      }
+
+      .workspace {
+        display: grid;
+        gap: 1.25rem;
+        padding-top: 1rem;
+        animation: rise 800ms 120ms ease-out both;
+      }
+
+      .panel {
+        background: color-mix(in srgb, var(--panel) 88%, black);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 1.1rem;
+      }
+
+      .panel h2 {
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        margin: 0 0 0.75rem;
+        letter-spacing: -0.02em;
+      }
+
+      .hint {
+        color: var(--muted);
+        font-size: 0.82rem;
+        margin: 0 0 1rem;
+        line-height: 1.45;
+      }
+
+      label {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--muted);
+        margin-bottom: 0.35rem;
+      }
+
+      textarea,
+      select {
+        width: 100%;
+        background: #061018;
+        color: var(--text);
+        border: 1px solid rgba(232, 240, 245, 0.14);
+        border-radius: var(--radius);
+        padding: 0.75rem;
+        font: inherit;
+        font-size: 0.82rem;
+        line-height: 1.45;
+        resize: vertical;
+      }
+
+      textarea:focus,
+      select:focus {
+        outline: 1px solid var(--accent);
+        border-color: var(--accent);
+      }
+
+      .grid-2 {
+        display: grid;
+        gap: 1rem;
+      }
+
+      @media (min-width: 900px) {
+        .grid-2 {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: end;
+        margin-top: 1rem;
+      }
+
+      .controls > div {
+        min-width: 12rem;
+        flex: 1;
+      }
+
+      .status {
+        min-height: 1.25rem;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      .status.ok {
+        color: var(--ok);
+      }
+
+      .result pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        color: #d7e6ef;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .metric {
+        border-top: 2px solid var(--accent);
+        padding-top: 0.55rem;
+      }
+
+      .metric b {
+        display: block;
+        font-family: var(--font-display);
+        font-size: 1.35rem;
+        letter-spacing: -0.02em;
+      }
+
+      .metric span {
+        color: var(--muted);
+        font-size: 0.75rem;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero" aria-label="pymtx">
+        <h1 class="brand">pymtx<span>.</span></h1>
+        <p class="lede">
+          Settle accounts receivable. Match payments and credit memos to open
+          invoices inside a customer and currency — Decimal cents, no floats.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="#workspace">Run a settlement</a>
+          <a
+            class="btn btn-ghost"
+            href="https://github.com/pymtx-abcxyz/pymtx"
+            target="_blank"
+            rel="noreferrer"
+            >View source</a
+          >
+        </div>
+      </section>
+
+      <section class="workspace" id="workspace">
+        <div class="panel">
+          <h2>Workspace</h2>
+          <p class="hint">
+            Paste invoice and receipt JSON, choose a matching strategy, then settle.
+            Explicit allocations are optional.
+          </p>
+          <div class="grid-2">
+            <div>
+              <label for="invoices">Invoices</label>
+              <textarea id="invoices" rows="12" spellcheck="false"></textarea>
+            </div>
+            <div>
+              <label for="receipts">Receipts</label>
+              <textarea id="receipts" rows="12" spellcheck="false"></textarea>
+            </div>
+          </div>
+          <div class="controls">
+            <div>
+              <label for="strategy">Strategy</label>
+              <select id="strategy">
+                <option value="oldest_due">oldest due</option>
+                <option value="largest_first">largest first</option>
+                <option value="document_order">document order</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="settle" type="button">Settle</button>
+            <button class="btn btn-ghost" id="sample" type="button">Load sample</button>
+          </div>
+          <p class="status" id="status" role="status"></p>
+        </div>
+
+        <div class="panel result" hidden id="result-panel">
+          <h2>Result</h2>
+          <div class="metrics" id="metrics"></div>
+          <pre id="result"></pre>
+        </div>
+      </section>
+    </main>
+    <script>
+      const sampleInvoices = [
+        {
+          id: "INV-100",
+          customer_id: "CUST-1",
+          amount: "150.00",
+          due_date: "2026-01-10",
+        },
+        {
+          id: "INV-101",
+          customer_id: "CUST-1",
+          amount: "50.00",
+          due_date: "2026-01-20",
+        },
+      ];
+      const sampleReceipts = [
+        {
+          id: "PMT-1",
+          customer_id: "CUST-1",
+          amount: "120.00",
+          date: "2026-01-25",
+        },
+      ];
+
+      const invoicesEl = document.getElementById("invoices");
+      const receiptsEl = document.getElementById("receipts");
+      const strategyEl = document.getElementById("strategy");
+      const statusEl = document.getElementById("status");
+      const resultPanel = document.getElementById("result-panel");
+      const resultEl = document.getElementById("result");
+      const metricsEl = document.getElementById("metrics");
+
+      function loadSample() {
+        invoicesEl.value = JSON.stringify(sampleInvoices, null, 2);
+        receiptsEl.value = JSON.stringify(sampleReceipts, null, 2);
+        statusEl.textContent = "Sample loaded.";
+        statusEl.className = "status ok";
+      }
+
+      function setBusy(busy) {
+        document.getElementById("settle").disabled = busy;
+        document.getElementById("sample").disabled = busy;
+      }
+
+      async function runSettle() {
+        statusEl.className = "status";
+        statusEl.textContent = "Settling…";
+        setBusy(true);
+        try {
+          const invoices = JSON.parse(invoicesEl.value);
+          const receipts = JSON.parse(receiptsEl.value);
+          const response = await fetch("/api/settle", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              invoices,
+              receipts,
+              strategy: strategyEl.value,
+            }),
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.detail || "Settlement failed");
+          }
+          resultPanel.hidden = false;
+          metricsEl.innerHTML = `
+            <div class="metric"><b>${payload.total_applied}</b><span>applied</span></div>
+            <div class="metric"><b>${payload.allocations.length}</b><span>allocations</span></div>
+            <div class="metric"><b>${payload.open_invoices.length}</b><span>open invoices</span></div>
+            <div class="metric"><b>${payload.unapplied_receipt_ids.length}</b><span>unapplied</span></div>
+          `;
+          resultEl.textContent = JSON.stringify(payload, null, 2);
+          statusEl.textContent = "Settlement complete.";
+          statusEl.className = "status ok";
+        } catch (error) {
+          statusEl.textContent = error.message || String(error);
+          statusEl.className = "status error";
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      document.getElementById("sample").addEventListener("click", loadSample);
+      document.getElementById("settle").addEventListener("click", runSettle);
+      loadSample();
+    </script>
+  </body>
+</html>
