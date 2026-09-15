@@ -128,6 +128,22 @@ class SettlementResult:
         )
 
     @property
+    def open_invoices(self) -> tuple[str, ...]:
+        return tuple(
+            invoice_id
+            for invoice_id, remaining in self.invoice_balances.items()
+            if remaining > ZERO
+        )
+
+    @property
+    def unapplied_receipt_ids(self) -> tuple[str, ...]:
+        return tuple(
+            receipt_id
+            for receipt_id, remaining in self.unapplied_receipts.items()
+            if remaining > ZERO
+        )
+
+    @property
     def total_applied(self) -> Decimal:
         total = ZERO
         for allocation in self.allocations:

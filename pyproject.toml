@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pymtx"
-version = "0.1.0"
+version = "0.1.1"
 description = "Accounts receivable settlement: apply payments and credit memos to open invoices."
 readme = "README.md"
 license = { file = "LICENSE" }

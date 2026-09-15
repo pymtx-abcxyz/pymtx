@@ -10,6 +10,7 @@ from pymtx.errors import (
     UnknownDocument,
 )
 from pymtx.models import Allocation, Invoice, Receipt, ReceiptType, SettlementResult, Strategy
+from pymtx.report import format_csv, format_text, group_totals, result_to_dict
 
 __all__ = [
     "Allocation",
@@ -24,7 +25,14 @@ __all__ = [
     "SettlementResult",
     "Strategy",
     "UnknownDocument",
+    "format_csv",
+    "format_text",
+    "group_totals",
+    "result_to_dict",
     "settle",
 ]
+
+__version__ = "0.1.1"
+
 
 __version__ = "0.1.0"
