@@ -21,7 +21,10 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Topic :: Office/Business :: Financial :: Accounting",
 ]
-dependencies = []
+dependencies = [
+  "fastapi>=0.115",
+  "pydantic>=2",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
