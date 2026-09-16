@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppearanceSettingSection } from "@/components/appearance-setting-section";
 import { PymtxLogotype } from "@/components/pymtx-mark";
 import { PROVIDER } from "@/lib/legal";
 
@@ -20,6 +21,7 @@ export default function HomePage() {
             className="flex flex-wrap items-center justify-end gap-3 text-[length:var(--text-sm)] font-medium"
             aria-label="Primary"
           >
+            <AppearanceSettingSection compact />
             <Link
               href="/login"
               className="hidden text-text-secondary hover:text-text-primary sm:inline-flex sm:items-center"
@@ -29,10 +31,7 @@ export default function HomePage() {
             <Link href="/register" className="btn-ghost btn-toolbar">
               Register
             </Link>
-            <Link
-              href="/login/customer"
-              className="btn-primary btn-toolbar"
-            >
+            <Link href="/login/customer" className="btn-primary btn-toolbar">
               Customer
             </Link>
           </nav>

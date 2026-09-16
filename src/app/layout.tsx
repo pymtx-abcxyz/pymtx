@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import { Figtree, Syne } from "next/font/google";
+import Script from "next/script";
+import { AppearanceProvider } from "@/components/appearance-provider";
+import { APPEARANCE_BOOT_SCRIPT } from "@/lib/appearance";
 import "./tokens.css";
 import "./globals.css";
 
@@ -45,9 +48,19 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en-CA" className={`${syne.variable} ${figtree.variable} h-full antialiased`}>
+    <html
+      lang="en-CA"
+      className={`${syne.variable} ${figtree.variable} h-full antialiased`}
+      data-theme="system"
+      suppressHydrationWarning
+    >
       <body className="min-h-full flex flex-col font-sans text-text-primary bg-canvas">
-        {children}
+        <Script
+          id="pymtx-appearance-boot"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOT_SCRIPT }}
+        />
+        <AppearanceProvider>{children}</AppearanceProvider>
       </body>
     </html>
   );

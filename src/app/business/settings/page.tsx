@@ -15,6 +15,7 @@ import {
   FormError,
   FormNotice,
 } from "@/components/ui";
+import { AppearanceSettingSection } from "@/components/appearance-setting-section";
 
 type Business = {
   id: string;
@@ -482,6 +483,8 @@ function BusinessSettingsInner() {
             </form>
           </section>
         ) : null}
+
+        <AppearanceSettingSection />
 
         {notice ? (
           <div className="mt-8">

@@ -19,6 +19,7 @@
   --color-danger: var(--danger);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-separator: var(--separator);
   --font-display: var(--font-syne);
   --font-sans: var(--font-figtree);
 }
@@ -66,7 +67,7 @@ body {
 .glass-panel {
   position: relative;
   border-radius: var(--radius-panel);
-  border: 1px solid var(--border-subtle);
+  border: var(--elevation-border, 1px solid var(--border-subtle));
   background: var(--material-regular);
   box-shadow: var(--shadow-elevated);
   backdrop-filter: blur(20px);
@@ -562,5 +563,128 @@ table th {
     background: var(--surface-card);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
+  }
+}
+
+/* —— Appearance (HIG ThemeManager UI) —— */
+.appearance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-panel);
+  background: var(--surface-card);
+  overflow: hidden;
+}
+
+.appearance-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: var(--space-4);
+  min-height: var(--touch-min);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--motion-duration) var(--motion-ease),
+    color var(--motion-duration) var(--motion-ease);
+}
+
+.appearance-row:last-child,
+.appearance-list > li:last-child .appearance-row {
+  border-bottom: 0;
+}
+
+.appearance-row:hover {
+  background: var(--surface-subtle);
+}
+
+.appearance-row.is-selected {
+  background: color-mix(in srgb, var(--action-primary) 10%, var(--surface-card));
+}
+
+.appearance-row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--space-focus-offset));
+  z-index: 1;
+}
+
+.appearance-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-min);
+  height: var(--touch-min);
+  border-radius: var(--radius-control);
+  background: var(--surface-subtle);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.appearance-row.is-selected .appearance-icon {
+  background: color-mix(in srgb, var(--action-primary) 18%, var(--surface-card));
+  color: var(--action-primary);
+}
+
+.appearance-check {
+  display: inline-flex;
+  width: 1.5rem;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.appearance-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-control);
+  background: var(--surface-subtle);
+}
+
+.appearance-segment-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  border: 0;
+  border-radius: calc(var(--radius-control) - 0.125rem);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    background var(--motion-duration) var(--motion-ease),
+    color var(--motion-duration) var(--motion-ease);
+}
+
+.appearance-segment-option:hover {
+  color: var(--text-primary);
+}
+
+.appearance-segment-option.is-selected {
+  background: var(--surface-card);
+  color: var(--action-primary);
+  box-shadow: var(--shadow-elevated);
+  border: var(--elevation-border);
+}
+
+.appearance-segment-option:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: var(--space-focus-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appearance-row,
+  .appearance-segment-option {
+    transition: none;
   }
 }

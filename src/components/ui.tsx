@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PymtxLogotype } from "@/components/pymtx-mark";
+import { AppearanceSettingSection } from "@/components/appearance-setting-section";
 import { PROVIDER } from "@/lib/legal";
 
 export function PortalShell({
@@ -167,10 +168,12 @@ export function PortalNav({
   portal,
   links,
   actions,
+  showAppearance = true,
 }: {
   portal: "Admin" | "Business" | "Client";
   links: { href: string; label: string }[];
   actions?: React.ReactNode;
+  showAppearance?: boolean;
 }) {
   return (
     <header className="portal-nav sticky top-0 z-20">
@@ -202,6 +205,7 @@ export function PortalNav({
               </Link>
             ))}
           </nav>
+          {showAppearance ? <AppearanceSettingSection compact /> : null}
           {actions}
         </div>
       </div>
