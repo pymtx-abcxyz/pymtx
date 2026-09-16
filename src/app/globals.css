@@ -221,11 +221,36 @@ body {
 
 .input:focus {
   border-color: var(--sage);
+  box-shadow: 0 0 0 3px rgba(159, 184, 154, 0.18);
 }
 
 .input option {
   background: #0b1c33;
   color: #e8eee9;
+}
+
+::selection {
+  background: rgba(159, 184, 154, 0.35);
+  color: #e8eee9;
+}
+
+:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 2px;
+}
+
+.btn-primary:focus-visible,
+.btn-ghost:focus-visible {
+  outline: 2px solid var(--sage-bright);
+  outline-offset: 2px;
+}
+
+a {
+  transition: color 0.15s ease;
+}
+
+table th {
+  font-weight: 600;
 }
 
 .notice {

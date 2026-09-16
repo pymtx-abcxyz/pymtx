@@ -10,18 +10,22 @@ export function PortalNav({
 }) {
   return (
     <header className="portal-nav sticky top-0 z-20">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <div className="flex items-baseline gap-3">
-          <Link href="/" className="text-xl text-sage-bright">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
+        <div className="flex min-w-0 items-baseline gap-3">
+          <Link href="/" className="shrink-0 text-xl text-sage-bright">
             <PymtxLogotype />
           </Link>
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-sage">
             {portal}
           </span>
         </div>
-        <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-sage/80">
+        <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm font-medium text-sage/80">
           {links.map((l) => (
-            <Link key={l.href} href={l.href} className="hover:text-sage-bright">
+            <Link
+              key={l.href + l.label}
+              href={l.href}
+              className="hover:text-sage-bright"
+            >
               {l.label}
             </Link>
           ))}

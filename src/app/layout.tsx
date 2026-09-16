@@ -14,10 +14,32 @@ const figtree = Figtree({
   weight: ["400", "500", "600", "700"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pymtx.com";
+
 export const metadata: Metadata = {
-  title: "pymtx — Zero-Custody AR Settlement",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "pymtx — Zero-Custody AR Settlement",
+    template: "%s · pymtx",
+  },
   description:
-    "Ontario B2C accounts receivable settlement SaaS. Businesses stay Merchant of Record; customers settle via Rule H1 PADs.",
+    "Ontario B2C accounts receivable settlement. Businesses stay Merchant of Record; customers settle via Rule H1 PADs.",
+  applicationName: "pymtx",
+  openGraph: {
+    type: "website",
+    locale: "en_CA",
+    url: siteUrl,
+    siteName: "pymtx",
+    title: "pymtx — Zero-Custody AR Settlement",
+    description:
+      "Past-due balances, settled directly — your business stays the creditor.",
+  },
+  twitter: {
+    card: "summary",
+    title: "pymtx",
+    description: "Zero-custody AR settlement for Ontario SMBs.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
