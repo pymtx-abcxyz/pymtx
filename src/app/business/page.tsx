@@ -19,6 +19,12 @@ import {
   formatCad,
 } from "@/components/ui";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
+import {
+  AGING_BUCKET_ORDER,
+  agingBucketLabel,
+  invoiceStatusLabel,
+  invoiceStatusTone,
+} from "@/lib/status-labels";
 
 type AuthUser = {
   id: string;
@@ -137,6 +143,13 @@ function BusinessPortalInner() {
     ? `/client?token=${invoices[0].customer.inviteToken}`
     : null;
 
+  const openBalanceCents = invoices.reduce((sum, inv) => sum + inv.balanceCents, 0);
+  const agingTotals: Record<string, number> = {};
+  for (const inv of invoices) {
+    agingTotals[inv.agingBucket] =
+      (agingTotals[inv.agingBucket] || 0) + inv.balanceCents;
+  }
+
   async function logout() {
     await fetch("/api/auth", { method: "DELETE" });
     router.replace("/login");
@@ -231,7 +244,9 @@ function BusinessPortalInner() {
     }
     const invite = data.items?.[0];
     setNotice(
-      `Uploaded & invited via CASL white-label from ${invite?.caslFrom}. Client token: ${invite?.inviteToken}`,
+      invite?.inviteToken
+        ? `Sample invite ready from ${invite.caslFrom}. Open the invite link from the table below.`
+        : `Uploaded via CASL white-label from ${invite?.caslFrom || "your business"}.`,
     );
     await loadInvoices(selectedId);
   }
@@ -391,9 +406,33 @@ function BusinessPortalInner() {
 
         <SectionTitle
           title="Aging & settlement"
-          subtitle="CSV columns: external_ref, description, amount (CAD dollars or cents), due_date, first_name, last_name, email, phone."
+          subtitle="Open balances by aging bucket. Upload past-due accounts with CSV template or a sample invite."
         />
-        <div className="mt-4 overflow-x-auto">
+        <p className="mt-2 text-[length:var(--text-xs)] text-text-muted">
+          CSV columns: external_ref, description, amount, due_date, first_name,
+          last_name, email, phone.
+        </p>
+
+        {invoices.length > 0 ? (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            <Metric
+              label="Open balance"
+              value={formatCad(openBalanceCents)}
+              hint={`${invoices.length} invoice${invoices.length === 1 ? "" : "s"}`}
+              size="md"
+            />
+            {AGING_BUCKET_ORDER.map((bucket) => (
+              <Metric
+                key={bucket}
+                label={agingBucketLabel(bucket)}
+                value={formatCad(agingTotals[bucket] || 0)}
+                size="md"
+              />
+            ))}
+          </div>
+        ) : null}
+
+        <div className="mt-6 overflow-x-auto">
           <table className="data-table min-w-[720px]">
             <caption className="sr-only">
               Past-due invoices and customer invite links
@@ -415,23 +454,11 @@ function BusinessPortalInner() {
                   <td>
                     {inv.customer.firstName} {inv.customer.lastName}
                   </td>
-                  <td>{inv.agingBucket}</td>
+                  <td>{agingBucketLabel(inv.agingBucket)}</td>
                   <td>{formatCad(inv.balanceCents)}</td>
                   <td>
-                    <StatusPill
-                      tone={
-                        inv.status === "SETTLED"
-                          ? "success"
-                          : inv.status === "PLAN_ACTIVE"
-                            ? "success"
-                            : inv.status === "WRITTEN_OFF"
-                              ? "danger"
-                              : inv.status === "PAST_DUE"
-                                ? "warning"
-                                : "default"
-                      }
-                    >
-                      {inv.status}
+                    <StatusPill tone={invoiceStatusTone(inv.status)}>
+                      {invoiceStatusLabel(inv.status)}
                     </StatusPill>
                   </td>
                   <td>
