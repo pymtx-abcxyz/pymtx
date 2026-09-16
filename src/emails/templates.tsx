@@ -17,7 +17,6 @@ const card = "#ffffff";
 const textPrimary = "#202b31";
 const textSecondary = "#30484a";
 const textMuted = "#4e6260";
-const actionPrimary = "#3b5b53";
 const borderSubtle = "#cad2c5";
 const danger = "#b3261e";
 
@@ -46,7 +45,7 @@ function Shell(props: {
         >
           <Text
             style={{
-              color: actionPrimary,
+              color: textMuted,
               fontSize: 12,
               fontWeight: 700,
               letterSpacing: "0.14em",

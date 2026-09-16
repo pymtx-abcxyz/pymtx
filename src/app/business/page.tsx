@@ -14,6 +14,7 @@ import {
   EmptyRow,
   FieldLabel,
   LoadingScreen,
+  FormError,
   FormNotice,
   formatCad,
 } from "@/components/ui";
@@ -73,8 +74,14 @@ function BusinessPortalInner() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
+
+  function clearFeedback() {
+    setError("");
+    setNotice("");
+  }
 
   async function loadSession() {
     const res = await fetch("/api/auth");
@@ -95,7 +102,7 @@ function BusinessPortalInner() {
     }
     const data = await res.json();
     if (!Array.isArray(data)) {
-      setMessage(data.error || "Could not load businesses");
+      setError(data.error || "Could not load businesses");
       return;
     }
     setBusinesses(data);
@@ -138,7 +145,7 @@ function BusinessPortalInner() {
   async function connectStripe() {
     if (!selectedId) return;
     setBusy(true);
-    setMessage("");
+    clearFeedback();
     const res = await fetch("/api/stripe/connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -147,14 +154,14 @@ function BusinessPortalInner() {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMessage(data.error || "Connect failed");
+      setError(data.error || "Connect failed");
       return;
     }
     if (data.url) {
       window.location.href = data.url;
       return;
     }
-    setMessage(
+    setNotice(
       data.message ||
         (data.readyForDebits
           ? `Demo Connect ready: ${data.stripeAccountId}. You are Merchant of Record.`
@@ -166,7 +173,7 @@ function BusinessPortalInner() {
   async function onCsvSelected(file: File | null) {
     if (!file || !selectedId) return;
     setBusy(true);
-    setMessage("");
+    clearFeedback();
     const form = new FormData();
     form.append("file", file);
     const res = await fetch(`/api/businesses/${selectedId}/invoices/upload`, {
@@ -177,11 +184,11 @@ function BusinessPortalInner() {
     setBusy(false);
     if (fileRef.current) fileRef.current.value = "";
     if (!res.ok) {
-      setMessage(data.error || "CSV upload failed");
+      setError(data.error || "CSV upload failed");
       return;
     }
     const first = data.items?.[0];
-    setMessage(
+    setNotice(
       `Uploaded ${data.uploaded} invoice(s)` +
         (first
           ? ` — e.g. ${first.externalRef} invited from ${first.caslFrom} (token ${first.inviteToken})`
@@ -195,7 +202,7 @@ function BusinessPortalInner() {
   async function uploadSample() {
     if (!selectedId) return;
     setBusy(true);
-    setMessage("");
+    clearFeedback();
     const res = await fetch("/api/businesses", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -219,11 +226,11 @@ function BusinessPortalInner() {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMessage(data.error || "Upload failed");
+      setError(data.error || "Upload failed");
       return;
     }
     const invite = data.items?.[0];
-    setMessage(
+    setNotice(
       `Uploaded & invited via CASL white-label from ${invite?.caslFrom}. Client token: ${invite?.inviteToken}`,
     );
     await loadInvoices(selectedId);
@@ -371,9 +378,14 @@ function BusinessPortalInner() {
           </div>
         ) : null}
 
-        {message ? (
+        {notice ? (
           <div className="mb-8">
-            <FormNotice>{message}</FormNotice>
+            <FormNotice>{notice}</FormNotice>
+          </div>
+        ) : null}
+        {error ? (
+          <div className="mb-8">
+            <FormError>{error}</FormError>
           </div>
         ) : null}
 
@@ -406,7 +418,21 @@ function BusinessPortalInner() {
                   <td>{inv.agingBucket}</td>
                   <td>{formatCad(inv.balanceCents)}</td>
                   <td>
-                    <StatusPill>{inv.status}</StatusPill>
+                    <StatusPill
+                      tone={
+                        inv.status === "SETTLED"
+                          ? "success"
+                          : inv.status === "PLAN_ACTIVE"
+                            ? "success"
+                            : inv.status === "WRITTEN_OFF"
+                              ? "danger"
+                              : inv.status === "PAST_DUE"
+                                ? "warning"
+                                : "default"
+                      }
+                    >
+                      {inv.status}
+                    </StatusPill>
                   </td>
                   <td>
                     <a

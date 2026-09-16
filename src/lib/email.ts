@@ -104,7 +104,7 @@ function brandedShell(opts: {
   return `
     <div style="font-family:Figtree,system-ui,sans-serif;background:${emailTone.canvas};color:${emailTone.textPrimary};padding:32px">
       <div style="max-width:480px;margin:0 auto;background:${emailTone.card};border:1px solid ${emailTone.borderSubtle};border-radius:12px;padding:28px 24px">
-        <p style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:${emailTone.actionPrimary};font-weight:700;margin:0">${escapeHtml(opts.eyebrow)}</p>
+        <p style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:${emailTone.textMuted};font-weight:700;margin:0">${escapeHtml(opts.eyebrow)}</p>
         <h1 style="font-size:22px;line-height:1.3;color:${titleColor};margin:12px 0 16px">${escapeHtml(opts.title)}</h1>
         ${opts.bodyHtml}
         <p style="margin-top:28px;font-size:11px;color:${emailTone.textMuted};line-height:1.5">

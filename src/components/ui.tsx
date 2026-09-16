@@ -128,16 +128,20 @@ export function FormError({
 export function FormNotice({
   children,
   id,
+  tone = "info",
 }: {
   children: React.ReactNode;
   id?: string;
+  tone?: "info" | "warning";
 }) {
   if (!children) return null;
+  const noticeClass =
+    tone === "warning" ? "notice notice-warning" : "notice";
   return (
-    <p id={id} className="notice flex items-start gap-2" role="status">
-      <AlertIcon tone="info" />
-      <span>{children}</span>
-    </p>
+    <div id={id} className={`${noticeClass} flex items-start gap-2`} role="status">
+      <AlertIcon tone={tone === "warning" ? "warning" : "info"} />
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
   );
 }
 

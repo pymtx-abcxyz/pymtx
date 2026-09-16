@@ -12,6 +12,7 @@ import {
   FieldLabel,
   StatusPill,
   LoadingScreen,
+  FormError,
   FormNotice,
 } from "@/components/ui";
 
@@ -47,14 +48,9 @@ type ConnectStatus = {
 
 function Flag({ label, ok }: { label: string; ok: boolean }) {
   return (
-    <div className="flex items-center justify-between border-t border-border-subtle py-3 text-sm">
+    <div className="flex items-center justify-between border-t border-border-subtle py-3 text-[length:var(--text-sm)]">
       <span className="text-text-secondary">{label}</span>
-      <span
-        className={ok ? "font-semibold text-success" : "font-semibold text-warning"}
-        aria-label={ok ? `${label}: Yes` : `${label}: No`}
-      >
-        {ok ? "Yes" : "No"}
-      </span>
+      <StatusPill tone={ok ? "success" : "warning"}>{ok ? "Yes" : "No"}</StatusPill>
     </div>
   );
 }
@@ -75,7 +71,8 @@ function BusinessSettingsInner() {
     caslConsent: false,
     saasAgreementAccepted: false,
   });
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [staffForm, setStaffForm] = useState({
@@ -139,12 +136,12 @@ function BusinessSettingsInner() {
       const data = await res.json();
       setBusy(false);
       if (!res.ok) {
-        setMessage(data.error || "Sync failed");
+        setError(data.error || "Sync failed");
         return;
       }
       setConnect(data);
       setSelectedId(businessId);
-      setMessage(
+      setNotice(
         stripeParam === "return"
           ? data.readyForDebits
             ? "Bank connected. You are Merchant of Record — ready for ACSS Debit."
@@ -157,6 +154,8 @@ function BusinessSettingsInner() {
 
   async function register(e: React.FormEvent) {
     e.preventDefault();
+    setError("");
+    setNotice("");
     const res = await fetch("/api/businesses", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -164,10 +163,10 @@ function BusinessSettingsInner() {
     });
     const data = await res.json();
     if (!res.ok) {
-      setMessage(data.error || "Registration failed");
+      setError(data.error || "Registration failed");
       return;
     }
-    setMessage(`Registered ${data.tradeName}. Connect your Canadian bank below.`);
+    setNotice(`Registered ${data.tradeName}. Connect your Canadian bank below.`);
     setBusinesses((prev) => [data, ...prev]);
     setSelectedId(data.id);
   }
@@ -175,7 +174,8 @@ function BusinessSettingsInner() {
   async function startOnboarding() {
     if (!selectedId) return;
     setBusy(true);
-    setMessage("");
+    setError("");
+    setNotice("");
     const res = await fetch("/api/stripe/connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -184,7 +184,7 @@ function BusinessSettingsInner() {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMessage(data.error || "Connect failed");
+      setError(data.error || "Connect failed");
       return;
     }
     setConnect(data);
@@ -192,7 +192,7 @@ function BusinessSettingsInner() {
       window.location.href = data.url;
       return;
     }
-    setMessage(data.message || "Connect ready (demo).");
+    setNotice(data.message || "Connect ready (demo).");
     await loadBusinesses();
   }
 
@@ -210,14 +210,15 @@ function BusinessSettingsInner() {
       window.location.href = data.url;
       return;
     }
-    setMessage(data.message || "Express Dashboard unavailable in demo mode.");
+    setNotice(data.message || "Express Dashboard unavailable in demo mode.");
   }
 
   async function inviteStaff(e: React.FormEvent) {
     e.preventDefault();
     if (!selectedId) return;
     setBusy(true);
-    setMessage("");
+    setError("");
+    setNotice("");
     const res = await fetch(`/api/businesses/${selectedId}/staff`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -226,10 +227,10 @@ function BusinessSettingsInner() {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMessage(data.error || "Could not invite staff");
+      setError(data.error || "Could not invite staff");
       return;
     }
-    setMessage(`Invited ${data.name} as ${data.role}`);
+    setNotice(`Invited ${data.name} as ${data.role}`);
     setStaffForm({ email: "", name: "", password: "", role: "CLERK" });
     await loadStaff(selectedId);
   }
@@ -371,7 +372,7 @@ function BusinessSettingsInner() {
               <Flag label="Payouts enabled" ok={connect.payoutsEnabled} />
               <Flag label="Ready for ACSS Debit" ok={connect.readyForDebits} />
               {connect.stripeAccountId ? (
-                <p className="mt-3 text-xs text-text-muted">
+                <p className="mt-3 text-[length:var(--text-xs)] text-text-muted">
                   Connected account: {connect.stripeAccountId}
                   {connect.demo ? " (demo)" : ""}
                 </p>
@@ -406,7 +407,7 @@ function BusinessSettingsInner() {
               subtitle="Owners manage Connect and staff. Clerks can upload invoices and view aging."
             />
 
-            <ul className="mt-4 space-y-2 text-sm">
+            <ul className="mt-4 space-y-2 text-[length:var(--text-sm)]">
               {staff.map((s) => (
                 <li
                   key={s.id}
@@ -482,9 +483,14 @@ function BusinessSettingsInner() {
           </section>
         ) : null}
 
-        {message ? (
+        {notice ? (
           <div className="mt-8">
-            <FormNotice>{message}</FormNotice>
+            <FormNotice>{notice}</FormNotice>
+          </div>
+        ) : null}
+        {error ? (
+          <div className="mt-8">
+            <FormError>{error}</FormError>
           </div>
         ) : null}
       </PortalMain>

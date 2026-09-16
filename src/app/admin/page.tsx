@@ -8,6 +8,7 @@ import {
   Metric,
   StatusPill,
   EmptyRow,
+  FormNotice,
   formatCad,
 } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
@@ -103,13 +104,22 @@ export default async function AdminPage() {
             />
           </div>
           {golive.blockers.length > 0 ? (
-            <ul className="notice notice-warning mt-6 space-y-1 text-sm">
-              {golive.blockers.map((b) => (
-                <li key={b}>{b}</li>
-              ))}
-            </ul>
+            <div className="mt-6">
+              <FormNotice tone="warning">
+                <span className="block text-[length:var(--text-sm)] font-semibold text-text-primary">
+                  Go-live blockers
+                </span>
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-[length:var(--text-sm)]">
+                  {golive.blockers.map((b) => (
+                    <li key={b}>{b}</li>
+                  ))}
+                </ul>
+              </FormNotice>
+            </div>
           ) : (
-            <p className="notice mt-6 text-sm">All go-live checks passed for this environment.</p>
+            <div className="mt-6">
+              <FormNotice>All go-live checks passed for this environment.</FormNotice>
+            </div>
           )}
         </section>
 
@@ -146,7 +156,21 @@ export default async function AdminPage() {
               <tbody>
                 {invoiceGroups.map((g) => (
                   <tr key={g.status} className="table-row">
-                    <td className="font-medium">{g.status}</td>
+                    <td>
+                      <StatusPill
+                        tone={
+                          g.status === "SETTLED" || g.status === "PLAN_ACTIVE"
+                            ? "success"
+                            : g.status === "WRITTEN_OFF"
+                              ? "danger"
+                              : g.status === "PAST_DUE"
+                                ? "warning"
+                                : "default"
+                        }
+                      >
+                        {g.status}
+                      </StatusPill>
+                    </td>
                     <td>{g._count}</td>
                     <td>{formatCad(g._sum.balanceCents || 0)}</td>
                   </tr>
@@ -207,7 +231,7 @@ export default async function AdminPage() {
                 {debitRuns.length === 0 ? (
                   <EmptyRow colSpan={6}>
                     No debit job runs yet — trigger via Inngest or{" "}
-                    <code className="text-xs">npm run job:daily-debit</code>.
+                    <code className="text-[length:var(--text-xs)]">npm run job:daily-debit</code>.
                   </EmptyRow>
                 ) : null}
               </tbody>

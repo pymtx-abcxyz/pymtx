@@ -11,7 +11,7 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <Link
             href="/"
-            className="text-[length:var(--text-lg)] text-text-primary"
+            className="text-[length:var(--text-xl)] text-text-primary"
             aria-label="pymtx home"
           >
             <PymtxLogotype />

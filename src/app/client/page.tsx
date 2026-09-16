@@ -329,10 +329,12 @@ function ClientCheckoutInner() {
             </div>
 
             {!preview.connectReady ? (
-              <p className="notice notice-warning mb-6" role="status">
-                Your creditor is still connecting their bank. Checkout will unlock when
-                Stripe Connect is ready.
-              </p>
+              <div className="mb-6">
+                <FormNotice tone="warning">
+                  Your creditor is still connecting their bank. Checkout will unlock when
+                  Stripe Connect is ready.
+                </FormNotice>
+              </div>
             ) : null}
 
             {notice ? (
@@ -342,7 +344,7 @@ function ClientCheckoutInner() {
             ) : null}
             {error ? (
               <div className="mb-6">
-                <FormError>{error}</FormError>
+                <FormError id="client-checkout-error">{error}</FormError>
               </div>
             ) : null}
 
@@ -541,7 +543,9 @@ function ClientCheckoutInner() {
                   </pre>
                 </div>
 
-                <p className="mt-4 text-sm text-text-secondary">{PAD_NSF_POLICY}</p>
+                <p className="mt-4 text-[length:var(--text-sm)] text-text-secondary">
+                  {PAD_NSF_POLICY}
+                </p>
 
                 <label className="checkbox-row mt-6" htmlFor="pad-accept">
                   <input
@@ -611,9 +615,11 @@ function ClientCheckoutInner() {
                   </button>
                 </div>
                 {skipInfo && !skipInfo.ok ? (
-                  <p className="mt-3 text-sm text-warning">{skipInfo.reason}</p>
+                  <div className="mt-3">
+                    <FormNotice tone="warning">{skipInfo.reason}</FormNotice>
+                  </div>
                 ) : (
-                  <p className="mt-3 text-sm text-text-muted">
+                  <p className="mt-3 text-[length:var(--text-sm)] text-text-muted">
                     Skips need ≥{skipInfo?.noticeRequired ?? 3} business days&apos;
                     notice
                     {skipInfo?.sequence
