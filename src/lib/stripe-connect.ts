@@ -115,6 +115,120 @@ export function isPlaceholderConnectAccount(accountId: string | null | undefined
   return accountId.startsWith("acct_demo_");
 }
 
+type MerchantDashboard = "express" | "none";
+
+/**
+ * Create a Connect merchant account via Accounts v2 (required for new platforms).
+ * Returns the connected account id (still `acct_…`, interoperable with v1 Direct Charges).
+ */
+async function createConnectedMerchantAccountV2(params: {
+  business: {
+    id: string;
+    email: string;
+    legalName: string;
+    tradeName: string;
+    phone: string | null;
+    supportEmail: string | null;
+    province: string;
+    ontarioCorpNumber: string | null;
+  };
+  dashboard: MerchantDashboard;
+  provision?: string;
+}): Promise<string> {
+  const { business, dashboard, provision } = params;
+  const nowIso = new Date().toISOString();
+
+  try {
+    const account = await stripe.v2.core.accounts.create({
+      contact_email: business.email,
+      contact_phone: business.phone || "+14165550100",
+      display_name: business.tradeName,
+      dashboard,
+      defaults: {
+        currency: "cad",
+        locales: ["en-CA"],
+        responsibilities: {
+          // Path B Direct Charges: platform sets application_fee_amount.
+          fees_collector: "application",
+          losses_collector: "application",
+        },
+        profile: {
+          business_url: "https://pymtx.com",
+          doing_business_as: business.tradeName,
+          product_description:
+            "Accounts receivable settlement — consumer installment PADs (Payments Canada Rule H1)",
+        },
+      },
+      identity: {
+        country: "ca",
+        entity_type: "company",
+        business_details: {
+          registered_name: business.legalName,
+          phone: business.phone || "+14165550100",
+          structure: "private_corporation",
+          address: {
+            line1: "100 Main Street",
+            city: "Toronto",
+            state: "ON",
+            postal_code: "M5V 2T6",
+            country: "CA",
+          },
+        },
+        attestations: {
+          terms_of_service: {
+            account: {
+              date: nowIso,
+              ip: "127.0.0.1",
+              user_agent: "Pymtx/smoke",
+            },
+          },
+        },
+      },
+      configuration: {
+        merchant: {
+          capabilities: {
+            card_payments: { requested: true },
+            acss_debit_payments: { requested: true },
+          },
+          mcc: "8099",
+          support: {
+            email: business.supportEmail || business.email,
+            phone: business.phone || "+14165550100",
+          },
+        },
+      },
+      metadata: {
+        pymtx_business_id: business.id,
+        pymtx_path: "B_zero_custody",
+        province: business.province,
+        ontario_corp_number: business.ontarioCorpNumber || "",
+        ...(provision ? { pymtx_provision: provision } : {}),
+      },
+      include: [
+        "configuration.merchant",
+        "identity",
+        "defaults",
+        "requirements",
+      ],
+    });
+
+    return account.id;
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/signed up for Connect|platform profile|connect_profile_not_submitted/i.test(msg)) {
+      throw new Error(
+        "Stripe Connect platform profile incomplete — open https://dashboard.stripe.com/test/connect and complete Get started, then retry",
+      );
+    }
+    if (/Accounts v1|feat_accounts_v1_support/i.test(msg)) {
+      throw new Error(
+        "Stripe requires Accounts v2 for this platform — ensure the app uses stripe.v2.core.accounts.create",
+      );
+    }
+    throw e instanceof Error ? e : new Error(msg);
+  }
+}
+
 /**
  * Create or resume Stripe Connect Express onboarding for an Ontario SMB.
  *
@@ -158,38 +272,17 @@ export async function startConnectOnboarding(businessId: string) {
   }
 
   if (!accountId) {
-    const account = await stripe.accounts.create({
-      type: "express",
-      country: "CA",
-      email: business.email,
-      business_type: "company",
-      company: { name: business.legalName },
-      capabilities: {
-        acss_debit_payments: { requested: true },
-        transfers: { requested: true },
-        card_payments: { requested: true },
-      },
-      business_profile: {
-        name: business.tradeName,
-        product_description:
-          "Accounts receivable settlement — consumer installment PADs (Payments Canada Rule H1)",
-        mcc: "8099",
-      },
-      metadata: {
-        pymtx_business_id: businessId,
-        pymtx_path: "B_zero_custody",
-        province: business.province,
-        ontario_corp_number: business.ontarioCorpNumber || "",
-      },
+    accountId = await createConnectedMerchantAccountV2({
+      business,
+      dashboard: "express",
     });
-
-    accountId = account.id;
     await prisma.business.update({
       where: { id: businessId },
       data: { stripeAccountId: accountId },
     });
   }
 
+  // Account Links remain on v1 and work with v2-created accounts.
   const link = await stripe.accountLinks.create({
     account: accountId,
     refresh_url: `${appUrl()}/business/settings?stripe=refresh&businessId=${businessId}`,
@@ -206,7 +299,7 @@ export async function startConnectOnboarding(businessId: string) {
 }
 
 /**
- * Test-mode only: provision a Custom Connect account that is ready for
+ * Test-mode only: provision a Connect merchant account ready for
  * Direct Charges + ACSS without browser Express onboarding (E2E smoke).
  * Refuses to run against live Stripe keys.
  */
@@ -237,43 +330,46 @@ export async function provisionTestConnectAccount(businessId: string) {
     }
   }
 
-  let account: Stripe.Account;
+  const accountId = await createConnectedMerchantAccountV2({
+    business,
+    dashboard: "none",
+    provision: "test_smoke",
+  });
+
+  // Representative + bank via v1 APIs (still supported on v2 accounts).
   try {
-    account = await stripe.accounts.create({
-      type: "custom",
-      country: "CA",
+    await stripe.accounts.createPerson(accountId, {
+      first_name: "Smoke",
+      last_name: "Owner",
       email: business.email,
-      business_type: "company",
-      company: {
-        name: business.legalName,
-        address: {
-          line1: "100 Main Street",
-          city: "Toronto",
-          state: "ON",
-          postal_code: "M5V 2T6",
-          country: "CA",
-        },
-        tax_id: "000000000",
-        phone: business.phone || "+14165550100",
+      relationship: {
+        representative: true,
+        executive: true,
+        owner: true,
+        percent_ownership: 100,
+        title: "Director",
       },
-      capabilities: {
-        acss_debit_payments: { requested: true },
-        transfers: { requested: true },
-        card_payments: { requested: true },
+      address: {
+        line1: "100 Main Street",
+        city: "Toronto",
+        state: "ON",
+        postal_code: "M5V 2T6",
+        country: "CA",
       },
-      business_profile: {
-        name: business.tradeName,
-        product_description:
-          "Accounts receivable settlement — consumer installment PADs (Payments Canada Rule H1)",
-        mcc: "8099",
-        support_email: business.supportEmail || business.email,
-        support_phone: business.phone || "+14165550100",
-        url: "https://pymtx.com",
-      },
-      tos_acceptance: {
-        date: Math.floor(Date.now() / 1000),
-        ip: "127.0.0.1",
-      },
+      dob: { day: 1, month: 1, year: 1980 },
+      phone: business.phone || "+14165550100",
+      id_number: "000000000",
+    });
+  } catch (e) {
+    // Person may already exist on retry — continue to bank / sync.
+    console.warn(
+      "[connect] createPerson:",
+      e instanceof Error ? e.message : e,
+    );
+  }
+
+  try {
+    await stripe.accounts.createExternalAccount(accountId, {
       external_account: {
         object: "bank_account",
         country: "CA",
@@ -283,54 +379,38 @@ export async function provisionTestConnectAccount(businessId: string) {
         routing_number: "11000-000",
         account_number: "000123456789",
       },
-      metadata: {
-        pymtx_business_id: businessId,
-        pymtx_path: "B_zero_custody",
-        pymtx_provision: "test_smoke",
-        province: business.province,
-        ontario_corp_number: business.ontarioCorpNumber || "",
-      },
     });
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    if (/signed up for Connect/i.test(msg)) {
-      throw new Error(
-        "Stripe Connect platform profile incomplete — open https://dashboard.stripe.com/test/connect and complete Get started, then retry provision_test",
-      );
-    }
-    throw e;
+    console.warn(
+      "[connect] createExternalAccount:",
+      e instanceof Error ? e.message : e,
+    );
   }
 
-  // Custom accounts usually need a representative before charges_enabled.
-  await stripe.accounts.createPerson(account.id, {
-    first_name: "Smoke",
-    last_name: "Owner",
-    email: business.email,
-    relationship: {
-      representative: true,
-      executive: true,
-      title: "Director",
-    },
-    address: {
-      line1: "100 Main Street",
-      city: "Toronto",
-      state: "ON",
-      postal_code: "M5V 2T6",
-      country: "CA",
-    },
-    dob: { day: 1, month: 1, year: 1980 },
-    phone: business.phone || "+14165550100",
-    id_number: "000000000",
-  });
-
-  const refreshed = await stripe.accounts.retrieve(account.id);
+  // Accept TOS on the v1 shape if still required.
+  try {
+    await stripe.accounts.update(accountId, {
+      tos_acceptance: {
+        date: Math.floor(Date.now() / 1000),
+        ip: "127.0.0.1",
+      },
+      business_profile: {
+        mcc: "8099",
+        url: "https://pymtx.com",
+        product_description:
+          "Accounts receivable settlement — consumer installment PADs (Payments Canada Rule H1)",
+      },
+    });
+  } catch {
+    /* ignore */
+  }
 
   await prisma.business.update({
     where: { id: businessId },
-    data: { stripeAccountId: account.id },
+    data: { stripeAccountId: accountId },
   });
 
-  return syncConnectAccountFromStripe(businessId, refreshed);
+  return syncConnectAccountFromStripe(businessId);
 }
 
 /** Express Dashboard login link (post-onboarding). */
