@@ -43,6 +43,8 @@ export async function GET(req: NextRequest) {
     charges_enabled: boolean;
   } | null = null;
   let accountError: string | undefined;
+  let connectPlatform: "ready" | "not_registered" | "unknown" = "unknown";
+  let connectPlatformDetail: string | undefined;
 
   if (secret && !secret.includes("placeholder") && SK_OK(secret)) {
     try {
@@ -57,6 +59,20 @@ export async function GET(req: NextRequest) {
         country: acct.country ?? null,
         charges_enabled: Boolean(acct.charges_enabled),
       };
+      try {
+        await stripe.accounts.list({ limit: 1 });
+        connectPlatform = "ready";
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (/signed up for Connect/i.test(msg)) {
+          connectPlatform = "not_registered";
+          connectPlatformDetail =
+            "Complete Connect platform profile at https://dashboard.stripe.com/test/connect";
+        } else {
+          connectPlatform = "unknown";
+          connectPlatformDetail = msg;
+        }
+      }
     } catch (e) {
       accountError = e instanceof Error ? e.message : "account retrieve failed";
     }
@@ -70,6 +86,8 @@ export async function GET(req: NextRequest) {
     webhookUrl: `${appUrl().replace(/\/$/, "")}${WEBHOOK_PATH}`,
     account,
     accountError,
+    connectPlatform,
+    connectPlatformDetail,
     rails: {
       readyForMoneyRails: report.readyForMoneyRails,
       blockers: report.blockers,

@@ -237,58 +237,69 @@ export async function provisionTestConnectAccount(businessId: string) {
     }
   }
 
-  const account = await stripe.accounts.create({
-    type: "custom",
-    country: "CA",
-    email: business.email,
-    business_type: "company",
-    company: {
-      name: business.legalName,
-      address: {
-        line1: "100 Main Street",
-        city: "Toronto",
-        state: "ON",
-        postal_code: "M5V 2T6",
-        country: "CA",
-      },
-      tax_id: "000000000",
-      phone: business.phone || "+14165550100",
-    },
-    capabilities: {
-      acss_debit_payments: { requested: true },
-      transfers: { requested: true },
-      card_payments: { requested: true },
-    },
-    business_profile: {
-      name: business.tradeName,
-      product_description:
-        "Accounts receivable settlement — consumer installment PADs (Payments Canada Rule H1)",
-      mcc: "8099",
-      support_email: business.supportEmail || business.email,
-      support_phone: business.phone || "+14165550100",
-      url: "https://pymtx.com",
-    },
-    tos_acceptance: {
-      date: Math.floor(Date.now() / 1000),
-      ip: "127.0.0.1",
-    },
-    external_account: {
-      object: "bank_account",
+  let account: Stripe.Account;
+  try {
+    account = await stripe.accounts.create({
+      type: "custom",
       country: "CA",
-      currency: "cad",
-      account_holder_name: business.legalName,
-      account_holder_type: "company",
-      routing_number: "11000-000",
-      account_number: "000123456789",
-    },
-    metadata: {
-      pymtx_business_id: businessId,
-      pymtx_path: "B_zero_custody",
-      pymtx_provision: "test_smoke",
-      province: business.province,
-      ontario_corp_number: business.ontarioCorpNumber || "",
-    },
-  });
+      email: business.email,
+      business_type: "company",
+      company: {
+        name: business.legalName,
+        address: {
+          line1: "100 Main Street",
+          city: "Toronto",
+          state: "ON",
+          postal_code: "M5V 2T6",
+          country: "CA",
+        },
+        tax_id: "000000000",
+        phone: business.phone || "+14165550100",
+      },
+      capabilities: {
+        acss_debit_payments: { requested: true },
+        transfers: { requested: true },
+        card_payments: { requested: true },
+      },
+      business_profile: {
+        name: business.tradeName,
+        product_description:
+          "Accounts receivable settlement — consumer installment PADs (Payments Canada Rule H1)",
+        mcc: "8099",
+        support_email: business.supportEmail || business.email,
+        support_phone: business.phone || "+14165550100",
+        url: "https://pymtx.com",
+      },
+      tos_acceptance: {
+        date: Math.floor(Date.now() / 1000),
+        ip: "127.0.0.1",
+      },
+      external_account: {
+        object: "bank_account",
+        country: "CA",
+        currency: "cad",
+        account_holder_name: business.legalName,
+        account_holder_type: "company",
+        routing_number: "11000-000",
+        account_number: "000123456789",
+      },
+      metadata: {
+        pymtx_business_id: businessId,
+        pymtx_path: "B_zero_custody",
+        pymtx_provision: "test_smoke",
+        province: business.province,
+        ontario_corp_number: business.ontarioCorpNumber || "",
+      },
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/signed up for Connect/i.test(msg)) {
+      throw new Error(
+        "Stripe Connect platform profile incomplete — open https://dashboard.stripe.com/test/connect and complete Get started, then retry provision_test",
+      );
+    }
+    throw e;
+  }
 
   // Custom accounts usually need a representative before charges_enabled.
   await stripe.accounts.createPerson(account.id, {

@@ -70,7 +70,16 @@ Then redeploy production and confirm `curl -s https://pymtx.com/api/health` show
 
 ## First live Path B smoke
 
-1. Owner signs in → Connect Canadian bank until charges enabled  
+**Prerequisite:** Stripe Dashboard → [Connect](https://dashboard.stripe.com/test/connect) → complete platform profile (“Get started”). Without this, `accounts.create` fails and Path B Direct Charges cannot run.
+
+```bash
+npm run smoke:e2e
+# or: BASE_URL=https://pymtx.com npm run smoke:e2e
+```
+
+Manual checklist:
+
+1. Owner signs in → Connect Canadian bank until charges enabled (`POST /api/stripe/connect` `provision_test` in test, or Express `onboard` for live)  
 2. Upload invoice / invite customer  
 3. Customer completes PAD on `/client?token=…`  
 4. Confirm PAD PDF email arrives (Resend)  
