@@ -163,10 +163,6 @@ body {
   flex-shrink: 0;
 }
 
-.input::placeholder {
-  color: rgba(159, 184, 154, 0.45);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .animate-rise,
   .animate-rise-delay-1,
