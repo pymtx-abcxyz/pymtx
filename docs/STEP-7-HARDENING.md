@@ -36,10 +36,11 @@ Client checkout / skip / invite require the invite `token` and verify ownership.
 - Magic-link request/verify rate limited; staff invites rate limited
 - Checkout / skip / invite / PAD record rate limited per IP
 - Rate-limit IP prefers `x-real-ip` / `x-vercel-forwarded-for` over spoofable first `X-Forwarded-For` hop
+- Under go-live lock, Redis rate-limit failures **fail closed** (deny) — no soft fallback to per-instance memory
 - Login rotates sessions (one active session per user)
 - Magic-link rotates customer sessions (one active session per customer)
-- Magic-link always returns a generic 200 body (no email enumeration on send failure)
-- `demoUrl` is returned **only** when `allowDemoMode()` is true and send succeeded
+- Magic-link and password-reset always return a generic 200 body (no email enumeration on send failure)
+- `demoUrl` (magic-link **and** password-reset) is returned **only** when `allowDemoMode()` is true, send succeeded, and email is in demo mode
 
 ## HTTP
 
@@ -57,6 +58,6 @@ npm run job:daily-debit   # authenticates as seeded admin, runs inline job
 ```
 
 Demo still works locally (`ALLOW_DEMO_MODE=true` or non-production).  
-For locked production: real Stripe keys, Connect webhook secret, Redis for distributed rate limits, Resend, and `ALLOW_DEMO_MODE=false`.
+For locked production: real Stripe keys, Connect webhook secret, Redis for distributed rate limits, Resend + `EMAIL_FROM`, Inngest keys, and `ALLOW_DEMO_MODE=false`.
 
 See also [`docs/GO-LIVE.md`](GO-LIVE.md) for money-rails readiness (`assertMoneyRailsReady`, `/api/admin/golive`, health `rails` field).

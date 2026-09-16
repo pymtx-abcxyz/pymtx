@@ -6,7 +6,8 @@
  * Go-live lock (production + ALLOW_DEMO_MODE≠true):
  * - No placeholder Stripe / webhook secrets
  * - Redis (or KV) required for distributed rate limits
- * - Resend required for Rule H1 written confirmations
+ * - Resend + EMAIL_FROM required for Rule H1 written confirmations
+ * - Inngest keys required for scheduled ACSS presentment
  *
  * Real-money rails (optional REQUIRE_LIVE_STRIPE=true):
  * - Stripe secret must be sk_live_…
@@ -139,12 +140,27 @@ export function hasRedisConfigured() {
   );
 }
 
-export function emailRailMode(): "resend" | "demo" | "resend_misconfigured" {
+export function hasInngestConfigured() {
+  return Boolean(
+    process.env.INNGEST_EVENT_KEY?.trim() &&
+      process.env.INNGEST_SIGNING_KEY?.trim(),
+  );
+}
+
+export function hasEmailFromConfigured() {
+  return Boolean(process.env.EMAIL_FROM?.trim());
+}
+
+export function emailRailMode():
+  | "resend"
+  | "demo"
+  | "resend_misconfigured"
+  | "resend_missing_from" {
   const provider = (process.env.EMAIL_PROVIDER || "demo").toLowerCase();
   if (provider === "resend") {
-    return process.env.RESEND_API_KEY?.trim()
-      ? "resend"
-      : "resend_misconfigured";
+    if (!process.env.RESEND_API_KEY?.trim()) return "resend_misconfigured";
+    if (!hasEmailFromConfigured()) return "resend_missing_from";
+    return "resend";
   }
   return "demo";
 }
@@ -187,10 +203,7 @@ export function goLiveReport(): GoLiveReport {
   );
   const email = emailRailMode();
   const redis = hasRedisConfigured();
-  const inngest = Boolean(
-    process.env.INNGEST_EVENT_KEY?.trim() &&
-      process.env.INNGEST_SIGNING_KEY?.trim(),
-  );
+  const inngest = hasInngestConfigured();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
   const checks: GoLiveCheck[] = [
@@ -234,17 +247,19 @@ export function goLiveReport(): GoLiveReport {
       ok: email === "resend" || !locked,
       detail:
         email === "resend"
-          ? "Resend configured"
+          ? "Resend + EMAIL_FROM configured"
           : email === "resend_misconfigured"
             ? "EMAIL_PROVIDER=resend but RESEND_API_KEY missing"
-            : "Email still in demo mode",
+            : email === "resend_missing_from"
+              ? "EMAIL_PROVIDER=resend but EMAIL_FROM missing"
+              : "Email still in demo mode",
     },
     {
       id: "inngest",
       ok: inngest || !locked,
       detail: inngest
         ? "Inngest keys configured"
-        : "INNGEST_EVENT_KEY / INNGEST_SIGNING_KEY recommended for locked prod",
+        : "INNGEST_EVENT_KEY / INNGEST_SIGNING_KEY required when go-live locked",
     },
     {
       id: "app_url",
@@ -270,7 +285,8 @@ export function goLiveReport(): GoLiveReport {
     (stripePublishable === "live" || stripePublishable === "test") &&
     webhookOk &&
     redis &&
-    email === "resend";
+    email === "resend" &&
+    inngest;
 
   const readyForLiveMoney =
     readyForMoneyRails &&
@@ -343,7 +359,12 @@ export function assertMoneyRailsReady(context: string) {
   const email = emailRailMode();
   if (email !== "resend") {
     throw new Error(
-      `${context}: EMAIL_PROVIDER=resend and RESEND_API_KEY required under go-live lock (got ${email})`,
+      `${context}: EMAIL_PROVIDER=resend, RESEND_API_KEY, and EMAIL_FROM required under go-live lock (got ${email})`,
+    );
+  }
+  if (!hasInngestConfigured()) {
+    throw new Error(
+      `${context}: INNGEST_EVENT_KEY and INNGEST_SIGNING_KEY required under go-live lock`,
     );
   }
 }

@@ -1,9 +1,11 @@
 /**
  * Rate limiter — Redis when REDIS_URL is set, otherwise in-memory fallback.
- * API is sync-compatible via async rateLimit(); prefer rateLimitAsync in routes.
+ * Under go-live lock, Redis command failures fail closed (deny) instead of
+ * soft-falling back to per-instance memory (which would bypass distributed limits).
  */
 
 import Redis from "ioredis";
+import { isGoLiveLocked } from "./env";
 
 type Bucket = { count: number; resetAt: number };
 const memoryBuckets = new Map<string, Bucket>();
@@ -28,13 +30,26 @@ function getRedis(): Redis | null {
       lazyConnect: true,
     });
     redis.on("error", () => {
-      /* fall through to memory on command failure */
+      /* command path handles fail-closed vs memory fallback */
     });
     return redis;
   } catch {
     redis = null;
     return null;
   }
+}
+
+/** Deny the request when Redis is required but unavailable. */
+function redisFailClosed(windowMs: number): {
+  ok: false;
+  retryAfterSec: number;
+  backend: "redis";
+} {
+  return {
+    ok: false,
+    retryAfterSec: Math.max(1, Math.ceil(windowMs / 1000)),
+    backend: "redis",
+  };
 }
 
 function memoryRateLimit(opts: {
@@ -72,7 +87,13 @@ export async function rateLimit(opts: {
   | { ok: false; retryAfterSec: number; backend: "redis" | "memory" }
 > {
   const client = getRedis();
-  if (!client) return memoryRateLimit(opts);
+  if (!client) {
+    // Redis URL configured but client init failed — fail closed under lock.
+    if (redisUrl() && isGoLiveLocked()) {
+      return redisFailClosed(opts.windowMs);
+    }
+    return memoryRateLimit(opts);
+  }
 
   const redisKey = `pymtx:rl:${opts.key}`;
   try {
@@ -93,6 +114,9 @@ export async function rateLimit(opts: {
     }
     return { ok: true, backend: "redis" };
   } catch {
+    if (isGoLiveLocked()) {
+      return redisFailClosed(opts.windowMs);
+    }
     return memoryRateLimit(opts);
   }
 }
