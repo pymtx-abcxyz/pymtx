@@ -1,11 +1,9 @@
 import type Stripe from "stripe";
 import { prisma } from "./db";
+import { assertLiveStripeOrDemoAllowed, isStripeDemoMode } from "./env";
 import { stripe } from "./stripe";
 
-export function isStripeDemoMode() {
-  const key = process.env.STRIPE_SECRET_KEY || "";
-  return !key || key.includes("placeholder");
-}
+export { isStripeDemoMode };
 
 function appUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
@@ -61,6 +59,7 @@ export async function syncConnectAccountFromStripe(
   businessId: string,
   account?: Stripe.Account,
 ) {
+  assertLiveStripeOrDemoAllowed("stripe connect sync");
   const business = await prisma.business.findUniqueOrThrow({
     where: { id: businessId },
   });
@@ -119,6 +118,7 @@ export async function syncConnectAccountFromStripe(
  * - Rail: Canadian ACSS Debit via `acss_debit_payments`
  */
 export async function startConnectOnboarding(businessId: string) {
+  assertLiveStripeOrDemoAllowed("stripe connect onboard");
   const business = await prisma.business.findUniqueOrThrow({
     where: { id: businessId },
   });

@@ -2,7 +2,7 @@ import { addMinutes } from "date-fns";
 import { nanoid } from "nanoid";
 import { prisma } from "./db";
 import { CaslMessageKind } from "./domain";
-import { appUrl } from "./env";
+import { allowDemoMode, appUrl } from "./env";
 import { createCustomerSession } from "./auth";
 import { magicLinkEmail, sendEmail } from "./email";
 
@@ -10,7 +10,7 @@ const MAGIC_LINK_TTL_MINUTES = 20;
 
 export type MagicLinkRequestResult = {
   ok: true;
-  /** Present when email provider is demo / unset. */
+  /** Present only when demo mode is explicitly allowed. */
   demoUrl?: string;
   message: string;
 };
@@ -92,7 +92,8 @@ export async function requestCustomerMagicLink(
     throw new Error(`Could not send sign-in email: ${sent.error}`);
   }
 
-  const demo = isEmailDemoMode() || sent.provider === "demo";
+  const demo =
+    allowDemoMode() && (isEmailDemoMode() || sent.provider === "demo");
 
   return {
     ok: true,
@@ -121,6 +122,9 @@ export async function consumeMagicLink(token: string) {
       data: { activatedAt: new Date() },
     });
   }
+
+  // Single active session per customer.
+  await prisma.session.deleteMany({ where: { customerId: link.customerId } });
 
   const session = await createCustomerSession(link.customerId);
   return {

@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertInviteOwnsPlan } from "@/lib/invite-access";
 import { evaluateSkipEligibility, executeSkip } from "@/lib/skip-engine";
+import { rateLimit } from "@/lib/rate-limit";
+
+function clientIp(req: NextRequest) {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "local"
+  );
+}
+
+async function guardSkip(req: NextRequest) {
+  const limited = await rateLimit({
+    key: `skip:${clientIp(req)}`,
+    limit: 30,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limited.retryAfterSec) },
+      },
+    );
+  }
+  return null;
+}
 
 /**
  * Skip API — invite-token bound.
@@ -8,6 +35,9 @@ import { evaluateSkipEligibility, executeSkip } from "@/lib/skip-engine";
  * POST { paymentPlanId, token }
  */
 export async function GET(req: NextRequest) {
+  const blocked = await guardSkip(req);
+  if (blocked) return blocked;
+
   const planId = req.nextUrl.searchParams.get("paymentPlanId");
   const token = req.nextUrl.searchParams.get("token");
   if (!planId || !token) {
@@ -28,6 +58,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const blocked = await guardSkip(req);
+  if (blocked) return blocked;
+
   const body = await req.json().catch(() => ({}));
   const paymentPlanId = body.paymentPlanId as string | undefined;
   const token = body.token as string | undefined;

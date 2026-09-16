@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Redis from "ioredis";
+import { isProduction } from "@/lib/env";
 import { rateLimitBackend } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
@@ -8,12 +9,13 @@ export const dynamic = "force-dynamic";
  * Lightweight ops probe — no secrets returned.
  */
 export async function GET() {
-  const configured = Boolean(process.env.REDIS_URL?.trim());
+  const configured = Boolean(process.env.REDIS_URL?.trim() || process.env.KV_URL?.trim());
   let redis: "ok" | "error" | "unconfigured" = "unconfigured";
   let detail: string | undefined;
 
   if (configured) {
-    const client = new Redis(process.env.REDIS_URL!.trim(), {
+    const url = (process.env.REDIS_URL || process.env.KV_URL)!.trim();
+    const client = new Redis(url, {
       maxRetriesPerRequest: 1,
       enableReadyCheck: false,
       lazyConnect: true,
@@ -43,7 +45,7 @@ export async function GET() {
       app: "pymtx",
       rateLimitBackend: rateLimitBackend(),
       redis,
-      ...(detail ? { detail } : {}),
+      ...(!isProduction() && detail ? { detail } : {}),
     },
     { status: ok ? 200 : 503 },
   );

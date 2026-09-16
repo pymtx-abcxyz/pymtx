@@ -163,10 +163,12 @@ export function setSessionCookie(
   token: string,
   expiresAt: Date,
 ) {
+  const secure =
+    process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
   res.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     expires: expiresAt,
   });
@@ -174,10 +176,12 @@ export function setSessionCookie(
 }
 
 export function clearSessionCookie(res: NextResponse) {
+  const secure =
+    process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
   res.cookies.set(SESSION_COOKIE, "", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     maxAge: 0,
   });

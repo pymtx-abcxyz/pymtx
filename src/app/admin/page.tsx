@@ -1,10 +1,18 @@
 import { PortalNav, SectionHeading, Metric, formatCad } from "@/components/ui";
+import { getCurrentUser } from "@/lib/auth";
+import { UserRole } from "@/lib/domain";
 import { prisma } from "@/lib/db";
 import { platformFeeBps } from "@/lib/stripe";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
+  const user = await getCurrentUser();
+  if (!user || user.role !== UserRole.ADMIN) {
+    redirect(user ? "/business" : "/login?next=/admin");
+  }
+
   const settings = await prisma.platformSettings.findUnique({ where: { id: "platform" } });
   const businesses = await prisma.business.count();
   const connectReady = await prisma.business.count({ where: { stripeOnboardingComplete: true } });
