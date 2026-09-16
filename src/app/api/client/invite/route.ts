@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { clientIp } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
 
 /**
  * Invite lookup — returns a trimmed DTO (no raw Prisma graph).
  */
 export async function GET(req: NextRequest) {
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "local";
+  const ip = clientIp(req);
   const limited = await rateLimit({
     key: `invite:${ip}`,
     limit: 60,

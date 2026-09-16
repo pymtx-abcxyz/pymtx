@@ -4,19 +4,25 @@
 
 | Route | Gate |
 |-------|------|
-| `POST/GET /api/jobs/daily-debit` | ADMIN |
-| `POST /api/charges` | ADMIN |
+| `POST/GET /api/jobs/daily-debit` | ADMIN + live Stripe (or demo allowed) |
+| `POST /api/charges` | ADMIN + live Stripe (or demo allowed) |
 | `GET /api/admin/metrics` | ADMIN |
-| `POST /api/plans` | ADMIN (legacy; clients use checkout) |
+| `POST /api/plans` | ADMIN (legacy; clients use checkout); PAD accept asserts live Stripe |
 
 **Admin UI** (`/admin`) requires an ADMIN user session (not cookie presence alone). Business portal still requires login; APIs enforce role + business access.
 
-Client checkout / skip / invite require the invite `token` and verify ownership. Responses are trimmed DTOs (no raw Prisma graphs).
+Client checkout / skip / invite require the invite `token` and verify ownership. Responses are trimmed DTOs (no raw Prisma graphs; no Connect `stripeAccountId` on checkout preview).
+
+## Demo / production lock
+
+- `chargeInstallment`, `runDailyDebitJob` / Inngest `processDailyInstallments`, checkout PAD, Connect login, and legacy `acceptPadMandate` all call `assertLiveStripeOrDemoAllowed`
+- Production refuses placeholder Stripe / webhook secrets unless `ALLOW_DEMO_MODE=true`
+- `.env.example` defaults `ALLOW_DEMO_MODE=false` (local non-production still allows demo via `!isProduction()`)
+- Webhook demo short-circuit only when demo is allowed; locked prod returns 503
 
 ## Webhooks
 
-- Production refuses placeholder `STRIPE_WEBHOOK_SECRET` unless `ALLOW_DEMO_MODE=true`
-- Checkout + Connect call `assertLiveStripeOrDemoAllowed` (no silent demo PADs in locked prod)
+- Prefer `STRIPE_CONNECT_WEBHOOK_SECRET`, fall back to `STRIPE_WEBHOOK_SECRET`
 - `StripeWebhookEvent` stores Stripe `event.id` for idempotent retries
 - Handler failures do **not** write the idempotency row (Stripe can retry)
 
@@ -28,15 +34,18 @@ Client checkout / skip / invite require the invite `token` and verify ownership.
 
 - Login rate limit: 10 attempts / 15 min per IP+email
 - Magic-link request/verify rate limited; staff invites rate limited
-- Checkout / skip / invite lookup rate limited per IP
+- Checkout / skip / invite / PAD record rate limited per IP
+- Rate-limit IP prefers `x-real-ip` / `x-vercel-forwarded-for` over spoofable first `X-Forwarded-For` hop
 - Login rotates sessions (one active session per user)
 - Magic-link rotates customer sessions (one active session per customer)
-- `demoUrl` is returned **only** when `allowDemoMode()` is true
+- Magic-link always returns a generic 200 body (no email enumeration on send failure)
+- `demoUrl` is returned **only** when `allowDemoMode()` is true and send succeeded
 
 ## HTTP
 
 Security headers via `next.config.ts` (CSP, HSTS, frame deny, nosniff, referrer, permissions).  
-Session cookie: `httpOnly`, `sameSite=lax`, `secure` in production / on Vercel.
+Session cookie: `httpOnly`, `sameSite=lax`, `secure` in production / on Vercel.  
+`/api/health` returns `{ ok, app }` only in production (Redis detail is non-prod).
 
 ## Ops
 
@@ -48,4 +57,4 @@ npm run job:daily-debit   # authenticates as seeded admin, runs inline job
 ```
 
 Demo still works locally (`ALLOW_DEMO_MODE=true` or non-production).  
-For locked production: real Stripe keys and `ALLOW_DEMO_MODE=false`.
+For locked production: real Stripe keys, Connect webhook secret, Redis for distributed rate limits, and `ALLOW_DEMO_MODE=false`.

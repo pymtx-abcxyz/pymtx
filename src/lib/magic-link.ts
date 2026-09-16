@@ -88,12 +88,15 @@ export async function requestCustomerMagicLink(
     fromName: customer.business.tradeName,
   });
 
+  // Never reveal send failures to the client (email enumeration).
   if (!sent.ok) {
-    throw new Error(`Could not send sign-in email: ${sent.error}`);
+    console.error("[magic-link] send failed", sent.error);
   }
 
   const demo =
-    allowDemoMode() && (isEmailDemoMode() || sent.provider === "demo");
+    allowDemoMode() &&
+    sent.ok &&
+    (isEmailDemoMode() || sent.provider === "demo");
 
   return {
     ok: true,

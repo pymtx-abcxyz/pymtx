@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 import { addDays } from "date-fns";
 import { prisma } from "./db";
+import { assertLiveStripeOrDemoAllowed } from "./env";
 import { chargeInstallment, findDueInstallments } from "./payments";
 import { DebitJobRunStatus, InstallmentStatus } from "./domain";
 
@@ -28,6 +29,9 @@ export type DebitJobResult = {
  * Also exported as `processDailyInstallments` for Path B naming.
  */
 export async function runDailyDebitJob(asOf = new Date()): Promise<DebitJobResult> {
+  // Inngest cron / event path must honor the same lock as /api/charges.
+  assertLiveStripeOrDemoAllowed("processDailyInstallments");
+
   const runDate = format(asOf, "yyyy-MM-dd");
 
   const existing = await prisma.debitJobRun.findUnique({ where: { runDate } });

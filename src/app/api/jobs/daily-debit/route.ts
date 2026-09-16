@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAuthUser, requireUser } from "@/lib/auth";
 import { UserRole } from "@/lib/domain";
 import { assertLiveStripeOrDemoAllowed } from "@/lib/env";
+import { publicError } from "@/lib/http";
 import { inngest } from "@/inngest/client";
 import { runDailyDebitJob } from "@/lib/debit-job";
 import { prisma } from "@/lib/db";
@@ -26,9 +27,9 @@ export async function POST(req: NextRequest) {
 
   try {
     assertLiveStripeOrDemoAllowed("daily-debit job");
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Misconfigured" },
+      { error: "Payment rail misconfigured" },
       { status: 503 },
     );
   }
@@ -55,9 +56,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(await runDailyDebitJob(asOf));
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Debit job failed" },
-      { status: 400 },
-    );
+    const { error } = publicError(e, "Debit job failed");
+    return NextResponse.json({ error }, { status: 400 });
   }
 }

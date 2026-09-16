@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { rateLimit, rateLimitBackend } from "./rate-limit";
+import { NextRequest } from "next/server";
+import { rateLimit, rateLimitBackend, pruneRateLimits } from "./rate-limit";
 import {
   allowDemoMode,
+  assertLiveStripeOrDemoAllowed,
   isProduction,
   isStripeDemoMode,
   isWebhookDemoMode,
@@ -13,6 +15,7 @@ import {
 } from "./permissions";
 import { UserRole } from "./domain";
 import type { AuthUser } from "./auth";
+import { clientIp } from "./http";
 
 describe("rateLimit", () => {
   it("allows up to limit then blocks", async () => {
@@ -26,6 +29,29 @@ describe("rateLimit", () => {
 
   it("reports backend from REDIS_URL", () => {
     expect(["redis", "memory"]).toContain(rateLimitBackend());
+  });
+
+  it("pruneRateLimits is safe to call", () => {
+    expect(() => pruneRateLimits()).not.toThrow();
+  });
+});
+
+describe("clientIp", () => {
+  it("prefers x-real-ip over x-forwarded-for", () => {
+    const req = new NextRequest("http://localhost/api", {
+      headers: {
+        "x-forwarded-for": "1.1.1.1, 2.2.2.2",
+        "x-real-ip": "9.9.9.9",
+      },
+    });
+    expect(clientIp(req)).toBe("9.9.9.9");
+  });
+
+  it("uses last XFF hop when real-ip missing", () => {
+    const req = new NextRequest("http://localhost/api", {
+      headers: { "x-forwarded-for": "1.1.1.1, 8.8.8.8" },
+    });
+    expect(clientIp(req)).toBe("8.8.8.8");
   });
 });
 
@@ -70,6 +96,7 @@ describe("env guards", () => {
   it("allows demo outside production", () => {
     if (!isProduction()) {
       expect(allowDemoMode()).toBe(true);
+      expect(() => assertLiveStripeOrDemoAllowed("test")).not.toThrow();
     }
   });
 });

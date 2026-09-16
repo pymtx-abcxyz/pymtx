@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { assertInviteOwnsPlan } from "@/lib/invite-access";
+import { clientIp } from "@/lib/http";
 import { evaluateSkipEligibility, executeSkip } from "@/lib/skip-engine";
 import { rateLimit } from "@/lib/rate-limit";
-
-function clientIp(req: NextRequest) {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "local"
-  );
-}
 
 async function guardSkip(req: NextRequest) {
   const limited = await rateLimit({

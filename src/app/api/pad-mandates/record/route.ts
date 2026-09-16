@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { completeCheckoutPad } from "@/lib/checkout";
 import { assertInviteOwnsPlan } from "@/lib/invite-access";
+import { clientIp, publicError } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
-
-function clientIp(req: NextRequest) {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "local"
-  );
-}
 
 /**
  * Rule H1 PAD mandate audit + activation.
@@ -62,13 +55,13 @@ export async function POST(req: NextRequest) {
       accountNumber: body.accountNumber
         ? String(body.accountNumber)
         : undefined,
-      ipAddress: req.headers.get("x-forwarded-for") || ip,
+      ipAddress: ip,
       userAgent: req.headers.get("user-agent") || undefined,
     });
     return NextResponse.json(plan);
   } catch (e) {
-    const message = e instanceof Error ? e.message : "PAD record failed";
-    const status = /belong|Invalid invite|Forbidden/i.test(message) ? 403 : 400;
-    return NextResponse.json({ error: message }, { status });
+    const { error } = publicError(e, "PAD record failed");
+    const status = /belong|Invalid invite|Forbidden/i.test(error) ? 403 : 400;
+    return NextResponse.json({ error }, { status });
   }
 }

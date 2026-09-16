@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { setSessionCookie } from "@/lib/auth";
 import { appUrl } from "@/lib/env";
+import { clientIp } from "@/lib/http";
 import { consumeMagicLink } from "@/lib/magic-link";
 import { rateLimit } from "@/lib/rate-limit";
 
 /** GET ?token= — consume magic link, set session, redirect to client portal. */
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token") || "";
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "local";
+  const ip = clientIp(req);
 
   const limited = await rateLimit({
     key: `magic-verify:${ip}`,

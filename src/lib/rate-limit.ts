@@ -42,6 +42,9 @@ function memoryRateLimit(opts: {
   limit: number;
   windowMs: number;
 }): { ok: true; backend: "memory" } | { ok: false; retryAfterSec: number; backend: "memory" } {
+  // Opportunistic prune so long-lived nodes do not grow unbounded.
+  if (memoryBuckets.size > 2000) pruneRateLimits();
+
   const now = Date.now();
   const existing = memoryBuckets.get(opts.key);
   if (!existing || existing.resetAt <= now) {

@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { normalizeUserRole } from "@/lib/domain";
+import { clientIp } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET() {
@@ -28,10 +29,7 @@ export async function POST(req: NextRequest) {
     .trim()
     .toLowerCase();
   const password = String(body.password || "");
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "local";
+  const ip = clientIp(req);
 
   if (!email || !password) {
     return NextResponse.json(
@@ -60,7 +58,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
-  // Single active session per user.
   await prisma.session.deleteMany({ where: { userId: record.id } });
 
   const session = await createSession(record.id);

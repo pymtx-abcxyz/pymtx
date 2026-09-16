@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { clientIp } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
 import { requestCustomerMagicLink } from "@/lib/magic-link";
 
@@ -8,10 +9,7 @@ export async function POST(req: NextRequest) {
   const email = String(body.email || "")
     .trim()
     .toLowerCase();
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "local";
+  const ip = clientIp(req);
 
   if (!email) {
     return NextResponse.json({ error: "email required" }, { status: 400 });
@@ -32,13 +30,15 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Always return the same generic body to avoid email enumeration.
   try {
     const result = await requestCustomerMagicLink(email);
     return NextResponse.json(result);
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Could not send link" },
-      { status: 400 },
-    );
+    console.error("[magic-link]", e instanceof Error ? e.message : e);
+    return NextResponse.json({
+      ok: true,
+      message: "If that email is on file, a sign-in link is on its way.",
+    });
   }
 }

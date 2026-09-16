@@ -185,6 +185,7 @@ export async function startConnectOnboarding(businessId: string) {
 
 /** Express Dashboard login link (post-onboarding). */
 export async function createConnectLoginLink(businessId: string) {
+  assertLiveStripeOrDemoAllowed("stripe connect login");
   const business = await prisma.business.findUniqueOrThrow({
     where: { id: businessId },
   });

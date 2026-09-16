@@ -36,7 +36,6 @@ export type CheckoutPreview = {
   businessSupportEmail: string;
   businessPhone: string | null;
   connectReady: boolean;
-  stripeAccountId: string | null;
   balanceCents: number;
   invoiceRef: string;
   description: string;
@@ -48,6 +47,47 @@ export type CheckoutPreview = {
   } | null;
   terms: { months: PlanTermMonths; monthlyCents: number; totalCents: number }[];
 };
+
+/** Client-safe plan DTO — no nested business / full PAD text / Stripe ids. */
+export function toClientPlanDto(plan: {
+  id: string;
+  status: string;
+  termMonths: number;
+  monthlyAmountCents: number;
+  startDate: Date | null;
+  installments: {
+    id: string;
+    sequence: number;
+    dueDate: Date;
+    amountCents: number;
+    status: string;
+  }[];
+  padMandate?: {
+    bankLast4: string | null;
+    institutionName: string | null;
+  } | null;
+}) {
+  return {
+    id: plan.id,
+    status: plan.status,
+    termMonths: plan.termMonths,
+    monthlyAmountCents: plan.monthlyAmountCents,
+    startDate: plan.startDate,
+    installments: plan.installments.map((i) => ({
+      id: i.id,
+      sequence: i.sequence,
+      dueDate: i.dueDate,
+      amountCents: i.amountCents,
+      status: i.status,
+    })),
+    padMandate: plan.padMandate
+      ? {
+          bankLast4: plan.padMandate.bankLast4,
+          institutionName: plan.padMandate.institutionName,
+        }
+      : null,
+  };
+}
 
 export async function getCheckoutByInvite(token: string): Promise<CheckoutPreview> {
   const customer = await prisma.customer.findUnique({
@@ -104,7 +144,6 @@ export async function getCheckoutByInvite(token: string): Promise<CheckoutPrevie
       customer.business.supportEmail || customer.business.email,
     businessPhone: customer.business.phone,
     connectReady,
-    stripeAccountId: customer.business.stripeAccountId,
     balanceCents: total,
     invoiceRef: invoice.externalRef,
     description: invoice.description,
@@ -441,5 +480,18 @@ export async function completeCheckoutPad(params: {
     console.error("[checkout] PAD confirmation email failed", err);
   });
 
-  return updated;
+  return toClientPlanDto({
+    id: updated.id,
+    status: updated.status,
+    termMonths: updated.termMonths,
+    monthlyAmountCents: updated.monthlyAmountCents,
+    startDate: updated.startDate,
+    installments: updated.installments,
+    padMandate: updated.padMandate
+      ? {
+          bankLast4: updated.padMandate.bankLast4,
+          institutionName: updated.padMandate.institutionName,
+        }
+      : null,
+  });
 }

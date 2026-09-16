@@ -6,10 +6,12 @@ import { rateLimitBackend } from "@/lib/rate-limit";
 export const dynamic = "force-dynamic";
 
 /**
- * Lightweight ops probe — no secrets returned.
+ * Lightweight ops probe — no secrets; production returns minimal fields.
  */
 export async function GET() {
-  const configured = Boolean(process.env.REDIS_URL?.trim() || process.env.KV_URL?.trim());
+  const configured = Boolean(
+    process.env.REDIS_URL?.trim() || process.env.KV_URL?.trim(),
+  );
   let redis: "ok" | "error" | "unconfigured" = "unconfigured";
   let detail: string | undefined;
 
@@ -39,13 +41,18 @@ export async function GET() {
   }
 
   const ok = !configured || redis === "ok";
+
+  if (isProduction()) {
+    return NextResponse.json({ ok, app: "pymtx" }, { status: ok ? 200 : 503 });
+  }
+
   return NextResponse.json(
     {
       ok,
       app: "pymtx",
       rateLimitBackend: rateLimitBackend(),
       redis,
-      ...(!isProduction() && detail ? { detail } : {}),
+      ...(detail ? { detail } : {}),
     },
     { status: ok ? 200 : 503 },
   );

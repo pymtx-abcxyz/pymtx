@@ -11,6 +11,7 @@ import {
   PaymentPlanStatus,
   type PlanTermMonths,
 } from "./domain";
+import { assertLiveStripeOrDemoAllowed, isStripeDemoMode } from "./env";
 
 export async function createPaymentPlan(params: {
   invoiceId: string;
@@ -78,10 +79,21 @@ export async function acceptPadMandate(params: {
   stripePaymentMethodId?: string;
   stripeMandateId?: string;
 }) {
+  assertLiveStripeOrDemoAllowed("plans accept_pad");
   const now = new Date();
-  const isDemo =
-    !process.env.STRIPE_SECRET_KEY ||
-    process.env.STRIPE_SECRET_KEY.includes("placeholder");
+  const demo = isStripeDemoMode();
+
+  if (!demo) {
+    if (
+      !params.stripeCustomerId ||
+      !params.stripePaymentMethodId ||
+      !params.stripeMandateId
+    ) {
+      throw new Error(
+        "Live Stripe customer, payment method, and mandate ids are required",
+      );
+    }
+  }
 
   return prisma.$transaction(async (tx) => {
     await tx.padMandate.create({
@@ -94,7 +106,7 @@ export async function acceptPadMandate(params: {
         institutionName: params.institutionName,
         stripeMandateId:
           params.stripeMandateId ||
-          (isDemo ? `mandate_demo_${params.paymentPlanId.slice(-8)}` : undefined),
+          (demo ? `mandate_demo_${params.paymentPlanId.slice(-8)}` : undefined),
         acceptedAt: now,
         ipAddress: params.ipAddress,
         userAgent: params.userAgent,
@@ -112,17 +124,32 @@ export async function acceptPadMandate(params: {
         padWrittenConfirmSentAt: now,
         stripeCustomerId:
           params.stripeCustomerId ||
-          (isDemo ? `cus_demo_${params.paymentPlanId.slice(-8)}` : undefined),
+          (demo ? `cus_demo_${params.paymentPlanId.slice(-8)}` : undefined),
         stripePaymentMethodId:
           params.stripePaymentMethodId ||
-          (isDemo ? `pm_demo_${params.paymentPlanId.slice(-8)}` : undefined),
+          (demo ? `pm_demo_${params.paymentPlanId.slice(-8)}` : undefined),
         stripeMandateId:
           params.stripeMandateId ||
-          (isDemo ? `mandate_demo_${params.paymentPlanId.slice(-8)}` : undefined),
+          (demo ? `mandate_demo_${params.paymentPlanId.slice(-8)}` : undefined),
       },
       include: {
-        installments: { orderBy: { sequence: "asc" } },
-        padMandate: true,
+        installments: {
+          orderBy: { sequence: "asc" },
+          select: {
+            id: true,
+            sequence: true,
+            dueDate: true,
+            amountCents: true,
+            status: true,
+          },
+        },
+        padMandate: {
+          select: {
+            bankLast4: true,
+            institutionName: true,
+            acceptedAt: true,
+          },
+        },
       },
     });
   });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAuthUser, requireUser } from "@/lib/auth";
 import { UserRole } from "@/lib/domain";
 import { assertLiveStripeOrDemoAllowed } from "@/lib/env";
+import { publicError } from "@/lib/http";
 import { chargeInstallment } from "@/lib/payments";
 
 /** Manual charge — ADMIN only. */
@@ -11,9 +12,9 @@ export async function POST(req: NextRequest) {
 
   try {
     assertLiveStripeOrDemoAllowed("manual charge");
-  } catch (e) {
+  } catch {
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Misconfigured" },
+      { error: "Payment rail misconfigured" },
       { status: 503 },
     );
   }
@@ -25,9 +26,7 @@ export async function POST(req: NextRequest) {
   try {
     return NextResponse.json(await chargeInstallment(installmentId));
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Charge failed" },
-      { status: 400 },
-    );
+    const { error } = publicError(e, "Charge failed");
+    return NextResponse.json({ error }, { status: 400 });
   }
 }

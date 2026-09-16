@@ -8,16 +8,10 @@ import {
   completeCheckoutPad,
   createCheckoutPlan,
   getCheckoutByInvite,
+  toClientPlanDto,
 } from "@/lib/checkout";
+import { clientIp, publicError } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
-
-function clientIp(req: NextRequest) {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "local"
-  );
-}
 
 async function guardCheckout(req: NextRequest) {
   const limited = await rateLimit({
@@ -52,11 +46,8 @@ export async function GET(req: NextRequest) {
   }
   try {
     return NextResponse.json(await getCheckoutByInvite(token));
-  } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Checkout unavailable" },
-      { status: 404 },
-    );
+  } catch {
+    return NextResponse.json({ error: "Checkout unavailable" }, { status: 404 });
   }
 }
 
@@ -67,6 +58,7 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const action = body.action as string;
   const token = String(body.token || "");
+  const ip = clientIp(req);
 
   try {
     if (action === "create_plan") {
@@ -79,7 +71,7 @@ export async function POST(req: NextRequest) {
         termMonths: body.termMonths,
         startDate: body.startDate ? new Date(body.startDate) : undefined,
       });
-      return NextResponse.json(plan, { status: 201 });
+      return NextResponse.json(toClientPlanDto(plan), { status: 201 });
     }
 
     if (action === "accept_pad") {
@@ -96,7 +88,7 @@ export async function POST(req: NextRequest) {
         transitNumber: body.transitNumber,
         institutionNumber: body.institutionNumber,
         accountNumber: body.accountNumber,
-        ipAddress: req.headers.get("x-forwarded-for") || "127.0.0.1",
+        ipAddress: ip,
         userAgent: req.headers.get("user-agent") || undefined,
       });
       return NextResponse.json(plan);
@@ -159,36 +151,14 @@ export async function POST(req: NextRequest) {
           externalRef: inv.externalRef,
           balanceCents: inv.balanceCents,
           status: inv.status,
-          // Trimmed DTO — keep paymentPlans[] shape for client loadPlanStatus.
-          paymentPlans: inv.paymentPlans.map((p) => ({
-            id: p.id,
-            status: p.status,
-            termMonths: p.termMonths,
-            monthlyAmountCents: p.monthlyAmountCents,
-            startDate: p.startDate,
-            installments: p.installments.map((i) => ({
-              id: i.id,
-              sequence: i.sequence,
-              dueDate: i.dueDate,
-              amountCents: i.amountCents,
-              status: i.status,
-            })),
-            padMandate: p.padMandate
-              ? {
-                  bankLast4: p.padMandate.bankLast4,
-                  institutionName: p.padMandate.institutionName,
-                }
-              : null,
-          })),
+          paymentPlans: inv.paymentPlans.map((p) => toClientPlanDto(p)),
         })),
       });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Checkout failed" },
-      { status: 400 },
-    );
+    const { error } = publicError(e, "Checkout failed");
+    return NextResponse.json({ error }, { status: 400 });
   }
 }
