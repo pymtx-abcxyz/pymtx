@@ -22,6 +22,7 @@ import {
   type EmailAttachment,
 } from "./email";
 import { buildPadMandatePdf, pdfToBase64 } from "./pad-mandate-pdf";
+import { caslAttributionBlock } from "./legal";
 
 async function persistAndSend(params: {
   businessId: string;
@@ -62,19 +63,41 @@ async function persistAndSend(params: {
   return sent;
 }
 
+function withCaslFooter(
+  text: string,
+  merchant: {
+    legalName: string;
+    address?: string | null;
+    supportEmail?: string | null;
+    phone?: string | null;
+  },
+) {
+  return `${text}\n\n—\n${caslAttributionBlock(merchant)}`;
+}
+
 export async function sendPadConfirmationNotice(params: {
   businessId: string;
   customerId: string;
   tradeName: string;
   legalName?: string;
+  physicalAddress?: string | null;
+  supportEmail?: string | null;
+  phone?: string | null;
+  payorName?: string;
   toEmail: string;
+  customerAddress?: string | null;
   invoiceRef: string;
   firstDebitDate: string;
   monthlyAmountCents: number;
+  totalPrincipalCents?: number;
+  tenureMonths?: number;
   bankLast4: string;
+  institutionNumber?: string;
+  transitNumber?: string;
   ipAddress?: string;
   userAgent?: string;
 }) {
+  const merchantLegal = params.legalName || params.tradeName;
   const tpl = padConfirmationEmail({
     tradeName: params.tradeName,
     invoiceRef: params.invoiceRef,
@@ -95,12 +118,21 @@ export async function sendPadConfirmationNotice(params: {
 
   const pdfBytes = await buildPadMandatePdf({
     tradeName: params.tradeName,
-    legalName: params.legalName,
+    legalName: merchantLegal,
+    physicalAddress: params.physicalAddress,
+    supportEmail: params.supportEmail,
+    phone: params.phone,
+    payorName: params.payorName,
     payorEmail: params.toEmail,
+    customerAddress: params.customerAddress,
     invoiceRef: params.invoiceRef,
     firstDebitDate: params.firstDebitDate,
     monthlyAmountCents: params.monthlyAmountCents,
+    totalPrincipalCents: params.totalPrincipalCents,
+    tenureMonths: params.tenureMonths,
     bankLast4: params.bankLast4,
+    institutionNumber: params.institutionNumber,
+    transitNumber: params.transitNumber,
     acceptedAt: new Date(),
     ipAddress: params.ipAddress,
     userAgent: params.userAgent,
@@ -115,7 +147,12 @@ export async function sendPadConfirmationNotice(params: {
     subject: tpl.subject,
     bodyPreview: tpl.text.slice(0, 280),
     html,
-    text: tpl.text,
+    text: withCaslFooter(tpl.text, {
+      legalName: merchantLegal,
+      address: params.physicalAddress,
+      supportEmail: params.supportEmail,
+      phone: params.phone,
+    }),
     attachments: [
       {
         filename: `pad-confirmation-${params.invoiceRef}.pdf`,
@@ -162,7 +199,7 @@ export async function sendReceiptNotice(params: {
     subject: tpl.subject,
     bodyPreview: tpl.text.slice(0, 280),
     html,
-    text: tpl.text,
+    text: withCaslFooter(tpl.text, { legalName: params.tradeName }),
   });
 }
 
@@ -187,7 +224,7 @@ export async function sendNsfAlertNotice(params: {
     subject: tpl.subject,
     bodyPreview: tpl.text.slice(0, 280),
     html,
-    text: tpl.text,
+    text: withCaslFooter(tpl.text, { legalName: params.tradeName }),
   });
 }
 
@@ -213,6 +250,6 @@ export async function sendSkipConfirmationNotice(params: {
     subject: tpl.subject,
     bodyPreview: tpl.text.slice(0, 280),
     html,
-    text: tpl.text,
+    text: withCaslFooter(tpl.text, { legalName: params.tradeName }),
   });
 }

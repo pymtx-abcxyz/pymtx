@@ -44,6 +44,16 @@ export default function HomePage() {
             Settle as a customer
           </Link>
         </div>
+        <p className="animate-rise-delay-2 mt-14 max-w-xl text-xs leading-relaxed text-sage/55">
+          Technology by 1001527397 ONTARIO INC. ·{" "}
+          <Link href="/legal/saas" className="underline hover:text-sage">
+            SaaS Agreement
+          </Link>{" "}
+          ·{" "}
+          <Link href="/legal/privacy" className="underline hover:text-sage">
+            Privacy &amp; CASL
+          </Link>
+        </p>
       </section>
     </main>
   );

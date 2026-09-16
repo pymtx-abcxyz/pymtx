@@ -56,7 +56,10 @@ function BusinessSettingsInner() {
     email: "",
     phone: "",
     ontarioCorpNumber: "",
-    caslConsent: true,
+    physicalAddress: "",
+    supportEmail: "",
+    caslConsent: false,
+    saasAgreementAccepted: false,
   });
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -238,6 +241,8 @@ function BusinessSettingsInner() {
               ["legalName", "Legal name"],
               ["tradeName", "Trade name (CASL from-name)"],
               ["email", "Billing email"],
+              ["supportEmail", "Customer support email"],
+              ["physicalAddress", "Ontario physical / mailing address"],
               ["phone", "Phone"],
               ["ontarioCorpNumber", "Ontario corp number"],
             ] as const
@@ -246,8 +251,12 @@ function BusinessSettingsInner() {
               <span className="mb-1 block font-semibold text-sage">{label}</span>
               <input
                 className="input"
-                required={key !== "phone" && key !== "ontarioCorpNumber"}
-                type={key === "email" ? "email" : "text"}
+                required={
+                  key !== "phone" &&
+                  key !== "ontarioCorpNumber" &&
+                  key !== "supportEmail"
+                }
+                type={key === "email" || key === "supportEmail" ? "email" : "text"}
                 value={form[key]}
                 onChange={(e) => setForm({ ...form, [key]: e.target.value })}
               />
@@ -257,12 +266,48 @@ function BusinessSettingsInner() {
             <input
               type="checkbox"
               className="mt-1"
+              checked={form.saasAgreementAccepted}
+              onChange={(e) =>
+                setForm({ ...form, saasAgreementAccepted: e.target.checked })
+              }
+            />
+            <span>
+              I accept the{" "}
+              <a
+                href="/legal/saas"
+                target="_blank"
+                rel="noreferrer"
+                className="text-sage-bright underline"
+              >
+                Master SaaS Agreement &amp; Merchant Indemnity
+              </a>{" "}
+              (electronic acceptance binds my business as Licensee).
+            </span>
+          </label>
+          <label className="flex items-start gap-2 text-sm text-sage">
+            <input
+              type="checkbox"
+              className="mt-1"
               checked={form.caslConsent}
               onChange={(e) => setForm({ ...form, caslConsent: e.target.checked })}
             />
-            I confirm customer outreach will be sent under our business identity (CASL).
+            I confirm customer outreach will be sent under our business identity (CASL
+            EBR / PIPEDA). See{" "}
+            <a
+              href="/legal/privacy"
+              target="_blank"
+              rel="noreferrer"
+              className="text-sage-bright underline"
+            >
+              Privacy &amp; CASL
+            </a>
+            .
           </label>
-          <button className="btn-primary w-fit" type="submit">
+          <button
+            className="btn-primary w-fit"
+            type="submit"
+            disabled={!form.saasAgreementAccepted || !form.caslConsent}
+          >
             Create business
           </button>
         </form>

@@ -1,5 +1,11 @@
 import { prisma } from "./db";
 import {
+  PAD_AGREEMENT_VERSION,
+  SETTLEMENT_TERMS_VERSION,
+  renderPadAgreement,
+  renderSettlementTerms,
+} from "./legal";
+import {
   PAD_CANCELLATION_TERMS,
   PAD_RECOURSE_TERMS,
   buildInstallmentSchedule,
@@ -20,11 +26,15 @@ export type CheckoutPreview = {
   firstName: string;
   lastName: string;
   email: string;
+  customerAddress: string | null;
   inviteToken: string;
   invoiceId: string;
   businessId: string;
   businessTradeName: string;
   businessLegalName: string;
+  businessPhysicalAddress: string | null;
+  businessSupportEmail: string;
+  businessPhone: string | null;
   connectReady: boolean;
   stripeAccountId: string | null;
   balanceCents: number;
@@ -83,11 +93,16 @@ export async function getCheckoutByInvite(token: string): Promise<CheckoutPrevie
     firstName: customer.firstName,
     lastName: customer.lastName,
     email: customer.email,
+    customerAddress: customer.address,
     inviteToken: customer.inviteToken,
     invoiceId: invoice.id,
     businessId: customer.businessId,
     businessTradeName: customer.business.tradeName,
     businessLegalName: customer.business.legalName,
+    businessPhysicalAddress: customer.business.physicalAddress,
+    businessSupportEmail:
+      customer.business.supportEmail || customer.business.email,
+    businessPhone: customer.business.phone,
     connectReady,
     stripeAccountId: customer.business.stripeAccountId,
     balanceCents: total,
@@ -318,6 +333,38 @@ export async function completeCheckoutPad(params: {
     plan.startDate?.toISOString().slice(0, 10) ||
     now.toISOString().slice(0, 10);
 
+  const formatCad = (cents: number) =>
+    new Intl.NumberFormat("en-CA", {
+      style: "currency",
+      currency: "CAD",
+    }).format(cents / 100);
+
+  const padAgreementText = renderPadAgreement({
+    customerFullName: params.payorName,
+    customerAddress: plan.customer.address || "Ontario, Canada",
+    customerEmail: params.payorEmail,
+    merchantLegalName: business.legalName,
+    merchantPhysicalAddress: business.physicalAddress || "Ontario, Canada",
+    merchantSupportEmail: business.supportEmail || business.email,
+    merchantPhone: business.phone || "—",
+    fiNumber: params.institutionNumber || "—",
+    transitNumber: params.transitNumber || "—",
+    accountLast4: params.bankLast4,
+    totalPrincipalCad: formatCad(plan.invoice.balanceCents),
+    tenureMonths: plan.termMonths,
+    monthlyInstallmentCad: formatCad(plan.monthlyAmountCents),
+    firstDebitDate,
+    dayOfMonth: Number(firstDebitDate.slice(-2)) || "same day",
+  });
+
+  const settlementTermsText = renderSettlementTerms({
+    merchantLegalName: business.legalName,
+    customerFullName: params.payorName,
+    totalInvoiceBalanceCad: formatCad(plan.invoice.balanceCents),
+    monthlyAmountCad: formatCad(plan.monthlyAmountCents),
+    tenureMonths: plan.termMonths,
+  });
+
   const updated = await prisma.$transaction(async (tx) => {
     await tx.padMandate.create({
       data: {
@@ -334,6 +381,10 @@ export async function completeCheckoutPad(params: {
         confirmationSentAt: now,
         cancellationTerms: PAD_CANCELLATION_TERMS,
         recourseTerms: PAD_RECOURSE_TERMS,
+        agreementVersion: PAD_AGREEMENT_VERSION,
+        settlementTermsVersion: SETTLEMENT_TERMS_VERSION,
+        agreementText: padAgreementText,
+        settlementTermsText,
       },
     });
 
@@ -361,11 +412,20 @@ export async function completeCheckoutPad(params: {
     customerId: plan.customerId,
     tradeName: business.tradeName,
     legalName: business.legalName,
+    physicalAddress: business.physicalAddress,
+    supportEmail: business.supportEmail || business.email,
+    phone: business.phone,
+    payorName: params.payorName,
     toEmail: params.payorEmail,
+    customerAddress: plan.customer.address,
     invoiceRef: plan.invoice.externalRef,
     firstDebitDate,
     monthlyAmountCents: plan.monthlyAmountCents,
+    totalPrincipalCents: plan.invoice.balanceCents,
+    tenureMonths: plan.termMonths,
     bankLast4: params.bankLast4,
+    institutionNumber: params.institutionNumber,
+    transitNumber: params.transitNumber,
     ipAddress: params.ipAddress,
     userAgent: params.userAgent,
   }).catch((err) => {

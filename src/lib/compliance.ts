@@ -68,9 +68,12 @@ export function formatDate(d: Date | string): string {
   return format(typeof d === "string" ? new Date(d) : d, "d MMM yyyy");
 }
 
-/** Payments Canada Rule H1 Personal PAD — mandatory disclosure copy. */
-export const PAD_RECOURSE_TERMS = `You have certain recourse rights if any debit does not comply with this agreement. For example, you have the right to receive reimbursement for any debit that is not authorized or is not consistent with this PAD Agreement. To obtain more information on your recourse rights, contact your financial institution or visit www.payments.ca.`;
-
-export const PAD_CANCELLATION_TERMS = `You may revoke your authorization at any time, subject to providing notice of at least 10 days before the next scheduled debit. To obtain a sample cancellation form, or for more information on your right to cancel a PAD Agreement, contact your financial institution or visit www.payments.ca.`;
+/** Payments Canada Rule H1 Personal PAD — mandatory disclosure copy (Document 2). */
+export {
+  PAD_RECOURSE_CLAUSE as PAD_RECOURSE_TERMS,
+  PAD_CANCELLATION_CLAUSE as PAD_CANCELLATION_TERMS,
+  PAD_SKIP_CLAUSE,
+  PAD_PRENOTIFICATION_WAIVER,
+} from "./legal/pad-agreement";
 
 export const PAD_NSF_POLICY = `If a Pre-Authorized Debit is returned for Non-Sufficient Funds (NSF), Payments Canada Rule H1 permits a maximum of one (1) re-presentment within thirty (30) days of the original debit date.`;

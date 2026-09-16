@@ -56,6 +56,15 @@ model Business {
   /// CASL: business consents that invites are sent under its identity.
   caslConsentAt            DateTime?
 
+  /// Merchant physical / mailing address (Ontario) for PAD + CASL disclosures.
+  physicalAddress          String?
+  /// Customer-facing support inbox (defaults to business email when null).
+  supportEmail             String?
+
+  /// Master SaaS Agreement & Merchant Indemnity acceptance audit.
+  saasAgreementAcceptedAt  DateTime?
+  saasAgreementVersion     String?
+
   createdAt                DateTime  @default(now())
   updatedAt                DateTime  @updatedAt
 
@@ -78,6 +87,8 @@ model Customer {
   lastName        String
   email           String
   phone           String?
+  /// Ontario billing / mailing address for PAD identification of parties.
+  address         String?
   /// Opaque portal invite token (never guessable sequential ids).
   inviteToken     String    @unique @default(cuid())
   invitedAt       DateTime?
@@ -192,6 +203,12 @@ model PadMandate {
   /// Frozen copy of mandatory H1 disclosure text at acceptance time.
   cancellationTerms  String
   recourseTerms      String
+  /// Document 2 / 3 version stamps for audit retention (Rule H1 ≥ 12 months).
+  agreementVersion   String?
+  settlementTermsVersion String?
+  /// Full rendered PAD agreement text frozen at acceptance.
+  agreementText      String?   @db.Text
+  settlementTermsText String?  @db.Text
   createdAt          DateTime    @default(now())
 }
 

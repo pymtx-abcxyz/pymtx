@@ -53,6 +53,8 @@ async function main() {
       email: "billing@mapleridgedental.example",
       phone: "+1-416-555-0142",
       ontarioCorpNumber: "ON-10293847",
+      physicalAddress: "100 Main St, Whitby, ON L1N 1A1, Canada",
+      supportEmail: "billing@mapleridgedental.example",
       stripeAccountId: "acct_demo_maple",
       stripeOnboardingComplete: true,
       stripeChargesEnabled: true,
@@ -60,6 +62,8 @@ async function main() {
       stripeDetailsSubmitted: true,
       stripeOnboardedAt: subDays(new Date(), 14),
       caslConsentAt: new Date(),
+      saasAgreementAcceptedAt: new Date(),
+      saasAgreementVersion: "2026-09-16-saas-v1",
     },
   });
 

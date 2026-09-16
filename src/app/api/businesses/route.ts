@@ -41,6 +41,23 @@ export async function POST(req: NextRequest) {
   if (!isAuthUser(user)) return user;
 
   const body = await req.json();
+  if (!body.saasAgreementAccepted) {
+    return NextResponse.json(
+      {
+        error:
+          "Merchant must accept the Master SaaS Agreement & Merchant Indemnity to register",
+      },
+      { status: 400 },
+    );
+  }
+  if (!body.caslConsent) {
+    return NextResponse.json(
+      { error: "CASL identity consent is required" },
+      { status: 400 },
+    );
+  }
+
+  const { SAAS_AGREEMENT_VERSION } = await import("@/lib/legal");
   const business = await prisma.business.create({
     data: {
       legalName: body.legalName,
@@ -48,7 +65,11 @@ export async function POST(req: NextRequest) {
       email: body.email,
       phone: body.phone,
       ontarioCorpNumber: body.ontarioCorpNumber,
-      caslConsentAt: body.caslConsent ? new Date() : null,
+      physicalAddress: body.physicalAddress || null,
+      supportEmail: body.supportEmail || body.email,
+      caslConsentAt: new Date(),
+      saasAgreementAcceptedAt: new Date(),
+      saasAgreementVersion: SAAS_AGREEMENT_VERSION,
     },
   });
   return NextResponse.json(business, { status: 201 });

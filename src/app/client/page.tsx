@@ -3,21 +3,26 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PortalNav, SectionHeading, formatCad } from "@/components/ui";
+import { PAD_NSF_POLICY } from "@/lib/compliance";
 import {
-  PAD_CANCELLATION_TERMS,
-  PAD_NSF_POLICY,
-  PAD_RECOURSE_TERMS,
-} from "@/lib/compliance";
+  PROVIDER,
+  renderPadAgreement,
+  renderSettlementTerms,
+} from "@/lib/legal";
 
 type CheckoutPreview = {
   customerId: string;
   firstName: string;
   lastName: string;
   email: string;
+  customerAddress: string | null;
   inviteToken: string;
   invoiceId: string;
   businessTradeName: string;
   businessLegalName: string;
+  businessPhysicalAddress: string | null;
+  businessSupportEmail: string;
+  businessPhone: string | null;
   connectReady: boolean;
   balanceCents: number;
   invoiceRef: string;
@@ -92,6 +97,7 @@ function ClientCheckoutInner() {
     institutionNumber: "",
     accountNumber: "",
     accepted: false,
+    settlementAccepted: false,
   });
   const [skipInfo, setSkipInfo] = useState<{
     ok: boolean;
@@ -191,7 +197,7 @@ function ClientCheckoutInner() {
   }
 
   async function acceptPad() {
-    if (!plan || !preview || !pad.accepted) return;
+    if (!plan || !preview || !pad.accepted || !pad.settlementAccepted) return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -382,21 +388,14 @@ function ClientCheckoutInner() {
               </section>
             ) : null}
 
-            {step === "pad" && plan ? (
+            {step === "pad" && plan && preview ? (
               <section>
                 <h2 className="font-display text-2xl font-bold">Personal PAD agreement</h2>
                 <p className="mt-2 text-sm leading-relaxed text-sage">
-                  Payments Canada Rule H1 requires an electronic Personal PAD mandate with
-                  recourse and cancellation terms, plus written confirmation before the first
-                  debit. Debits are drawn by{" "}
-                  <strong>{preview.businessTradeName}</strong> (not Pymtx).
+                  Payments Canada Rule H1 Personal PAD. Debits are drawn by{" "}
+                  <strong>{preview.businessLegalName}</strong> as Merchant of Record.{" "}
+                  {PROVIDER.legalName} is an automated technological conduit only.
                 </p>
-
-                <div className="mt-4 space-y-3 border-t border-mist/10 pt-4 text-sm leading-relaxed text-sage/90">
-                  <p>{PAD_RECOURSE_TERMS}</p>
-                  <p>{PAD_CANCELLATION_TERMS}</p>
-                  <p>{PAD_NSF_POLICY}</p>
-                </div>
 
                 <div className="mt-6 grid gap-3">
                   <label className="text-sm">
@@ -427,20 +426,20 @@ function ClientCheckoutInner() {
                       }
                     />
                   </label>
-                  <details className="text-sm text-sage">
+                  <details className="text-sm text-sage" open>
                     <summary className="cursor-pointer font-semibold">
-                      Full bank details (required for live Stripe)
+                      Bank routing details (required for live Stripe)
                     </summary>
                     <div className="mt-3 grid gap-3">
                       <input
                         className="input"
-                        placeholder="Transit number"
+                        placeholder="Transit number (5 digits)"
                         value={pad.transitNumber}
                         onChange={(e) => setPad({ ...pad, transitNumber: e.target.value })}
                       />
                       <input
                         className="input"
-                        placeholder="Institution number"
+                        placeholder="Institution number (3 digits)"
                         value={pad.institutionNumber}
                         onChange={(e) =>
                           setPad({ ...pad, institutionNumber: e.target.value })
@@ -454,22 +453,85 @@ function ClientCheckoutInner() {
                       />
                     </div>
                   </details>
-                  <label className="flex items-start gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="mt-1"
-                      checked={pad.accepted}
-                      onChange={(e) => setPad({ ...pad, accepted: e.target.checked })}
-                    />
-                    I authorize {preview.businessTradeName} to debit my account for the
-                    scheduled amounts under this Personal PAD Agreement.
-                  </label>
                 </div>
+
+                <div className="mt-8 max-h-72 overflow-y-auto rounded-sm border border-mist/15 bg-navy/40 p-4 text-xs leading-relaxed text-sage/90">
+                  <pre className="whitespace-pre-wrap font-sans">
+                    {renderPadAgreement({
+                      customerFullName:
+                        pad.payorName || `${preview.firstName} ${preview.lastName}`,
+                      customerAddress:
+                        preview.customerAddress || "Ontario, Canada",
+                      customerEmail: preview.email,
+                      merchantLegalName: preview.businessLegalName,
+                      merchantPhysicalAddress:
+                        preview.businessPhysicalAddress || "Ontario, Canada",
+                      merchantSupportEmail: preview.businessSupportEmail,
+                      merchantPhone: preview.businessPhone || "—",
+                      fiNumber: pad.institutionNumber || "—",
+                      transitNumber: pad.transitNumber || "—",
+                      accountLast4: pad.bankLast4 || "****",
+                      totalPrincipalCad: formatCad(preview.balanceCents),
+                      tenureMonths: plan.termMonths,
+                      monthlyInstallmentCad: formatCad(plan.monthlyAmountCents),
+                      firstDebitDate:
+                        (plan.startDate && String(plan.startDate).slice(0, 10)) ||
+                        new Date().toISOString().slice(0, 10),
+                      dayOfMonth: "scheduled due day",
+                    })}
+                  </pre>
+                </div>
+
+                <div className="mt-4 max-h-56 overflow-y-auto rounded-sm border border-mist/15 bg-navy/40 p-4 text-xs leading-relaxed text-sage/90">
+                  <pre className="whitespace-pre-wrap font-sans">
+                    {renderSettlementTerms({
+                      merchantLegalName: preview.businessLegalName,
+                      customerFullName:
+                        pad.payorName || `${preview.firstName} ${preview.lastName}`,
+                      totalInvoiceBalanceCad: formatCad(preview.balanceCents),
+                      monthlyAmountCad: formatCad(plan.monthlyAmountCents),
+                      tenureMonths: plan.termMonths,
+                    })}
+                  </pre>
+                </div>
+
+                <p className="mt-4 text-sm text-sage/80">{PAD_NSF_POLICY}</p>
+
+                <label className="mt-6 flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={pad.accepted}
+                    onChange={(e) => setPad({ ...pad, accepted: e.target.checked })}
+                  />
+                  I authorize {preview.businessLegalName} to debit my account under this
+                  Personal PAD Agreement (Payments Canada Rule H1). I waive fixed-amount
+                  pre-notification as described above. A confirmation PDF will be emailed
+                  immediately.
+                </label>
+                <label className="mt-3 flex items-start gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={pad.settlementAccepted}
+                    onChange={(e) =>
+                      setPad({ ...pad, settlementAccepted: e.target.checked })
+                    }
+                  />
+                  I acknowledge the Settlement Terms &amp; Cost of Credit Disclosure
+                  (0% APR / $0 platform fees to me) and that {PROVIDER.legalName} owns no
+                  interest in this debt.
+                </label>
 
                 <button
                   className="btn-primary mt-6"
                   type="button"
-                  disabled={busy || !pad.accepted || pad.bankLast4.length !== 4}
+                  disabled={
+                    busy ||
+                    !pad.accepted ||
+                    !pad.settlementAccepted ||
+                    pad.bankLast4.length !== 4
+                  }
                   onClick={acceptPad}
                 >
                   Accept PAD &amp; activate plan
