@@ -12,6 +12,7 @@ import {
 
 export const SESSION_COOKIE = "pymtx_session";
 const SESSION_DAYS = 14;
+export const MIN_PASSWORD_LENGTH = 8;
 
 export type AuthUser = {
   id: string;

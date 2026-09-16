@@ -133,6 +133,45 @@ export function magicLinkEmail(opts: {
   return { subject, text, html };
 }
 
+/** Staff password-reset link (Owners / Clerks / Admins). */
+export function passwordResetEmail(opts: {
+  name: string;
+  url: string;
+  minutes: number;
+}) {
+  const subject = "Reset your pymtx password";
+  const text = [
+    `Hi ${opts.name},`,
+    "",
+    "We received a request to reset your pymtx portal password.",
+    "",
+    opts.url,
+    "",
+    `This link expires in ${opts.minutes} minutes.`,
+    "",
+    "If you did not request this, you can ignore this email — your password will not change.",
+    "",
+    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
+  ].join("\n");
+
+  const html = brandedShell({
+    eyebrow: PROVIDER.brand,
+    title: "Reset your password",
+    bodyHtml: `
+      <p style="color:#9fb89a;line-height:1.5">Hi ${escapeHtml(opts.name)}, use this one-time link to choose a new password. It expires in ${opts.minutes} minutes.</p>
+      <p style="margin:28px 0">
+        <a href="${opts.url}" style="display:inline-block;background:#9fb89a;color:#071426;text-decoration:none;font-weight:700;padding:12px 18px">
+          Choose a new password
+        </a>
+      </p>
+      <p style="font-size:12px;color:#9fb89a;word-break:break-all">${escapeHtml(opts.url)}</p>
+      <p style="color:#9fb89a;line-height:1.5;margin-top:20px">If you did not request this, ignore this email.</p>
+    `,
+  });
+
+  return { subject, text, html };
+}
+
 function formatCad(cents: number) {
   return new Intl.NumberFormat("en-CA", {
     style: "currency",

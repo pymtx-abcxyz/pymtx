@@ -77,11 +77,23 @@ function LoginForm({ allowDemo }: { allowDemo: boolean }) {
             required
           />
         </label>
+        <div className="flex justify-end">
+          <Link className="link-accent text-sm" href="/forgot-password">
+            Forgot password?
+          </Link>
+        </div>
         {error ? <p className="text-sm text-coral">{error}</p> : null}
         <button className="btn-primary w-full" type="submit" disabled={busy}>
           {busy ? "Signing in…" : "Sign in"}
         </button>
       </form>
+
+      <p className="mt-6 text-sm text-sage/85">
+        New merchant?{" "}
+        <Link className="link-accent" href="/register">
+          Create an account
+        </Link>
+      </p>
 
       {allowDemo ? (
         <div className="mt-8 border-t border-mist/10 pt-6 text-xs leading-relaxed text-sage/70">

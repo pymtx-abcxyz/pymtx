@@ -324,11 +324,26 @@ model User {
   businessId   String?
   business     Business? @relation(fields: [businessId], references: [id])
   sessions     Session[]
+  passwordResetTokens PasswordResetToken[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   @@index([role])
   @@index([businessId])
+}
+
+/// One-time staff password-reset tokens (email link).
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 /// Opaque session tokens (httpOnly cookie pymtx_session).
