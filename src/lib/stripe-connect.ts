@@ -138,8 +138,11 @@ async function createConnectedMerchantAccountV2(params: {
   };
   dashboard: MerchantDashboard;
   provision?: string;
+  /** Custom/provision accounts may attest ToS; Express leaves that to Stripe-hosted onboarding. */
+  attestTermsOfService?: boolean;
 }): Promise<string> {
-  const { business, dashboard, provision } = params;
+  const { business, dashboard, provision, attestTermsOfService = false } =
+    params;
   const nowIso = new Date().toISOString();
 
   try {
@@ -178,15 +181,19 @@ async function createConnectedMerchantAccountV2(params: {
             country: "CA",
           },
         },
-        attestations: {
-          terms_of_service: {
-            account: {
-              date: nowIso,
-              ip: "127.0.0.1",
-              user_agent: "Pymtx/smoke",
-            },
-          },
-        },
+        ...(attestTermsOfService
+          ? {
+              attestations: {
+                terms_of_service: {
+                  account: {
+                    date: nowIso,
+                    ip: "127.0.0.1",
+                    user_agent: "Pymtx/smoke",
+                  },
+                },
+              },
+            }
+          : {}),
       },
       configuration: {
         merchant: {
@@ -348,6 +355,7 @@ export async function provisionTestConnectAccount(businessId: string) {
       business,
       dashboard: "none",
       provision: "test_smoke",
+      attestTermsOfService: true,
     });
   }
 
