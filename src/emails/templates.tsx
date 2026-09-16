@@ -52,7 +52,8 @@ function Shell(props: {
           <Section>{props.children}</Section>
           <Hr style={{ borderColor: "rgba(159,184,154,0.25)", margin: "28px 0 12px" }} />
           <Text style={{ color: sage, fontSize: 11, lineHeight: "1.5", margin: 0 }}>
-            Powered by pymtx
+            1001527397 ONTARIO INC. · MB055-70 Taunton Rd E, Whitby, ON L1R 3L5 ·
+            info@pymtx.com
           </Text>
         </Container>
       </Body>

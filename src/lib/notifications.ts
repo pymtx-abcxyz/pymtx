@@ -1,18 +1,19 @@
 /**
  * Path B / Rule H1 customer notifications.
- * Merchant of Record = business trade name on From; pymtx is platform only.
- * HTML via React Email; PAD confirmation includes Rule H1 PDF attachment.
+ * From: merchant trade name.
+ * Statutory attribution: 1001527397 ONTARIO INC. only (no operating brand).
  */
 import { render } from "@react-email/render";
 import { createElement } from "react";
-import { prisma } from "./db";
-import { CaslMessageKind } from "./domain";
 import {
   NsfAlertEmail,
   PadConfirmationEmail,
   ReceiptEmail,
   SkipConfirmationEmail,
 } from "@/emails/templates";
+import { gateOntarioDebtorNotice } from "./compliance/ontarioHours";
+import { prisma } from "./db";
+import { CaslMessageKind } from "./domain";
 import {
   nsfAlertEmail,
   padConfirmationEmail,
@@ -20,9 +21,16 @@ import {
   sendEmail,
   skipConfirmationEmail,
   type EmailAttachment,
+  type SendEmailResult,
 } from "./email";
+import { caslAttributionBlock, PROVIDER } from "./legal";
 import { buildPadMandatePdf, pdfToBase64 } from "./pad-mandate-pdf";
-import { caslAttributionBlock } from "./legal";
+
+/** Auth + Rule H1 written confirmation may send outside CDSSA contact hours. */
+const CONTACT_WINDOW_EXEMPT = new Set<string>([
+  CaslMessageKind.MAGIC_LINK,
+  CaslMessageKind.PAD_CONFIRMATION,
+]);
 
 async function persistAndSend(params: {
   businessId: string;
@@ -35,7 +43,26 @@ async function persistAndSend(params: {
   html: string;
   text: string;
   attachments?: EmailAttachment[];
-}) {
+  merchantLegalName: string;
+  merchantAddress?: string | null;
+  merchantSupportEmail?: string | null;
+  merchantPhone?: string | null;
+}): Promise<SendEmailResult | { ok: true; provider: "deferred" }> {
+  const attribution = caslAttributionBlock({
+    legalName: params.merchantLegalName,
+    address: params.merchantAddress,
+    supportEmail: params.merchantSupportEmail,
+    phone: params.merchantPhone,
+  });
+  const text = [
+    params.text,
+    "",
+    "—",
+    `Sent on behalf of ${params.merchantLegalName}.`,
+    `Serviced technically by ${PROVIDER.legalName}, ${PROVIDER.addressLine} (${PROVIDER.email}).`,
+    attribution,
+  ].join("\n");
+
   await prisma.caslMessage.create({
     data: {
       businessId: params.businessId,
@@ -48,11 +75,18 @@ async function persistAndSend(params: {
     },
   });
 
+  if (!CONTACT_WINDOW_EXEMPT.has(params.kind)) {
+    const gate = gateOntarioDebtorNotice(`notice:${params.kind}`);
+    if (!gate.ok) {
+      return { ok: true, provider: "deferred" };
+    }
+  }
+
   const sent = await sendEmail({
     to: params.toEmail,
     subject: params.subject,
     html: params.html,
-    text: params.text,
+    text,
     fromName: params.fromName,
     attachments: params.attachments,
   });
@@ -61,18 +95,6 @@ async function persistAndSend(params: {
     console.error(`[notifications] ${params.kind} send failed:`, sent.error);
   }
   return sent;
-}
-
-function withCaslFooter(
-  text: string,
-  merchant: {
-    legalName: string;
-    address?: string | null;
-    supportEmail?: string | null;
-    phone?: string | null;
-  },
-) {
-  return `${text}\n\n—\n${caslAttributionBlock(merchant)}`;
 }
 
 export async function sendPadConfirmationNotice(params: {
@@ -105,7 +127,6 @@ export async function sendPadConfirmationNotice(params: {
     monthlyAmountCents: params.monthlyAmountCents,
     bankLast4: params.bankLast4,
   });
-
   const html = await render(
     createElement(PadConfirmationEmail, {
       tradeName: params.tradeName,
@@ -115,7 +136,6 @@ export async function sendPadConfirmationNotice(params: {
       bankLast4: params.bankLast4,
     }),
   );
-
   const pdfBytes = await buildPadMandatePdf({
     tradeName: params.tradeName,
     legalName: merchantLegal,
@@ -147,12 +167,11 @@ export async function sendPadConfirmationNotice(params: {
     subject: tpl.subject,
     bodyPreview: tpl.text.slice(0, 280),
     html,
-    text: withCaslFooter(tpl.text, {
-      legalName: merchantLegal,
-      address: params.physicalAddress,
-      supportEmail: params.supportEmail,
-      phone: params.phone,
-    }),
+    text: tpl.text,
+    merchantLegalName: merchantLegal,
+    merchantAddress: params.physicalAddress,
+    merchantSupportEmail: params.supportEmail,
+    merchantPhone: params.phone,
     attachments: [
       {
         filename: `pad-confirmation-${params.invoiceRef}.pdf`,
@@ -167,6 +186,7 @@ export async function sendReceiptNotice(params: {
   businessId: string;
   customerId: string;
   tradeName: string;
+  legalName?: string;
   toEmail: string;
   invoiceRef: string;
   amountCents: number;
@@ -199,7 +219,8 @@ export async function sendReceiptNotice(params: {
     subject: tpl.subject,
     bodyPreview: tpl.text.slice(0, 280),
     html,
-    text: withCaslFooter(tpl.text, { legalName: params.tradeName }),
+    text: tpl.text,
+    merchantLegalName: params.legalName || params.tradeName,
   });
 }
 
@@ -207,6 +228,7 @@ export async function sendNsfAlertNotice(params: {
   businessId: string;
   customerId: string;
   tradeName: string;
+  legalName?: string;
   toEmail: string;
   invoiceRef: string;
   amountCents: number;
@@ -224,7 +246,8 @@ export async function sendNsfAlertNotice(params: {
     subject: tpl.subject,
     bodyPreview: tpl.text.slice(0, 280),
     html,
-    text: withCaslFooter(tpl.text, { legalName: params.tradeName }),
+    text: tpl.text,
+    merchantLegalName: params.legalName || params.tradeName,
   });
 }
 
@@ -232,6 +255,7 @@ export async function sendSkipConfirmationNotice(params: {
   businessId: string;
   customerId: string;
   tradeName: string;
+  legalName?: string;
   toEmail: string;
   amountCents: number;
   skippedDue: string;
@@ -250,6 +274,7 @@ export async function sendSkipConfirmationNotice(params: {
     subject: tpl.subject,
     bodyPreview: tpl.text.slice(0, 280),
     html,
-    text: withCaslFooter(tpl.text, { legalName: params.tradeName }),
+    text: tpl.text,
+    merchantLegalName: params.legalName || params.tradeName,
   });
 }

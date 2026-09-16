@@ -80,7 +80,17 @@ export async function POST(req: NextRequest) {
   }
   const result = await executeSkip(paymentPlanId);
   if (!result.success) {
-    return NextResponse.json(result, { status: 400 });
+    const message = result.error || "Skip denied";
+    const noticeOrCooldown =
+      /business days|Next skip available|180|cooldown|notice/i.test(message);
+    return NextResponse.json(
+      {
+        success: false,
+        error: message,
+        code: noticeOrCooldown ? "SKIP_WINDOW_VIOLATION" : "SKIP_DENIED",
+      },
+      { status: 400 },
+    );
   }
   return NextResponse.json(result);
 }

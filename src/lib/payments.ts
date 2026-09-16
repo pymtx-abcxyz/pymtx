@@ -11,6 +11,10 @@ import {
   applyInstallmentFailure,
   applyInstallmentSuccess,
 } from "./settlement";
+import {
+  assertConnectedAccountDirectCharge,
+  assertNoDestinationChargePayload,
+} from "./path-b";
 
 function isDemoMode() {
   return (
@@ -56,6 +60,10 @@ export async function chargeInstallment(installmentId: string) {
   if (!business.stripeAccountId || !business.stripeChargesEnabled) {
     throw new Error("Business Stripe Connect account is not ready for charges");
   }
+  assertConnectedAccountDirectCharge(
+    business.stripeAccountId,
+    "chargeInstallment",
+  );
   if (!plan.stripeCustomerId || !plan.stripePaymentMethodId) {
     throw new Error("Customer PAD payment method is not on file");
   }
@@ -131,29 +139,33 @@ export async function chargeInstallment(installmentId: string) {
   }
 
   try {
-    const paymentIntent = await stripe.paymentIntents.create(
-      {
-        amount: installment.amountCents,
-        currency: "cad",
-        customer: plan.stripeCustomerId,
-        payment_method: plan.stripePaymentMethodId,
-        payment_method_types: ["acss_debit"],
-        confirm: true,
-        application_fee_amount: fee,
-        mandate: plan.stripeMandateId || undefined,
-        metadata: {
-          pymtx_installment_id: installmentId,
-          pymtx_plan_id: plan.id,
-          pymtx_invoice_id: plan.invoiceId,
-          pymtx_attempt_id: attempt.id,
-          zero_custody: "true",
-        },
+    const piPayload = {
+      amount: installment.amountCents,
+      currency: "cad",
+      customer: plan.stripeCustomerId,
+      payment_method: plan.stripePaymentMethodId,
+      payment_method_types: ["acss_debit"],
+      confirm: true,
+      application_fee_amount: fee,
+      mandate: plan.stripeMandateId || undefined,
+      metadata: {
+        pymtx_installment_id: installmentId,
+        pymtx_plan_id: plan.id,
+        pymtx_invoice_id: plan.invoiceId,
+        pymtx_attempt_id: attempt.id,
+        zero_custody: "true",
+        path_b: "true",
       },
-      {
-        stripeAccount: business.stripeAccountId,
-        idempotencyKey,
-      },
+    };
+    assertNoDestinationChargePayload(
+      piPayload as unknown as Record<string, unknown>,
+      "chargeInstallment",
     );
+
+    const paymentIntent = await stripe.paymentIntents.create(piPayload, {
+      stripeAccount: business.stripeAccountId,
+      idempotencyKey,
+    });
 
     await prisma.debitAttempt.update({
       where: { id: attempt.id },

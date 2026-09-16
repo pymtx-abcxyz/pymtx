@@ -1,4 +1,5 @@
 import { appUrl } from "./env";
+import { PROVIDER } from "./legal/provider";
 
 export type EmailAttachment = {
   filename: string;
@@ -91,7 +92,7 @@ function brandedShell(opts: {
         <h1 style="font-size:22px;line-height:1.3;color:#e8eee9;margin:12px 0 16px">${escapeHtml(opts.title)}</h1>
         ${opts.bodyHtml}
         <p style="margin-top:28px;font-size:11px;color:#9fb89a;line-height:1.5">
-          ${opts.footerNote || ""}Powered by pymtx · ${escapeHtml(appUrl())}
+          ${opts.footerNote || ""}${escapeHtml(PROVIDER.legalName)} · ${escapeHtml(PROVIDER.addressLine)} · ${escapeHtml(PROVIDER.email)}
         </p>
       </div>
     </div>
@@ -112,11 +113,11 @@ export function magicLinkEmail(opts: {
     `This link expires in ${opts.minutes} minutes.`,
     "",
     `If you did not request this, you can ignore this email.`,
-    `Powered by pymtx · ${appUrl()}`,
+    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
   ].join("\n");
 
   const html = brandedShell({
-    eyebrow: "pymtx",
+    eyebrow: PROVIDER.legalName,
     title: `Sign in to settle with ${opts.tradeName}`,
     bodyHtml: `
       <p style="color:#9fb89a;line-height:1.5">Use this one-time link. It expires in ${opts.minutes} minutes.</p>
@@ -158,7 +159,7 @@ export function padConfirmationEmail(opts: {
     "",
     "You may cancel with at least 10 days' written notice before a scheduled debit (Payments Canada Rule H1).",
     "",
-    `Powered by pymtx · ${appUrl()}`,
+    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
   ].join("\n");
 
   const html = brandedShell({
@@ -196,7 +197,7 @@ export function receiptEmail(opts: {
     `Installment #${opts.sequence}: ${formatCad(opts.amountCents)}`,
     `Date: ${paid}`,
     "",
-    `Powered by pymtx · ${appUrl()}`,
+    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
   ].join("\n");
 
   const html = brandedShell({
@@ -235,7 +236,7 @@ export function nsfAlertEmail(opts: {
     "",
     retryLine,
     "",
-    `Powered by pymtx · ${appUrl()}`,
+    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
   ].join("\n");
 
   const html = brandedShell({
@@ -268,7 +269,7 @@ export function skipConfirmationEmail(opts: {
     `A replacement payment (seq ${opts.appendedSequence}) is scheduled for ${opts.appendedDue}.`,
     `Next skip available ${opts.nextSkipAvailable}.`,
     "",
-    `Powered by pymtx · ${appUrl()}`,
+    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
   ].join("\n");
 
   const html = brandedShell({

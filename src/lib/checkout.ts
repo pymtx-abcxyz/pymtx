@@ -116,11 +116,20 @@ export async function getCheckoutByInvite(token: string): Promise<CheckoutPrevie
           monthlyAmountCents: existing.monthlyAmountCents,
         }
       : null,
-    terms: ([6, 12, 18] as const).map((months) => ({
-      months,
-      monthlyCents: Math.ceil(total / months),
-      totalCents: total,
-    })),
+    terms: ([6, 12, 18] as const).map((months) => {
+      const schedule = buildInstallmentSchedule({
+        totalCents: total,
+        termMonths: months,
+        startDate: new Date(),
+      });
+      const monthlyCents = schedule[0]?.amountCents ?? 0;
+      // CDSSA: schedule sums exactly to principal — never inflate via ceil.
+      return {
+        months,
+        monthlyCents,
+        totalCents: schedule.reduce((s, i) => s + i.amountCents, 0),
+      };
+    }),
   };
 }
 

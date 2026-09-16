@@ -262,7 +262,7 @@ function ClientCheckoutInner() {
       <main className="mx-auto max-w-3xl px-6 py-10">
         <SectionHeading
           title="Settle your balance"
-          subtitle="Choose a plan and authorize a Personal PAD. Communications come from your creditor — Pymtx never holds your payment."
+          subtitle="Choose a plan and authorize a Personal PAD. Communications come from your creditor — 1001527397 ONTARIO INC. never holds your payment."
         />
 
         {!preview ? (
@@ -608,13 +608,14 @@ function ClientCheckoutInner() {
           </>
         )}
       </main>
-      <footer className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 pb-10 pt-2 text-xs text-sage/55">
+      <footer className="mx-auto flex max-w-3xl flex-col gap-2 px-6 pb-10 pt-2 text-xs text-sage/55 sm:flex-row sm:items-center sm:justify-between">
         <span>
-          Debits are drawn by your creditor as Merchant of Record. Pymtx never
-          holds principal (Path B / zero-custody).
+          Debits are drawn by your creditor as Merchant of Record. 1001527397
+          ONTARIO INC. never holds principal (Path B / zero-custody).
         </span>
-        <span className="shrink-0 font-semibold tracking-[0.08em] text-sage/70">
-          Powered by pymtx
+        <span className="shrink-0 text-sage/70">
+          Technical processing: 1001527397 ONTARIO INC. · MB055-70 Taunton Rd E,
+          Whitby, ON L1R 3L5 · info@pymtx.com
         </span>
       </footer>
     </div>

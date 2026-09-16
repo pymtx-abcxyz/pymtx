@@ -7,15 +7,18 @@ import {
   startOfDay,
 } from "date-fns";
 import { AgingBucket } from "./domain";
+import { isOntarioStatutoryHoliday } from "./compliance/ontarioHours";
 
-/** Ontario business-day helper (excludes Sat/Sun; statutory holidays approximated weekends-only for MVP). */
+/** Ontario business-day helper (excludes Sat/Sun and Ontario statutory holidays). */
 export function addBusinessDays(from: Date, days: number): Date {
   let cursor = startOfDay(from);
   let remaining = days;
   while (remaining > 0) {
     cursor = addDays(cursor, 1);
     const dow = cursor.getDay();
-    if (dow !== 0 && dow !== 6) remaining -= 1;
+    if (dow === 0 || dow === 6) continue;
+    if (isOntarioStatutoryHoliday(cursor)) continue;
+    remaining -= 1;
   }
   return cursor;
 }
@@ -29,7 +32,9 @@ export function businessDaysUntil(from: Date, to: Date): number {
   while (isBefore(cursor, end)) {
     cursor = addDays(cursor, 1);
     const dow = cursor.getDay();
-    if (dow !== 0 && dow !== 6) count += 1;
+    if (dow === 0 || dow === 6) continue;
+    if (isOntarioStatutoryHoliday(cursor)) continue;
+    count += 1;
   }
   return count;
 }
