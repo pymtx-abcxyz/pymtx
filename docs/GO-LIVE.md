@@ -47,6 +47,27 @@ curl -s https://pymtx.com/api/health
 curl -s https://pymtx.com/api/admin/golive
 ```
 
+## Stripe cutover (scripted)
+
+From a machine that has your real keys (never commit them):
+
+```bash
+export STRIPE_SECRET_KEY=sk_test_…   # or sk_live_…
+export NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_…  # matching mode
+export NEXT_PUBLIC_APP_URL=https://pymtx.com
+export VERCEL_TOKEN=…               # for --apply-vercel
+export VERCEL_ORG_ID=team_0E9QQc4gJv0zKV4Vt6OqspNy
+export VERCEL_PROJECT_ID=prj_BYQ5OjJ9JmLNfRe7NJqKnaOgyf4t
+
+npm run stripe:golive                 # validate + create Connect webhook
+npm run stripe:golive -- --apply-vercel
+# for live CAD PADs:
+npm run stripe:golive -- --live-only --apply-vercel
+```
+
+Then redeploy production and confirm `curl -s https://pymtx.com/api/health` shows
+`stripeSecret` / `stripePublishable` as `test` or `live` (not `placeholder`) and `webhook: ok`.
+
 ## First live Path B smoke
 
 1. Owner signs in → Connect Canadian bank until charges enabled  

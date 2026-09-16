@@ -15,7 +15,8 @@
     "inngest:dev": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
     "job:daily-debit": "tsx scripts/run-daily-debit.ts",
     "smoke:hardening": "tsx scripts/smoke-hardening.ts",
-    "smoke:step8": "tsx scripts/smoke-step8.ts"
+    "smoke:step8": "tsx scripts/smoke-step8.ts",
+    "stripe:golive": "tsx scripts/stripe-golive.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
