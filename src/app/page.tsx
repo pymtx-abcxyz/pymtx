@@ -8,7 +8,7 @@ export default function HomePage() {
       <div className="absolute inset-0 pymtx-grain" aria-hidden />
 
       <header className="portal-nav sticky top-0 z-20">
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-2 sm:py-3">
           <Link
             href="/"
             className="text-[length:var(--text-xl)] text-text-primary"
@@ -22,16 +22,16 @@ export default function HomePage() {
           >
             <Link
               href="/login"
-              className="hidden text-text-secondary hover:text-text-primary sm:inline"
+              className="hidden text-text-secondary hover:text-text-primary sm:inline-flex sm:items-center"
             >
               Sign in
             </Link>
-            <Link href="/register" className="btn-ghost !px-3 !py-2 text-[length:var(--text-sm)]">
+            <Link href="/register" className="btn-ghost btn-toolbar">
               Register
             </Link>
             <Link
               href="/login/customer"
-              className="btn-primary !px-3 !py-2 text-[length:var(--text-sm)]"
+              className="btn-primary btn-toolbar"
             >
               Customer
             </Link>

@@ -3,10 +3,11 @@
  * WCAG 2.1 AA/AAA calibrated. Semantic only; no component rules here.
  *
  * Light defaults. Dark via prefers-color-scheme. High contrast via prefers-contrast.
+ * Type scale uses rem so Dynamic Type / browser text-size settings apply.
  */
 
 :root {
-  /* —— Canvas & surfaces —— */
+  /* —— Canvas & surfaces (semantic, Light Mode) —— */
   --canvas: #f5f7f5;
   --surface-card: #ffffff;
   --surface-subtle: #e9eee8;
@@ -23,8 +24,8 @@
   --text-on-primary: #ffffff;
   --text-on-danger: #ffffff;
 
-  /* —— Interactive —— */
-  --action-primary: #3b5b53; /* CTAs / active / key indicators only */
+  /* —— Interactive (brand accent reserved for primary actions) —— */
+  --action-primary: #3b5b53;
   --action-primary-hover: #2e4741;
   --focus-ring: #202b31;
 
@@ -38,53 +39,48 @@
   --success: #3b5b53;
   --warning: #8a6a2f;
 
-  /* —— Materials —— */
-  --nav-blur: blur(16px);
-  --nav-bg: rgba(var(--surface-card-rgb), 0.8);
+  /* —— Materials (HIG: content-first, chrome defers) —— */
+  --nav-blur: blur(20px);
+  --nav-bg: rgba(var(--surface-card-rgb), 0.72);
+  --material-regular: color-mix(in srgb, var(--surface-card) 86%, transparent);
+  --material-thick: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  --shadow-elevated: 0 0.5rem 1.75rem color-mix(in srgb, var(--text-primary) 6%, transparent);
   --radius-control: 0.75rem;
   --radius-panel: 1rem;
   --space-focus-offset: 0.125rem;
 
-  /* —— Type scale (rem; honors user default) —— */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: clamp(1.35rem, 1.1rem + 0.8vw, 1.75rem);
-  --text-3xl: clamp(1.65rem, 1.2rem + 1.4vw, 2.25rem);
-  --text-display: clamp(2.25rem, 1.4rem + 3.2vw, 4.5rem);
+  /* —— Spacing (8pt grid) —— */
+  --space-1: 0.25rem; /* 4 */
+  --space-2: 0.5rem; /* 8 */
+  --space-3: 0.75rem; /* 12 */
+  --space-4: 1rem; /* 16 */
+  --space-5: 1.25rem; /* 20 */
+  --space-6: 1.5rem; /* 24 */
+  --space-8: 2rem; /* 32 */
+  --space-10: 2.5rem; /* 40 */
+  --space-12: 3rem; /* 48 */
 
-  /* —— Legacy aliases (bridge until components fully migrate) —— */
+  /* —— Touch / pointer (HIG ≥44×44 pt) —— */
+  --touch-min: 2.75rem; /* 44px at 16px root */
+
+  /* —— Type scale (rem; honors user default ≈ Dynamic Type) —— */
+  --text-caption2: 0.6875rem;
+  --text-xs: 0.75rem; /* caption */
+  --text-sm: 0.875rem; /* footnote / subheadline */
+  --text-base: 1rem; /* body */
+  --text-lg: 1.125rem; /* callout */
+  --text-xl: 1.25rem; /* headline */
+  --text-2xl: clamp(1.35rem, 1.1rem + 0.8vw, 1.75rem); /* title2/title3 */
+  --text-3xl: clamp(1.65rem, 1.2rem + 1.4vw, 2.25rem); /* title */
+  --text-display: clamp(2.25rem, 1.4rem + 3.2vw, 4.5rem); /* largeTitle */
+
+  /* —— Motion —— */
+  --motion-duration: 0.2s;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* —— Compat aliases (read-only bridges) —— */
   --background: var(--canvas);
   --foreground: var(--text-primary);
-  --mist: var(--text-primary);
-  --sage: var(--text-secondary);
-  --sage-bright: var(--action-primary);
-  --ink: var(--text-primary);
-  --ink-soft: var(--text-muted);
-  --navy: var(--text-primary);
-  --navy-deep: var(--canvas);
-  --paper: var(--surface-card);
-  --panel: var(--surface-subtle);
-  --line: var(--border-subtle);
-  --line-strong: var(--border-strong);
-  --coral: var(--danger);
-  --gold: var(--warning);
-  --pine: var(--action-primary);
-  --pine-deep: var(--action-primary-hover);
-  --fog: var(--surface-subtle);
-  --ash: var(--text-muted);
-  --muted-teal: var(--text-secondary);
-  --deep-teal: var(--action-primary);
-  --slate: var(--text-secondary);
-  --charcoal-blue: var(--text-primary);
-  --amber: var(--action-primary);
-  --signal: var(--action-primary);
-  --cream: var(--surface-card);
-  --violet: var(--action-primary);
-  --charcoal: var(--text-primary);
-  --charcoal-deep: var(--canvas);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -115,7 +111,10 @@
     --success: #8ebd97;
     --warning: #e0c070;
 
-    --nav-bg: rgba(var(--surface-card-rgb), 0.8);
+    --nav-bg: rgba(var(--surface-card-rgb), 0.72);
+    --material-regular: color-mix(in srgb, var(--surface-card) 78%, transparent);
+    --material-thick: color-mix(in srgb, var(--surface-card) 90%, transparent);
+    --shadow-elevated: 0 0.5rem 1.75rem color-mix(in srgb, #000 35%, transparent);
   }
 }
 
@@ -124,6 +123,8 @@
     --border-subtle: currentColor;
     --border-strong: currentColor;
     --nav-bg: var(--surface-card);
+    --material-regular: var(--surface-card);
+    --material-thick: var(--surface-card);
   }
 }
 

@@ -130,7 +130,7 @@ export function OnboardingChecklist({
           {(snap.complete || snap.doneCount > 0) && (
             <button
               type="button"
-              className="btn-ghost !px-3 !py-2 text-[length:var(--text-sm)]"
+              className="btn-ghost btn-toolbar"
               onClick={dismiss}
             >
               Dismiss
@@ -200,14 +200,14 @@ export function OnboardingChecklist({
                 {step.id === "invite" && step.done && inviteHref ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     <a
-                      className="btn-ghost !py-2 text-[length:var(--text-sm)]"
+                      className="btn-ghost btn-toolbar"
                       href={inviteHref}
                     >
                       Open invite
                     </a>
                     <button
                       type="button"
-                      className="btn-ghost !py-2 text-[length:var(--text-sm)]"
+                      className="btn-ghost btn-toolbar"
                       onClick={copyInvite}
                     >
                       {copied ? "Copied" : "Copy link"}
@@ -249,12 +249,12 @@ function StepActions({
   onOpenInvite: () => void;
 }) {
   const primary = isCurrent ? "btn-primary" : "btn-ghost";
-  const size = `${primary} !py-2 text-[length:var(--text-sm)]`;
+  const size = `${primary} btn-toolbar`;
 
   if (id === "connect") {
     if (!canConnect) {
       return (
-        <a className="btn-ghost !py-2 text-[length:var(--text-sm)]" href="/business/settings">
+        <a className="btn-ghost btn-toolbar" href="/business/settings">
           Open settings
         </a>
       );
@@ -286,7 +286,7 @@ function StepActions({
         </button>
         <button
           type="button"
-          className="btn-ghost !py-2 text-[length:var(--text-sm)]"
+          className="btn-ghost btn-toolbar"
           disabled={busy}
           onClick={onUploadSample}
           aria-busy={busy}
@@ -306,7 +306,7 @@ function StepActions({
       ) : null}
       <button
         type="button"
-        className="btn-ghost !py-2 text-[length:var(--text-sm)]"
+        className="btn-ghost btn-toolbar"
         disabled={!inviteHref}
         onClick={onCopyInvite}
       >

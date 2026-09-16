@@ -13,15 +13,15 @@ export function LegalShell({
   return (
     <PortalShell>
       <header className="portal-nav sticky top-0 z-20">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-4">
-          <Link href="/" className="text-[length:var(--text-xl)] text-text-primary">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-2 sm:py-3">
+          <Link href="/" className="text-[length:var(--text-xl)] text-text-primary" aria-label="pymtx home">
             <PymtxLogotype />
           </Link>
-          <nav className="flex flex-wrap gap-4 text-[length:var(--text-sm)] font-medium text-text-secondary">
-            <Link href="/legal/saas" className="hover:text-text-primary">
+          <nav className="flex flex-wrap gap-1 text-[length:var(--text-sm)] font-medium text-text-secondary">
+            <Link href="/legal/saas" className="rounded-md px-3 hover:bg-surface-subtle hover:text-text-primary">
               SaaS Agreement
             </Link>
-            <Link href="/legal/privacy" className="hover:text-text-primary">
+            <Link href="/legal/privacy" className="rounded-md px-3 hover:bg-surface-subtle hover:text-text-primary">
               Privacy &amp; CASL
             </Link>
           </nav>

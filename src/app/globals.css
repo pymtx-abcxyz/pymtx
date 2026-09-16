@@ -17,32 +17,8 @@
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);
   --color-danger: var(--danger);
-  --color-navy: var(--navy);
-  --color-navy-deep: var(--navy-deep);
-  --color-ink: var(--ink);
-  --color-ink-soft: var(--ink-soft);
-  --color-sage: var(--sage);
-  --color-sage-bright: var(--sage-bright);
-  --color-pine: var(--pine);
-  --color-pine-deep: var(--pine-deep);
-  --color-mist: var(--mist);
-  --color-fog: var(--fog);
-  --color-paper: var(--paper);
-  --color-panel: var(--panel);
-  --color-gold: var(--gold);
-  --color-coral: var(--coral);
   --color-success: var(--success);
   --color-warning: var(--warning);
-  --color-ash: var(--ash);
-  --color-muted-teal: var(--muted-teal);
-  --color-deep-teal: var(--deep-teal);
-  --color-slate: var(--slate);
-  --color-charcoal-blue: var(--charcoal-blue);
-  --color-amber: var(--amber);
-  --color-signal: var(--signal);
-  --color-cream: var(--cream);
-  --color-violet: var(--violet);
-  --color-charcoal: var(--charcoal);
   --font-display: var(--font-syne);
   --font-sans: var(--font-figtree);
 }
@@ -86,21 +62,21 @@ body {
   color: var(--text-primary);
 }
 
-/* Elevated surface (auth / panels) — HIG material, not brand fill */
+/* Elevated surface — HIG regularMaterial analogue (defers to content) */
 .glass-panel {
   position: relative;
   border-radius: var(--radius-panel);
   border: 1px solid var(--border-subtle);
-  background: color-mix(in srgb, var(--surface-card) 92%, transparent);
-  box-shadow: 0 0.5rem 1.5rem color-mix(in srgb, var(--text-primary) 8%, transparent);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--material-regular);
+  box-shadow: var(--shadow-elevated);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   overflow: hidden;
 }
 
 .field-label {
   display: block;
-  margin-bottom: 0.35rem;
+  margin-bottom: var(--space-2);
   font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-secondary);
@@ -108,11 +84,11 @@ body {
 
 .metric-tile {
   border-top: 1px solid var(--border-subtle);
-  padding-top: 1rem;
+  padding-top: var(--space-4);
 }
 
 .section-block {
-  margin-top: 3.5rem;
+  margin-top: var(--space-12);
 }
 
 .data-table {
@@ -142,11 +118,15 @@ body {
 .plan-option {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
-  padding: 1.25rem 1rem;
+  padding: var(--space-5) var(--space-4);
+  min-height: var(--touch-min);
   text-align: left;
   background: var(--surface-card);
   color: var(--text-primary);
-  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color var(--motion-duration) var(--motion-ease),
+    background var(--motion-duration) var(--motion-ease),
+    box-shadow var(--motion-duration) var(--motion-ease);
 }
 
 .plan-option:hover {
@@ -171,7 +151,7 @@ body {
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
   background: var(--surface-subtle);
-  padding: 1rem;
+  padding: var(--space-4);
   font-size: var(--text-xs);
   line-height: 1.6;
   color: var(--text-secondary);
@@ -180,16 +160,20 @@ body {
 .checkbox-row {
   display: flex;
   align-items: flex-start;
-  gap: 0.65rem;
+  gap: var(--space-3);
+  min-height: var(--touch-min);
+  padding-block: var(--space-2);
   font-size: var(--text-sm);
   line-height: 1.45;
   color: var(--text-secondary);
+  cursor: pointer;
 }
 
 .checkbox-row input[type="checkbox"] {
-  margin-top: 0.2rem;
-  width: 1rem;
-  height: 1rem;
+  margin-top: 0.15rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  min-width: 1.25rem;
   accent-color: var(--action-primary);
   flex-shrink: 0;
 }
@@ -270,8 +254,14 @@ body {
 .portal-nav {
   border-bottom: 1px solid var(--border-subtle);
   background: var(--nav-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.portal-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--touch-min);
 }
 
 /* Primary CTA only — brand action color restricted here */
@@ -279,16 +269,18 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
   border: 1px solid transparent;
   border-radius: var(--radius-control);
   background: var(--action-primary);
   color: var(--text-on-primary);
-  padding: 0.75rem 1.25rem;
+  padding: var(--space-3) var(--space-5);
   font-size: var(--text-base);
   font-weight: 700;
   letter-spacing: 0.01em;
-  transition: background 0.15s ease;
+  transition: background var(--motion-duration) var(--motion-ease);
 }
 
 .btn-primary:hover {
@@ -304,15 +296,19 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
   color: var(--text-primary);
-  padding: 0.75rem 1.25rem;
+  padding: var(--space-3) var(--space-5);
   font-size: var(--text-base);
   font-weight: 600;
   background: var(--surface-card);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition:
+    border-color var(--motion-duration) var(--motion-ease),
+    background var(--motion-duration) var(--motion-ease);
 }
 
 .btn-ghost:hover {
@@ -325,10 +321,17 @@ body {
   cursor: not-allowed;
 }
 
+/* Dense toolbars / secondary actions — still ≥44pt tall */
+.btn-toolbar {
+  padding-inline: var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-1);
   font-size: var(--text-xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -358,14 +361,17 @@ body {
 
 .input {
   width: 100%;
+  min-height: var(--touch-min);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-control);
   background: var(--surface-subtle);
-  padding: 0.75rem 0.9rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--text-primary);
   font-size: var(--text-base);
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    border-color var(--motion-duration) var(--motion-ease),
+    box-shadow var(--motion-duration) var(--motion-ease);
 }
 
 .input::placeholder {
@@ -419,7 +425,7 @@ table th {
   border-left: 0.2rem solid var(--text-secondary);
   border-radius: var(--radius-control);
   background: var(--surface-subtle);
-  padding: 0.75rem 1rem;
+  padding: var(--space-3) var(--space-4);
   font-size: var(--text-sm);
   color: var(--text-primary);
 }

@@ -257,7 +257,7 @@ function BusinessPortalInner() {
         actions={
           user ? (
             <button
-              className="btn-ghost !px-3 !py-2 text-[length:var(--text-sm)]"
+              className="btn-ghost btn-toolbar"
               type="button"
               onClick={logout}
             >

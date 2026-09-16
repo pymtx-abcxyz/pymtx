@@ -174,11 +174,12 @@ export function PortalNav({
 }) {
   return (
     <header className="portal-nav sticky top-0 z-20">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-2 sm:py-3">
         <div className="flex min-w-0 flex-wrap items-baseline gap-3">
           <Link
             href="/"
             className="shrink-0 text-[length:var(--text-xl)] text-text-primary"
+            aria-label="pymtx home"
           >
             <PymtxLogotype />
           </Link>
@@ -186,16 +187,16 @@ export function PortalNav({
             {portal}
           </span>
         </div>
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-4 gap-y-2">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1">
           <nav
-            className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-[length:var(--text-sm)] font-medium text-text-secondary"
+            className="flex flex-wrap items-center justify-end gap-x-1 gap-y-1 text-[length:var(--text-sm)] font-medium text-text-secondary"
             aria-label={`${portal} navigation`}
           >
             {links.map((l) => (
               <Link
                 key={l.href + l.label}
                 href={l.href}
-                className="hover:text-text-primary"
+                className="rounded-md px-3 hover:bg-surface-subtle hover:text-text-primary"
               >
                 {l.label}
               </Link>
