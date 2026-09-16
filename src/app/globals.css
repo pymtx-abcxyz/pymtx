@@ -270,8 +270,8 @@ body {
 .portal-nav {
   border-bottom: 1px solid var(--border-subtle);
   background: var(--nav-bg);
-  backdrop-filter: var(--nav-blur);
-  -webkit-backdrop-filter: var(--nav-blur);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 /* Primary CTA only — brand action color restricted here */
