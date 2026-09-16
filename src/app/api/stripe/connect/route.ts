@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { canManageConnect } from "@/lib/permissions";
 import {
   createConnectLoginLink,
+  provisionTestConnectAccount,
   startConnectOnboarding,
   syncConnectAccountFromStripe,
   toConnectStatus,
@@ -34,10 +35,11 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * POST { businessId, action?: "onboard" | "sync" | "login" }
+ * POST { businessId, action?: "onboard" | "sync" | "login" | "provision_test" }
  * - onboard (default): create/resume Express AccountLink
  * - sync: pull charges/payouts/details flags from Stripe
  * - login: Express Dashboard link
+ * - provision_test: sk_test_ only — Custom Connect ready for ACSS Direct Charges (E2E)
  * OWNER (or ADMIN) only — clerks cannot manage Connect.
  */
 export async function POST(req: NextRequest) {
@@ -66,6 +68,16 @@ export async function POST(req: NextRequest) {
     if (action === "login") {
       const result = await createConnectLoginLink(businessId);
       return NextResponse.json(result);
+    }
+
+    if (action === "provision_test") {
+      const status = await provisionTestConnectAccount(businessId);
+      return NextResponse.json({
+        ...status,
+        message: status.readyForDebits
+          ? "Test Connect account ready for Path B Direct Charges"
+          : "Test Connect account created — charges not enabled yet",
+      });
     }
 
     const result = await startConnectOnboarding(businessId);

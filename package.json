@@ -16,6 +16,7 @@
     "job:daily-debit": "tsx scripts/run-daily-debit.ts",
     "smoke:hardening": "tsx scripts/smoke-hardening.ts",
     "smoke:step8": "tsx scripts/smoke-step8.ts",
+    "smoke:e2e": "tsx scripts/smoke-e2e-path-b.ts",
     "stripe:golive": "tsx scripts/stripe-golive.ts"
   },
   "prisma": {
