@@ -12,6 +12,10 @@ import {
   FormNotice,
 } from "@/components/ui";
 
+const ERROR_ID = "reset-password-error";
+const NOTICE_ID = "reset-password-notice";
+const HINT_ID = "reset-password-hint";
+
 export default function ResetPasswordForm() {
   const router = useRouter();
   const search = useSearchParams();
@@ -52,6 +56,8 @@ export default function ResetPasswordForm() {
     }, 1200);
   }
 
+  const invalid = Boolean(error);
+
   return (
     <AuthShell>
       <AuthHeading title="Choose a new password">
@@ -59,42 +65,57 @@ export default function ResetPasswordForm() {
       </AuthHeading>
 
       {!token ? (
-        <p className="mt-8 text-sm text-coral" role="alert">
+        <FormError id={ERROR_ID}>
           This reset link is missing a token.{" "}
           <Link className="link-accent" href="/forgot-password">
             Request a new one
           </Link>
           .
-        </p>
+        </FormError>
       ) : (
-        <form onSubmit={onSubmit} className="mt-8 space-y-4">
-          <label className="block text-sm">
-            <FieldLabel>New password</FieldLabel>
+        <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
+          <div>
+            <FieldLabel htmlFor="reset-password">New password</FieldLabel>
             <input
+              id="reset-password"
               className="input"
               type="password"
+              name="password"
               autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               minLength={8}
               required
+              aria-invalid={invalid}
+              aria-describedby={
+                invalid ? `${ERROR_ID} ${HINT_ID}` : HINT_ID
+              }
             />
-          </label>
-          <label className="block text-sm">
-            <FieldLabel>Confirm password</FieldLabel>
+          </div>
+          <div>
+            <FieldLabel htmlFor="reset-confirm">Confirm password</FieldLabel>
             <input
+              id="reset-confirm"
               className="input"
               type="password"
+              name="confirm"
               autoComplete="new-password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
               minLength={8}
               required
+              aria-invalid={invalid}
+              aria-describedby={invalid ? ERROR_ID : undefined}
             />
-          </label>
-          <p className="text-xs text-sage/60">At least 8 characters.</p>
-          <FormError>{error}</FormError>
-          <FormNotice>{message}</FormNotice>
+          </div>
+          <p
+            id={HINT_ID}
+            className="text-[length:var(--text-xs)] text-text-muted"
+          >
+            At least 8 characters.
+          </p>
+          <FormError id={ERROR_ID}>{error}</FormError>
+          <FormNotice id={NOTICE_ID}>{message}</FormNotice>
           <button
             className="btn-primary w-full"
             type="submit"

@@ -302,18 +302,21 @@ export function SectionTitle({
 export function FieldLabel({
   children,
   htmlFor,
+  className = "",
 }: {
   children: React.ReactNode;
   htmlFor?: string;
+  className?: string;
 }) {
+  const classes = className ? `field-label ${className}` : "field-label";
   if (htmlFor) {
     return (
-      <label className="field-label" htmlFor={htmlFor}>
+      <label className={classes} htmlFor={htmlFor}>
         {children}
       </label>
     );
   }
-  return <span className="field-label">{children}</span>;
+  return <span className={classes}>{children}</span>;
 }
 
 export function Metric({
