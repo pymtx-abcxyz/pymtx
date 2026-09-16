@@ -11,11 +11,19 @@ import {
   FormNotice,
   formatCad,
 } from "@/components/ui";
+import { AdminStripeCutover } from "@/components/admin-stripe-cutover";
 import { getCurrentUser } from "@/lib/auth";
 import { UserRole } from "@/lib/domain";
 import { prisma } from "@/lib/db";
 import { goLiveReport } from "@/lib/env";
 import { platformFeeBps } from "@/lib/stripe";
+import {
+  debitJobStatusLabel,
+  debitJobStatusTone,
+  goLiveCheckLabel,
+  invoiceStatusLabel,
+  invoiceStatusTone,
+} from "@/lib/status-labels";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -103,6 +111,33 @@ export default async function AdminPage() {
               size="md"
             />
           </div>
+
+          <div className="mt-6 overflow-x-auto">
+            <table className="data-table min-w-[560px]">
+              <caption className="sr-only">Go-live readiness checks</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Check</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Detail</th>
+                </tr>
+              </thead>
+              <tbody>
+                {golive.checks.map((c) => (
+                  <tr key={c.id} className="table-row">
+                    <td className="font-medium">{goLiveCheckLabel(c.id)}</td>
+                    <td>
+                      <StatusPill tone={c.ok ? "success" : "danger"}>
+                        {c.ok ? "Pass" : "Fail"}
+                      </StatusPill>
+                    </td>
+                    <td className="text-text-secondary">{c.detail}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
           {golive.blockers.length > 0 ? (
             <div className="mt-6">
               <FormNotice tone="warning">
@@ -123,7 +158,9 @@ export default async function AdminPage() {
           )}
         </section>
 
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <AdminStripeCutover />
+
+        <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <Metric label="Take-rate" value={`${(feeBps / 100).toFixed(2)}%`} hint="application_fee_amount" />
           <Metric label="Onboarding health" value={`${health}%`} hint={`${connectReady}/${businesses} Connect-ready`} />
           <Metric
@@ -157,18 +194,8 @@ export default async function AdminPage() {
                 {invoiceGroups.map((g) => (
                   <tr key={g.status} className="table-row">
                     <td>
-                      <StatusPill
-                        tone={
-                          g.status === "SETTLED" || g.status === "PLAN_ACTIVE"
-                            ? "success"
-                            : g.status === "WRITTEN_OFF"
-                              ? "danger"
-                              : g.status === "PAST_DUE"
-                                ? "warning"
-                                : "default"
-                        }
-                      >
-                        {g.status}
+                      <StatusPill tone={invoiceStatusTone(g.status)}>
+                        {invoiceStatusLabel(g.status)}
                       </StatusPill>
                     </td>
                     <td>{g._count}</td>
@@ -208,18 +235,8 @@ export default async function AdminPage() {
                   <tr key={r.id} className="table-row">
                     <td className="font-medium">{r.runDate}</td>
                     <td>
-                      <StatusPill
-                        tone={
-                          r.status === "SUCCEEDED"
-                            ? "success"
-                            : r.status === "FAILED"
-                              ? "danger"
-                              : r.status === "PARTIAL"
-                                ? "warning"
-                                : "default"
-                        }
-                      >
-                        {r.status}
+                      <StatusPill tone={debitJobStatusTone(r.status)}>
+                        {debitJobStatusLabel(r.status)}
                       </StatusPill>
                     </td>
                     <td>{r.scannedCount}</td>

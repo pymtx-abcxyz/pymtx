@@ -23,6 +23,10 @@ import {
   renderPadAgreement,
   renderSettlementTerms,
 } from "@/lib/legal";
+import {
+  installmentStatusLabel,
+  installmentStatusTone,
+} from "@/lib/status-labels";
 
 type CheckoutPreview = {
   customerId: string;
@@ -655,18 +659,8 @@ function ClientCheckoutInner() {
                           <td>{new Date(i.dueDate).toLocaleDateString("en-CA")}</td>
                           <td>{formatCad(i.amountCents)}</td>
                           <td>
-                            <StatusPill
-                              tone={
-                                i.status === "SUCCEEDED"
-                                  ? "success"
-                                  : i.status === "FAILED" || i.status === "FAILED_NSF"
-                                    ? "danger"
-                                    : i.status === "SKIPPED"
-                                      ? "warning"
-                                      : "default"
-                              }
-                            >
-                              {i.status}
+                            <StatusPill tone={installmentStatusTone(i.status)}>
+                              {installmentStatusLabel(i.status)}
                             </StatusPill>
                           </td>
                         </tr>
