@@ -126,16 +126,14 @@ async function main() {
     businessId,
     action: "provision_test",
   });
+  const signupBlocked = isConnectSignupError(provision.json.error);
   const connectBlocked =
-    provision.status !== 200 ||
-    provision.json.readyForDebits !== true ||
-    isConnectSignupError(provision.json.error);
+    signupBlocked || stripeSetup.json.connectPlatform === "not_registered";
 
   if (connectBlocked) {
     ok(
       "connect blocked (expected until platform profile)",
-      isConnectSignupError(provision.json.error) ||
-        stripeSetup.json.connectPlatform === "not_registered",
+      true,
       provision.json,
     );
 

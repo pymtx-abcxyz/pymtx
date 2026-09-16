@@ -77,7 +77,7 @@ export async function syncConnectAccountFromStripe(
         stripeOnboardedAt: business.stripeOnboardedAt ?? new Date(),
       },
     });
-    return toConnectStatus(updated);
+    return { ...toConnectStatus(updated), currentlyDue: [] as string[] };
   }
 
   if (!business.stripeAccountId && !account) {
@@ -91,6 +91,10 @@ export async function syncConnectAccountFromStripe(
   const payoutsEnabled = !!acct.payouts_enabled;
   const detailsSubmitted = !!acct.details_submitted;
   const onboardingComplete = detailsSubmitted && chargesEnabled;
+  const currentlyDue = [
+    ...(acct.requirements?.currently_due || []),
+    ...(acct.requirements?.past_due || []),
+  ];
 
   const updated = await prisma.business.update({
     where: { id: businessId },
@@ -106,7 +110,7 @@ export async function syncConnectAccountFromStripe(
     },
   });
 
-  return toConnectStatus(updated);
+  return { ...toConnectStatus(updated), currentlyDue };
 }
 
 /** Seed / local placeholders that are not real Stripe Connect accounts. */
@@ -325,16 +329,25 @@ export async function provisionTestConnectAccount(businessId: string) {
     try {
       const existing = await syncConnectAccountFromStripe(businessId);
       if (existing.readyForDebits) return existing;
+      // Fall through and try to complete requirements on the existing account.
     } catch {
       /* recreate below */
     }
   }
 
-  const accountId = await createConnectedMerchantAccountV2({
-    business,
-    dashboard: "none",
-    provision: "test_smoke",
-  });
+  let accountId =
+    business.stripeAccountId &&
+    !isPlaceholderConnectAccount(business.stripeAccountId)
+      ? business.stripeAccountId
+      : null;
+
+  if (!accountId) {
+    accountId = await createConnectedMerchantAccountV2({
+      business,
+      dashboard: "none",
+      provision: "test_smoke",
+    });
+  }
 
   // Representative + bank via v1 APIs (still supported on v2 accounts).
   try {
@@ -359,6 +372,7 @@ export async function provisionTestConnectAccount(businessId: string) {
       dob: { day: 1, month: 1, year: 1980 },
       phone: business.phone || "+14165550100",
       id_number: "000000000",
+      ssn_last_4: "0000",
     });
   } catch (e) {
     // Person may already exist on retry — continue to bank / sync.
@@ -387,30 +401,59 @@ export async function provisionTestConnectAccount(businessId: string) {
     );
   }
 
-  // Accept TOS on the v1 shape if still required.
-  try {
-    await stripe.accounts.update(accountId, {
-      tos_acceptance: {
-        date: Math.floor(Date.now() / 1000),
-        ip: "127.0.0.1",
-      },
-      business_profile: {
-        mcc: "8099",
-        url: "https://pymtx.com",
-        product_description:
-          "Accounts receivable settlement — consumer installment PADs (Payments Canada Rule H1)",
-      },
-    });
-  } catch {
-    /* ignore */
-  }
-
   await prisma.business.update({
     where: { id: businessId },
     data: { stripeAccountId: accountId },
   });
 
-  return syncConnectAccountFromStripe(businessId);
+  // Prefer company tax id + company details via v1 for verification.
+  try {
+    await stripe.accounts.update(accountId, {
+      company: {
+        name: business.legalName,
+        tax_id: "000000000",
+        phone: business.phone || "+14165550100",
+        address: {
+          line1: "100 Main Street",
+          city: "Toronto",
+          state: "ON",
+          postal_code: "M5V 2T6",
+          country: "CA",
+        },
+        owners_provided: true,
+        directors_provided: true,
+        executives_provided: true,
+      },
+      business_type: "company",
+      business_profile: {
+        mcc: "8099",
+        url: "https://pymtx.com",
+        name: business.tradeName,
+        product_description:
+          "Accounts receivable settlement — consumer installment PADs (Payments Canada Rule H1)",
+        support_email: business.supportEmail || business.email,
+        support_phone: business.phone || "+14165550100",
+      },
+      tos_acceptance: {
+        date: Math.floor(Date.now() / 1000),
+        ip: "127.0.0.1",
+      },
+    });
+  } catch (e) {
+    console.warn(
+      "[connect] accounts.update:",
+      e instanceof Error ? e.message : e,
+    );
+  }
+
+  const status = await syncConnectAccountFromStripe(businessId);
+  if (!status.readyForDebits) {
+    return {
+      ...status,
+      message: `Test Connect account created — charges not enabled yet (due: ${status.currentlyDue.join(", ") || "unknown"})`,
+    };
+  }
+  return status;
 }
 
 /** Express Dashboard login link (post-onboarding). */
