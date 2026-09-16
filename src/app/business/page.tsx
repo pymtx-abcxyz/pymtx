@@ -128,12 +128,6 @@ function BusinessPortalInner() {
   const inviteHref = invoices[0]?.customer.inviteToken
     ? `/client?token=${invoices[0].customer.inviteToken}`
     : null;
-  const showOnboarding =
-    !!selected &&
-    (!selected.stripeOnboardingComplete ||
-      invoices.length === 0 ||
-      !inviteHref ||
-      welcome);
 
   async function logout() {
     await fetch("/api/auth", { method: "DELETE" });
@@ -270,7 +264,7 @@ function BusinessPortalInner() {
           }
         />
 
-        {showOnboarding && selected ? (
+        {selected ? (
           <OnboardingChecklist
             businessId={selected.id}
             stripeOnboardingComplete={selected.stripeOnboardingComplete}
