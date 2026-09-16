@@ -13,6 +13,9 @@ import {
   LoadingScreen,
 } from "@/components/ui";
 
+const ERROR_ID = "customer-login-error";
+const NOTICE_ID = "customer-login-notice";
+
 function CustomerLoginForm({ allowDemo }: { allowDemo: boolean }) {
   const search = useSearchParams();
   const errorParam = search.get("error");
@@ -32,6 +35,9 @@ function CustomerLoginForm({ allowDemo }: { allowDemo: boolean }) {
         : errorParam === "missing_token"
           ? "Missing sign-in token."
           : "";
+
+  const displayError = errorHint || error;
+  const invalid = Boolean(displayError);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -54,6 +60,13 @@ function CustomerLoginForm({ allowDemo }: { allowDemo: boolean }) {
     if (data.demoUrl) setDemoUrl(data.demoUrl);
   }
 
+  const describedBy = [
+    invalid ? ERROR_ID : null,
+    message ? NOTICE_ID : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <AuthShell>
       <AuthHeading title="Customer sign-in">
@@ -61,23 +74,27 @@ function CustomerLoginForm({ allowDemo }: { allowDemo: boolean }) {
         password.
       </AuthHeading>
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
-        <label className="block text-sm">
-          <FieldLabel>Email</FieldLabel>
+      <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
+        <div>
+          <FieldLabel htmlFor="customer-login-email">Email</FieldLabel>
           <input
+            id="customer-login-email"
             className="input"
             type="email"
+            name="email"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            aria-invalid={invalid}
+            aria-describedby={describedBy || undefined}
           />
-        </label>
-        <FormError>{errorHint || error}</FormError>
-        <FormNotice>{message}</FormNotice>
+        </div>
+        <FormError id={ERROR_ID}>{displayError}</FormError>
+        <FormNotice id={NOTICE_ID}>{message}</FormNotice>
         {demoUrl ? (
-          <p className="text-sm text-sage/85">
-            <span className="font-semibold text-sage">Demo link: </span>
+          <p className="text-[length:var(--text-sm)] text-text-secondary">
+            <span className="font-semibold text-text-primary">Demo link: </span>
             <a className="link-accent break-all" href={demoUrl}>
               Open portal
             </a>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PymtxLogotype } from "@/components/pymtx-mark";
+import { AppearanceSettingSection } from "@/components/appearance-setting-section";
 import { PROVIDER } from "@/lib/legal";
 
 export function PortalShell({
@@ -11,7 +12,12 @@ export function PortalShell({
 }) {
   return (
     <div className="relative min-h-screen overflow-x-hidden portal-shell">
-      {grain ? <div className="pointer-events-none absolute inset-0 pymtx-grain" aria-hidden /> : null}
+      {grain ? (
+        <div
+          className="pointer-events-none absolute inset-0 pymtx-grain"
+          aria-hidden
+        />
+      ) : null}
       <div className="relative z-10 flex min-h-screen flex-col">{children}</div>
     </div>
   );
@@ -26,14 +32,19 @@ export function AuthShell({
 }) {
   return (
     <PortalShell grain>
+      <header className="portal-nav sticky top-0 z-20">
+        <div className="mx-auto flex w-full max-w-lg items-center justify-end px-6 py-2 sm:py-3">
+          <AppearanceSettingSection compact />
+        </div>
+      </header>
       <main
-        className={`mx-auto flex min-h-screen w-full flex-col justify-center px-6 py-16 ${
+        className={`mx-auto flex min-h-[calc(100vh-3.5rem)] w-full flex-col justify-center px-6 py-12 ${
           wide ? "max-w-lg" : "max-w-md"
         }`}
       >
         <Link
           href="/"
-          className="animate-rise text-2xl text-ash"
+          className="animate-rise text-[length:var(--text-2xl)] text-text-primary"
           aria-label="pymtx home"
         >
           <PymtxLogotype />
@@ -41,7 +52,7 @@ export function AuthShell({
         <div className="animate-rise-delay-1 glass-panel mt-6 px-6 py-7 sm:px-7">
           {children}
         </div>
-        <p className="animate-rise-delay-2 mt-10 text-xs leading-relaxed text-sage/50">
+        <p className="animate-rise-delay-2 mt-10 text-[length:var(--text-xs)] leading-relaxed text-text-muted">
           <Link href="/legal/saas" className="link-accent">
             SaaS Agreement
           </Link>
@@ -49,7 +60,7 @@ export function AuthShell({
           <Link href="/legal/privacy" className="link-accent">
             Privacy &amp; CASL
           </Link>
-          <span className="mt-1 block text-sage/40">{PROVIDER.legalName}</span>
+          <span className="mt-1 block text-text-muted">{PROVIDER.legalName}</span>
         </p>
       </main>
     </PortalShell>
@@ -65,38 +76,93 @@ export function AuthHeading({
 }) {
   return (
     <div className="mt-0">
-      <h1 className="font-display text-3xl font-bold tracking-tight text-mist">
+      <h1 className="font-display text-[length:var(--text-3xl)] font-bold tracking-tight text-text-primary">
         {title}
       </h1>
       {children ? (
-        <p className="mt-2 text-sm leading-relaxed text-sage/85">{children}</p>
+        <p className="mt-2 text-[length:var(--text-sm)] leading-relaxed text-text-secondary">
+          {children}
+        </p>
       ) : null}
     </div>
   );
 }
 
-export function FormError({ children }: { children: React.ReactNode }) {
+function AlertIcon({ tone }: { tone: "danger" | "info" | "warning" }) {
+  const paths =
+    tone === "danger"
+      ? "M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+      : tone === "warning"
+        ? "M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"
+        : "M12 16v-4m0-4h.01M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z";
+  return (
+    <svg
+      className="mt-0.5 h-4 w-4 shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d={paths} />
+    </svg>
+  );
+}
+
+export function FormError({
+  children,
+  id,
+}: {
+  children: React.ReactNode;
+  id?: string;
+}) {
   if (!children) return null;
   return (
-    <p className="text-sm text-coral" role="alert">
+    <div
+      id={id}
+      className="notice notice-danger flex items-start gap-2"
+      role="alert"
+    >
+      <AlertIcon tone="danger" />
+      <div className="min-w-0 flex-1 text-[length:var(--text-sm)]">{children}</div>
+    </div>
+  );
+}
+
+export function FormNotice({
+  children,
+  id,
+  tone = "info",
+}: {
+  children: React.ReactNode;
+  id?: string;
+  tone?: "info" | "warning";
+}) {
+  if (!children) return null;
+  const noticeClass =
+    tone === "warning" ? "notice notice-warning" : "notice";
+  return (
+    <div id={id} className={`${noticeClass} flex items-start gap-2`} role="status">
+      <AlertIcon tone={tone === "warning" ? "warning" : "info"} />
+      <div className="min-w-0 flex-1">{children}</div>
+    </div>
+  );
+}
+
+export function AuthAltLink({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="mt-6 text-[length:var(--text-sm)] text-text-secondary">
       {children}
     </p>
   );
 }
 
-export function FormNotice({ children }: { children: React.ReactNode }) {
-  if (!children) return null;
-  return <p className="notice">{children}</p>;
-}
-
-export function AuthAltLink({ children }: { children: React.ReactNode }) {
-  return <p className="mt-6 text-sm text-sage/80">{children}</p>;
-}
-
 export function FormSectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="border-t border-mist/10 pt-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sage/75">
+    <div className="border-t border-border-subtle pt-5">
+      <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.14em] text-text-muted">
         {children}
       </p>
     </div>
@@ -107,34 +173,44 @@ export function PortalNav({
   portal,
   links,
   actions,
+  showAppearance = true,
 }: {
   portal: "Admin" | "Business" | "Client";
   links: { href: string; label: string }[];
   actions?: React.ReactNode;
+  showAppearance?: boolean;
 }) {
   return (
     <header className="portal-nav sticky top-0 z-20">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-        <div className="flex min-w-0 items-baseline gap-3">
-          <Link href="/" className="shrink-0 text-xl text-ash">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-2 sm:py-3">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-3">
+          <Link
+            href="/"
+            className="shrink-0 text-[length:var(--text-xl)] text-text-primary"
+            aria-label="pymtx home"
+          >
             <PymtxLogotype />
           </Link>
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-sage">
+          <span className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.14em] text-text-muted">
             {portal}
           </span>
         </div>
-        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
-          <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm font-medium text-sage/80">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1">
+          <nav
+            className="flex flex-wrap items-center justify-end gap-x-1 gap-y-1 text-[length:var(--text-sm)] font-medium text-text-secondary"
+            aria-label={`${portal} navigation`}
+          >
             {links.map((l) => (
               <Link
                 key={l.href + l.label}
                 href={l.href}
-                className="hover:text-ash"
+                className="rounded-md px-3 hover:bg-surface-subtle hover:text-text-primary"
               >
                 {l.label}
               </Link>
             ))}
           </nav>
+          {showAppearance ? <AppearanceSettingSection compact /> : null}
           {actions}
         </div>
       </div>
@@ -167,17 +243,17 @@ export function PortalFooter({
 }) {
   return (
     <footer
-      className={`mx-auto w-full px-6 pb-10 pt-2 text-xs leading-relaxed text-sage/55 ${
+      className={`mx-auto w-full px-6 pb-10 pt-2 text-[length:var(--text-xs)] leading-relaxed text-text-muted ${
         narrow ? "max-w-3xl" : "max-w-6xl"
       }`}
     >
       {children ?? (
-        <div className="flex flex-col gap-2 border-t border-mist/10 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+        <div className="flex flex-col gap-2 border-t border-border-subtle pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
           <span>
-            Debits settle to the merchant as Merchant of Record. {PROVIDER.legalName}{" "}
-            never holds principal (Path B / zero-custody).
+            Debits settle to the merchant as Merchant of Record.{" "}
+            {PROVIDER.legalName} never holds principal (Path B / zero-custody).
           </span>
-          <span className="shrink-0 text-sage/65">
+          <span className="shrink-0 text-text-muted">
             {PROVIDER.legalName} · {PROVIDER.addressLine} · {PROVIDER.email}
           </span>
         </div>
@@ -198,14 +274,18 @@ export function SectionHeading({
   return (
     <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-mist sm:text-4xl">
+        <h1 className="font-display text-[length:var(--text-3xl)] font-bold tracking-tight text-text-primary">
           {title}
         </h1>
         {subtitle ? (
-          <p className="mt-2 max-w-2xl text-sage/85">{subtitle}</p>
+          <p className="mt-2 max-w-2xl text-[length:var(--text-base)] text-text-secondary">
+            {subtitle}
+          </p>
         ) : null}
       </div>
-      {actions ? <div className="flex shrink-0 flex-wrap gap-3">{actions}</div> : null}
+      {actions ? (
+        <div className="flex shrink-0 flex-wrap gap-3">{actions}</div>
+      ) : null}
     </div>
   );
 }
@@ -221,14 +301,36 @@ export function SectionTitle({
 }) {
   return (
     <div className={className}>
-      <h2 className="font-display text-2xl font-bold text-mist">{title}</h2>
-      {subtitle ? <p className="mt-1 text-sm text-sage/75">{subtitle}</p> : null}
+      <h2 className="font-display text-[length:var(--text-2xl)] font-bold text-text-primary">
+        {title}
+      </h2>
+      {subtitle ? (
+        <p className="mt-1 text-[length:var(--text-sm)] text-text-muted">
+          {subtitle}
+        </p>
+      ) : null}
     </div>
   );
 }
 
-export function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <span className="field-label">{children}</span>;
+export function FieldLabel({
+  children,
+  htmlFor,
+  className = "",
+}: {
+  children: React.ReactNode;
+  htmlFor?: string;
+  className?: string;
+}) {
+  const classes = className ? `field-label ${className}` : "field-label";
+  if (htmlFor) {
+    return (
+      <label className={classes} htmlFor={htmlFor}>
+        {children}
+      </label>
+    );
+  }
+  return <span className={classes}>{children}</span>;
 }
 
 export function Metric({
@@ -244,18 +346,102 @@ export function Metric({
 }) {
   return (
     <div className="metric-tile">
-      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
+      <div className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.12em] text-text-muted">
         {label}
       </div>
       <div
-        className={`mt-2 font-display font-bold text-mist ${
-          size === "md" ? "text-xl leading-snug" : "text-3xl"
+        className={`mt-2 font-display font-bold text-text-primary ${
+          size === "md"
+            ? "text-[length:var(--text-xl)] leading-snug"
+            : "text-[length:var(--text-3xl)]"
         }`}
       >
         {value}
       </div>
-      {hint ? <div className="mt-1 text-sm text-sage/70">{hint}</div> : null}
+      {hint ? (
+        <div className="mt-1 text-[length:var(--text-sm)] text-text-muted">
+          {hint}
+        </div>
+      ) : null}
     </div>
+  );
+}
+
+const STATUS_TONE_LABEL = {
+  default: "Status",
+  success: "Success",
+  warning: "Warning",
+  danger: "Error",
+} as const;
+
+function StatusIcon({
+  tone,
+}: {
+  tone: keyof typeof STATUS_TONE_LABEL;
+}) {
+  if (tone === "success") {
+    return (
+      <svg
+        className="h-3.5 w-3.5 shrink-0"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    );
+  }
+  if (tone === "warning") {
+    return (
+      <svg
+        className="h-3.5 w-3.5 shrink-0"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+      </svg>
+    );
+  }
+  if (tone === "danger") {
+    return (
+      <svg
+        className="h-3.5 w-3.5 shrink-0"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="m15 9-6 6M9 9l6 6" />
+      </svg>
+    );
+  }
+  return (
+    <svg
+      className="h-3.5 w-3.5 shrink-0"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4M12 8h.01" />
+    </svg>
   );
 }
 
@@ -266,13 +452,23 @@ export function StatusPill({
   children: React.ReactNode;
   tone?: "default" | "success" | "warning" | "danger";
 }) {
-  return <span className={`status-pill status-pill-${tone}`}>{children}</span>;
+  return (
+    <span className={`status-pill status-pill-${tone}`}>
+      <StatusIcon tone={tone} />
+      <span className="sr-only">{STATUS_TONE_LABEL[tone]}: </span>
+      <span>{children}</span>
+    </span>
+  );
 }
 
 export function LoadingScreen({ label = "Loading…" }: { label?: string }) {
   return (
     <PortalShell>
-      <div className="flex min-h-screen items-center justify-center px-6 text-sm text-sage">
+      <div
+        className="flex min-h-screen items-center justify-center px-6 text-[length:var(--text-sm)] text-text-secondary"
+        role="status"
+        aria-live="polite"
+      >
         {label}
       </div>
     </PortalShell>
@@ -288,7 +484,10 @@ export function EmptyRow({
 }) {
   return (
     <tr>
-      <td colSpan={colSpan} className="py-8 text-sage/70">
+      <td
+        colSpan={colSpan}
+        className="py-8 text-[length:var(--text-sm)] text-text-muted"
+      >
         {children}
       </td>
     </tr>

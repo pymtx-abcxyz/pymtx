@@ -79,8 +79,8 @@ export async function buildPadMandatePdf(params: {
   const doc = await PDFDocument.create();
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const ink = rgb(0.05, 0.1, 0.16);
-  const muted = rgb(0.35, 0.42, 0.4);
+  const ink = rgb(32 / 255, 43 / 255, 49 / 255); // #202b31 text-primary
+  const muted = rgb(78 / 255, 98 / 255, 96 / 255); // #4e6260 text-muted
 
   const writePages = (title: string, body: string) => {
     const lines = body.split("\n");

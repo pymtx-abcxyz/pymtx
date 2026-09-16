@@ -11,6 +11,9 @@ import {
   FormNotice,
 } from "@/components/ui";
 
+const ERROR_ID = "forgot-password-error";
+const NOTICE_ID = "forgot-password-notice";
+
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
@@ -39,28 +42,40 @@ export default function ForgotPasswordForm() {
     if (data.demoUrl) setDemoUrl(String(data.demoUrl));
   }
 
+  const invalid = Boolean(error);
+  const describedBy = [
+    invalid ? ERROR_ID : null,
+    message ? NOTICE_ID : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <AuthShell>
       <AuthHeading title="Forgot password">
         Enter your work email and we&apos;ll send a one-time reset link.
       </AuthHeading>
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
-        <label className="block text-sm">
-          <FieldLabel>Email</FieldLabel>
+      <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
+        <div>
+          <FieldLabel htmlFor="forgot-email">Email</FieldLabel>
           <input
+            id="forgot-email"
             className="input"
             type="email"
+            name="email"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            aria-invalid={invalid}
+            aria-describedby={describedBy || undefined}
           />
-        </label>
-        <FormError>{error}</FormError>
-        <FormNotice>{message}</FormNotice>
+        </div>
+        <FormError id={ERROR_ID}>{error}</FormError>
+        <FormNotice id={NOTICE_ID}>{message}</FormNotice>
         {demoUrl ? (
-          <p className="text-sm text-sage/85">
+          <p className="text-[length:var(--text-sm)] text-text-secondary">
             Demo link:{" "}
             <Link className="link-accent break-all" href={demoUrl}>
               Open reset page

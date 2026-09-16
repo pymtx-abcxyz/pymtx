@@ -11,7 +11,7 @@ const RESET_TTL_MINUTES = 30;
 export type PasswordResetRequestResult = {
   ok: true;
   message: string;
-  /** Present only when demo email mode / ALLOW_DEMO_MODE. */
+  /** Present only when demo mode is explicitly allowed and send succeeded. */
   demoUrl?: string;
 };
 
@@ -73,14 +73,19 @@ export async function requestPasswordReset(
     text: mail.text,
     fromName: PROVIDER.brand,
   });
+  // Never reveal send failures to the client (email enumeration).
   if (!sent.ok) {
     console.error("[password-reset] email failed", sent.error);
   }
 
-  const demoUrl =
-    allowDemoMode() || isEmailDemoMode() ? url : undefined;
+  // Match magic-link: demoUrl only when demo is allowed AND send succeeded.
+  // Returning the URL for known emails otherwise enumerates accounts and leaks tokens.
+  const demo =
+    allowDemoMode() &&
+    sent.ok &&
+    (isEmailDemoMode() || sent.provider === "demo");
 
-  return { ...generic, ...(demoUrl ? { demoUrl } : {}) };
+  return { ...generic, ...(demo ? { demoUrl: url } : {}) };
 }
 
 export async function resetPasswordWithToken(params: {

@@ -12,6 +12,8 @@ import {
   LoadingScreen,
 } from "@/components/ui";
 
+const ERROR_ID = "login-form-error";
+
 function LoginForm({ allowDemo }: { allowDemo: boolean }) {
   const router = useRouter();
   const search = useSearchParams();
@@ -46,6 +48,8 @@ function LoginForm({ allowDemo }: { allowDemo: boolean }) {
     router.refresh();
   }
 
+  const invalid = Boolean(error);
+
   return (
     <AuthShell>
       <AuthHeading title="Sign in">
@@ -56,38 +60,48 @@ function LoginForm({ allowDemo }: { allowDemo: boolean }) {
         .
       </AuthHeading>
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
-        <label className="block text-sm">
-          <FieldLabel>Email</FieldLabel>
+      <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
+        <div>
+          <FieldLabel htmlFor="login-email">Email</FieldLabel>
           <input
+            id="login-email"
             className="input"
             type="email"
+            name="email"
             autoComplete="username"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            aria-invalid={invalid}
+            aria-describedby={invalid ? ERROR_ID : undefined}
           />
-        </label>
-        <label className="block text-sm">
-          <span className="mb-1.5 flex items-center justify-between gap-3">
-            <span className="field-label !mb-0">Password</span>
+        </div>
+        <div>
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-3">
+            <FieldLabel htmlFor="login-password" className="!mb-0">
+              Password
+            </FieldLabel>
             <Link
-              className="text-xs font-medium text-sage-bright underline-offset-2 hover:text-sage hover:underline"
+              className="text-[length:var(--text-xs)] font-medium text-text-secondary underline-offset-2 hover:text-text-primary hover:underline"
               href="/forgot-password"
             >
               Forgot password?
             </Link>
-          </span>
+          </div>
           <input
+            id="login-password"
             className="input"
             type="password"
+            name="password"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            aria-invalid={invalid}
+            aria-describedby={invalid ? ERROR_ID : undefined}
           />
-        </label>
-        <FormError>{error}</FormError>
+        </div>
+        <FormError id={ERROR_ID}>{error}</FormError>
         <button
           className="btn-primary w-full"
           type="submit"
@@ -106,8 +120,8 @@ function LoginForm({ allowDemo }: { allowDemo: boolean }) {
       </AuthAltLink>
 
       {allowDemo ? (
-        <div className="mt-8 border-t border-mist/10 pt-6 text-xs leading-relaxed text-sage/70">
-          <p className="font-semibold text-sage">Demo accounts</p>
+        <div className="mt-8 border-t border-border-subtle pt-6 text-[length:var(--text-xs)] leading-relaxed text-text-muted">
+          <p className="font-semibold text-text-secondary">Demo accounts</p>
           <p className="mt-2">
             Owner: billing@mapleridgedental.example / pymtx-business-demo
           </p>

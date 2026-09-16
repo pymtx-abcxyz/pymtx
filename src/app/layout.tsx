@@ -1,17 +1,24 @@
 import type { Metadata } from "next";
-import { Figtree, Syne } from "next/font/google";
+import { Fragment_Mono } from "next/font/google";
+import { cookies } from "next/headers";
+import Script from "next/script";
+import { AppearanceProvider } from "@/components/appearance-provider";
+import {
+  APPEARANCE_BOOT_SCRIPT,
+  APP_THEME_STORAGE_KEY,
+  AppTheme,
+  isAppTheme,
+  type AppTheme as AppThemeType,
+} from "@/lib/appearance";
+import "./tokens.css";
 import "./globals.css";
 
-const syne = Syne({
-  variable: "--font-syne",
+/** Monotype Design Team — Fragment Mono (regular only; no faux-bold). */
+const monotype = Fragment_Mono({
+  variable: "--font-monotype",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-});
-
-const figtree = Figtree({
-  variable: "--font-figtree",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "400",
+  display: "swap",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pymtx.com";
@@ -42,10 +49,37 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+async function readThemeCookie(): Promise<AppThemeType> {
+  try {
+    const jar = await cookies();
+    const raw = jar.get(APP_THEME_STORAGE_KEY)?.value;
+    return isAppTheme(raw) ? raw : AppTheme.system;
+  } catch {
+    return AppTheme.system;
+  }
+}
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const theme = await readThemeCookie();
+  const colorScheme =
+    theme === AppTheme.system ? "light dark" : theme;
+
   return (
-    <html lang="en-CA" className={`${syne.variable} ${figtree.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans text-mist">{children}</body>
+    <html
+      lang="en-CA"
+      className={`${monotype.variable} h-full antialiased`}
+      data-theme={theme}
+      style={{ colorScheme }}
+      suppressHydrationWarning
+    >
+      <body className="min-h-full flex flex-col font-sans text-text-primary bg-canvas">
+        <Script
+          id="pymtx-appearance-boot"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: APPEARANCE_BOOT_SCRIPT }}
+        />
+        <AppearanceProvider>{children}</AppearanceProvider>
+      </body>
     </html>
   );
 }

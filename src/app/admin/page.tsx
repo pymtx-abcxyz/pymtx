@@ -8,6 +8,7 @@ import {
   Metric,
   StatusPill,
   EmptyRow,
+  FormNotice,
   formatCad,
 } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
@@ -103,13 +104,22 @@ export default async function AdminPage() {
             />
           </div>
           {golive.blockers.length > 0 ? (
-            <ul className="notice notice-warning mt-6 space-y-1 text-sm">
-              {golive.blockers.map((b) => (
-                <li key={b}>{b}</li>
-              ))}
-            </ul>
+            <div className="mt-6">
+              <FormNotice tone="warning">
+                <span className="block text-[length:var(--text-sm)] font-semibold text-text-primary">
+                  Go-live blockers
+                </span>
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-[length:var(--text-sm)]">
+                  {golive.blockers.map((b) => (
+                    <li key={b}>{b}</li>
+                  ))}
+                </ul>
+              </FormNotice>
+            </div>
           ) : (
-            <p className="notice mt-6 text-sm">All go-live checks passed for this environment.</p>
+            <div className="mt-6">
+              <FormNotice>All go-live checks passed for this environment.</FormNotice>
+            </div>
           )}
         </section>
 
@@ -135,17 +145,32 @@ export default async function AdminPage() {
           />
           <div className="mt-6 overflow-x-auto">
             <table className="data-table min-w-[520px]">
+              <caption className="sr-only">Invoice pipeline by status</caption>
               <thead>
                 <tr>
-                  <th>Status</th>
-                  <th>Count</th>
-                  <th>Open balance</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Count</th>
+                  <th scope="col">Open balance</th>
                 </tr>
               </thead>
               <tbody>
                 {invoiceGroups.map((g) => (
                   <tr key={g.status} className="table-row">
-                    <td className="font-medium">{g.status}</td>
+                    <td>
+                      <StatusPill
+                        tone={
+                          g.status === "SETTLED" || g.status === "PLAN_ACTIVE"
+                            ? "success"
+                            : g.status === "WRITTEN_OFF"
+                              ? "danger"
+                              : g.status === "PAST_DUE"
+                                ? "warning"
+                                : "default"
+                        }
+                      >
+                        {g.status}
+                      </StatusPill>
+                    </td>
                     <td>{g._count}</td>
                     <td>{formatCad(g._sum.balanceCents || 0)}</td>
                   </tr>
@@ -167,14 +192,15 @@ export default async function AdminPage() {
           />
           <div className="mt-6 overflow-x-auto">
             <table className="data-table min-w-[640px]">
+              <caption className="sr-only">Daily debit job runs</caption>
               <thead>
                 <tr>
-                  <th>Run date</th>
-                  <th>Status</th>
-                  <th>Scanned</th>
-                  <th>OK</th>
-                  <th>Failed</th>
-                  <th>Skipped</th>
+                  <th scope="col">Run date</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Scanned</th>
+                  <th scope="col">OK</th>
+                  <th scope="col">Failed</th>
+                  <th scope="col">Skipped</th>
                 </tr>
               </thead>
               <tbody>
@@ -205,7 +231,7 @@ export default async function AdminPage() {
                 {debitRuns.length === 0 ? (
                   <EmptyRow colSpan={6}>
                     No debit job runs yet — trigger via Inngest or{" "}
-                    <code className="text-xs">npm run job:daily-debit</code>.
+                    <code className="text-[length:var(--text-xs)]">npm run job:daily-debit</code>.
                   </EmptyRow>
                 ) : null}
               </tbody>
@@ -215,7 +241,7 @@ export default async function AdminPage() {
 
         <section className="section-block">
           <SectionTitle title="Rule H1 & CDSSA posture" />
-          <ul className="mt-4 space-y-2 text-sm leading-relaxed text-sage">
+          <ul className="mt-4 space-y-2 text-[length:var(--text-sm)] leading-relaxed text-text-secondary">
             <li>Zero-custody Direct Charges (`stripeAccount` on connected business) — Pymtx is not a collection agency.</li>
             <li>ACSS Debit Personal PAD with written confirmation before first debit.</li>
             <li>NSF: max 1 retry within 30 days. Skip: ≥3 business days notice, 180-day cooldown.</li>
@@ -227,12 +253,13 @@ export default async function AdminPage() {
           <SectionTitle title="Recent businesses" />
           <div className="mt-6 overflow-x-auto">
             <table className="data-table min-w-[560px]">
+              <caption className="sr-only">Recent businesses</caption>
               <thead>
                 <tr>
-                  <th>Trade name</th>
-                  <th>Connect</th>
-                  <th>Customers</th>
-                  <th>Invoices</th>
+                  <th scope="col">Trade name</th>
+                  <th scope="col">Connect</th>
+                  <th scope="col">Customers</th>
+                  <th scope="col">Invoices</th>
                 </tr>
               </thead>
               <tbody>

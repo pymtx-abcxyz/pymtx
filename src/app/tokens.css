@@ -1,0 +1,184 @@
+/**
+ * pymtx accessible design tokens — Apple HIG–inspired earthy teal
+ * WCAG 2.1 AA/AAA calibrated. Semantic only; no component rules here.
+ *
+ * Appearance:
+ * - html[data-theme="system"] (default) → follows prefers-color-scheme
+ * - html[data-theme="light"] → force light (ignores OS dark)
+ * - html[data-theme="dark"] → force dark (ignores OS light)
+ */
+
+:root,
+html[data-theme="light"] {
+  /* —— Canvas & surfaces (semantic, Light Mode) —— */
+  --canvas: #f5f7f5;
+  --surface-card: #ffffff;
+  --surface-subtle: #e9eee8;
+
+  --canvas-rgb: 245, 247, 245;
+  --surface-card-rgb: 255, 255, 255;
+  --surface-subtle-rgb: 233, 238, 232;
+
+  --text-primary: #202b31; /* 11.8:1 on card — AAA */
+  --text-secondary: #30484a; /* 7.5:1 on card — AAA */
+  --text-muted: #4e6260; /* 4.8:1 on card — AA */
+  --text-on-primary: #ffffff;
+  --text-on-danger: #ffffff;
+
+  --action-primary: #3b5b53;
+  --action-primary-hover: #2e4741;
+  --focus-ring: #202b31;
+
+  --border-subtle: #cad2c5;
+  --border-strong: #7d968b;
+  --separator: #cad2c5;
+
+  --danger: #b3261e;
+  --danger-fg: #ffffff;
+  --success: #3b5b53;
+  --warning: #8a6a2f;
+
+  --nav-blur: blur(20px);
+  --nav-bg: rgba(var(--surface-card-rgb), 0.72);
+  --material-regular: color-mix(in srgb, var(--surface-card) 86%, transparent);
+  --material-thick: color-mix(in srgb, var(--surface-card) 94%, transparent);
+  /* Light: soft elevation; Dark: prefer hairline (set below) */
+  --shadow-elevated: 0 0.5rem 1.75rem color-mix(in srgb, var(--text-primary) 6%, transparent);
+  --elevation-border: 1px solid var(--separator);
+
+  --radius-control: 0.75rem;
+  --radius-panel: 1rem;
+  --space-focus-offset: 0.125rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  --touch-min: 2.75rem;
+
+  --text-caption2: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: clamp(1.35rem, 1.1rem + 0.8vw, 1.75rem);
+  --text-3xl: clamp(1.65rem, 1.2rem + 1.4vw, 2.25rem);
+  --text-display: clamp(2.25rem, 1.4rem + 3.2vw, 4.5rem);
+
+  --motion-duration: 0.2s;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --background: var(--canvas);
+  --foreground: var(--text-primary);
+
+  color-scheme: light;
+}
+
+html[data-theme="system"] {
+  color-scheme: light dark;
+}
+
+/* Forced dark — works when OS is light */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #141b1f;
+  --surface-card: #1e272c;
+  --surface-subtle: #29343a;
+
+  --canvas-rgb: 20, 27, 31;
+  --surface-card-rgb: 30, 39, 44;
+  --surface-subtle-rgb: 41, 52, 58;
+
+  --text-primary: #f5f7f5;
+  --text-secondary: #d1d9cd;
+  --text-muted: #a3b2a8;
+  --text-on-primary: #141b1f;
+  --text-on-danger: #601410;
+
+  --action-primary: #8ebd97;
+  --action-primary-hover: #a5cca9;
+  --focus-ring: #8ebd97;
+
+  --border-subtle: #2f3e46;
+  --border-strong: #52796f;
+  --separator: #3a474e;
+
+  --danger: #f2b8b5;
+  --danger-fg: #601410;
+  --success: #8ebd97;
+  --warning: #e0c070;
+
+  --nav-bg: rgba(var(--surface-card-rgb), 0.72);
+  --material-regular: color-mix(in srgb, var(--surface-card) 78%, transparent);
+  --material-thick: color-mix(in srgb, var(--surface-card) 90%, transparent);
+  /* HIG Dark Mode: hairline over heavy drop shadows */
+  --shadow-elevated: none;
+  --elevation-border: 1px solid var(--separator);
+}
+
+/* System appearance — follow OS when not forced light/dark */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]):not([data-theme="dark"]),
+  html[data-theme="system"] {
+    --canvas: #141b1f;
+    --surface-card: #1e272c;
+    --surface-subtle: #29343a;
+
+    --canvas-rgb: 20, 27, 31;
+    --surface-card-rgb: 30, 39, 44;
+    --surface-subtle-rgb: 41, 52, 58;
+
+    --text-primary: #f5f7f5;
+    --text-secondary: #d1d9cd;
+    --text-muted: #a3b2a8;
+    --text-on-primary: #141b1f;
+    --text-on-danger: #601410;
+
+    --action-primary: #8ebd97;
+    --action-primary-hover: #a5cca9;
+    --focus-ring: #8ebd97;
+
+    --border-subtle: #2f3e46;
+    --border-strong: #52796f;
+    --separator: #3a474e;
+
+    --danger: #f2b8b5;
+    --danger-fg: #601410;
+    --success: #8ebd97;
+    --warning: #e0c070;
+
+    --nav-bg: rgba(var(--surface-card-rgb), 0.72);
+    --material-regular: color-mix(in srgb, var(--surface-card) 78%, transparent);
+    --material-thick: color-mix(in srgb, var(--surface-card) 90%, transparent);
+    --shadow-elevated: none;
+    --elevation-border: 1px solid var(--separator);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root,
+  html[data-theme="light"],
+  html[data-theme="dark"],
+  html[data-theme="system"] {
+    --border-subtle: currentColor;
+    --border-strong: currentColor;
+    --separator: currentColor;
+    --nav-bg: var(--surface-card);
+    --material-regular: var(--surface-card);
+    --material-thick: var(--surface-card);
+    --shadow-elevated: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration: 0.01ms;
+  }
+}

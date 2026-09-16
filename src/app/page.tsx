@@ -1,39 +1,52 @@
 import Link from "next/link";
+import { AppearanceSettingSection } from "@/components/appearance-setting-section";
 import { PymtxLogotype } from "@/components/pymtx-mark";
 import { PROVIDER } from "@/lib/legal";
 
 export default function HomePage() {
   return (
-    <main className="relative min-h-screen overflow-hidden pymtx-atmosphere">
+    <main className="relative min-h-screen overflow-x-hidden pymtx-atmosphere">
       <div className="absolute inset-0 pymtx-grain" aria-hidden />
 
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-        <PymtxLogotype className="text-lg text-ash" />
-        <nav className="flex items-center gap-3 text-sm font-medium">
+      <header className="portal-nav sticky top-0 z-20">
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-2 sm:py-3">
           <Link
-            href="/login"
-            className="hidden text-sage/90 hover:text-ash sm:inline"
+            href="/"
+            className="text-[length:var(--text-xl)] text-text-primary"
+            aria-label="pymtx home"
           >
-            Sign in
+            <PymtxLogotype />
           </Link>
-          <Link href="/register" className="btn-ghost !py-2 !px-3 text-sm">
-            Register
-          </Link>
-          <Link href="/login/customer" className="btn-primary !py-2 !px-3 text-sm">
-            Customer
-          </Link>
-        </nav>
+          <nav
+            className="flex flex-wrap items-center justify-end gap-3 text-[length:var(--text-sm)] font-medium"
+            aria-label="Primary"
+          >
+            <AppearanceSettingSection compact />
+            <Link
+              href="/login"
+              className="hidden text-text-secondary hover:text-text-primary sm:inline-flex sm:items-center"
+            >
+              Sign in
+            </Link>
+            <Link href="/register" className="btn-ghost btn-toolbar">
+              Register
+            </Link>
+            <Link href="/login/customer" className="btn-primary btn-toolbar">
+              Customer
+            </Link>
+          </nav>
+        </div>
       </header>
 
-      <section className="relative z-10 mx-auto flex min-h-[calc(100vh-5.5rem)] w-full max-w-6xl flex-col justify-center px-6 pb-16 pt-4">
-        <p className="animate-rise font-display text-6xl font-bold tracking-tight text-ash sm:text-7xl md:text-8xl">
+      <section className="relative z-10 mx-auto flex min-h-[calc(100vh-4.5rem)] w-full max-w-6xl flex-col justify-center px-6 pb-16 pt-8">
+        <p className="animate-rise font-display text-[length:var(--text-display)] font-bold tracking-tight text-text-primary">
           pymtx
         </p>
 
-        <h1 className="animate-rise-delay-1 mt-8 max-w-xl font-display text-2xl font-medium leading-snug text-mist sm:text-3xl">
+        <h1 className="animate-rise-delay-1 mt-8 max-w-xl font-display text-[length:var(--text-3xl)] font-medium leading-snug text-text-primary">
           Past-due balances, settled directly — your business stays the creditor.
         </h1>
-        <p className="animate-rise-delay-1 mt-4 max-w-lg text-base leading-relaxed text-sage/85">
+        <p className="animate-rise-delay-1 mt-4 max-w-lg text-[length:var(--text-base)] leading-relaxed text-text-secondary">
           Zero-custody AR for Ontario SMBs. Customers choose a PAD plan; funds go
           straight to your bank. pymtx never holds the debt.
         </p>
@@ -45,7 +58,7 @@ export default function HomePage() {
             Settle as a customer
           </Link>
         </div>
-        <p className="animate-rise-delay-2 mt-14 max-w-xl text-xs leading-relaxed text-sage/55">
+        <p className="animate-rise-delay-2 mt-14 max-w-xl text-[length:var(--text-xs)] leading-relaxed text-text-muted">
           Technology by {PROVIDER.legalName} ·{" "}
           <Link href="/legal/saas" className="link-accent">
             SaaS Agreement

@@ -13,6 +13,8 @@ import {
   StatusPill,
   Metric,
   LoadingScreen,
+  FormError,
+  FormNotice,
   formatCad,
 } from "@/components/ui";
 import { PAD_NSF_POLICY } from "@/lib/compliance";
@@ -75,12 +77,18 @@ function Stepper({ step }: { step: Step }) {
   ];
   const idx = steps.findIndex((s) => s.id === step);
   return (
-    <ol className="mb-10 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-[0.12em]">
+    <ol
+      className="mb-10 flex flex-wrap gap-2 text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.12em]"
+      aria-label="Checkout progress"
+    >
       {steps.map((s, i) => (
         <li
           key={s.id}
+          aria-current={s.id === step ? "step" : undefined}
           className={`border-b-2 pb-1 ${
-            i <= idx ? "border-sage text-mist" : "border-mist/10 text-sage/50"
+            i <= idx
+              ? "border-action-primary text-text-primary"
+              : "border-border-subtle text-text-muted"
           }`}
         >
           {i + 1}. {s.label}
@@ -280,15 +288,18 @@ function ClientCheckoutInner() {
 
         {!preview ? (
           <div className="max-w-md">
-            <label className="block text-sm">
-              <FieldLabel>Invite token</FieldLabel>
+            <div>
+              <FieldLabel htmlFor="client-invite-token">Invite token</FieldLabel>
               <input
+                id="client-invite-token"
                 className="input"
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="Paste invite token from email"
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? "client-token-error" : undefined}
               />
-            </label>
+            </div>
             <button
               className="btn-primary mt-4"
               type="button"
@@ -297,33 +308,45 @@ function ClientCheckoutInner() {
             >
               Open checkout
             </button>
-            {error ? <p className="mt-3 text-sm text-coral">{error}</p> : null}
+            <div className="mt-3">
+              <FormError id="client-token-error">{error}</FormError>
+            </div>
           </div>
         ) : (
           <>
             <Stepper step={step} />
 
             <div className="mb-8 metric-tile">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
+              <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.12em] text-text-muted">
                 Creditor (Merchant of Record)
               </p>
-              <p className="mt-1 font-display text-2xl font-bold text-mist">
+              <p className="mt-1 font-display text-[length:var(--text-2xl)] font-bold text-text-primary">
                 {preview.businessTradeName}
               </p>
-              <p className="text-sm text-sage/75">
+              <p className="text-[length:var(--text-sm)] text-text-secondary">
                 Hi {preview.firstName} — invoice {preview.invoiceRef}
               </p>
             </div>
 
             {!preview.connectReady ? (
-              <p className="notice notice-warning mb-6">
-                Your creditor is still connecting their bank. Checkout will unlock when
-                Stripe Connect is ready.
-              </p>
+              <div className="mb-6">
+                <FormNotice tone="warning">
+                  Your creditor is still connecting their bank. Checkout will unlock when
+                  Stripe Connect is ready.
+                </FormNotice>
+              </div>
             ) : null}
 
-            {notice ? <p className="notice mb-6">{notice}</p> : null}
-            {error ? <p className="mb-6 text-sm text-coral">{error}</p> : null}
+            {notice ? (
+              <div className="mb-6">
+                <FormNotice>{notice}</FormNotice>
+              </div>
+            ) : null}
+            {error ? (
+              <div className="mb-6">
+                <FormError id="client-checkout-error">{error}</FormError>
+              </div>
+            ) : null}
 
             {(step === "review" || step === "plan") && !plan ? (
               <section>
@@ -333,10 +356,10 @@ function ClientCheckoutInner() {
                     value={formatCad(preview.balanceCents)}
                   />
                   <div className="metric-tile">
-                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
+                    <div className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.12em] text-text-muted">
                       For
                     </div>
-                    <div className="mt-2 text-sage">{preview.description}</div>
+                    <div className="mt-2 text-text-secondary">{preview.description}</div>
                   </div>
                 </div>
 
@@ -345,11 +368,13 @@ function ClientCheckoutInner() {
                   subtitle="Monthly Pre-Authorized Debits (PAD) from your Canadian bank — 6, 12, or 18 months. One skip every 6 months."
                 />
 
-                <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <div className="mt-6 grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Payment plan term">
                   {preview.terms.map((t) => (
                     <button
                       key={t.months}
                       type="button"
+                      role="radio"
+                      aria-checked={term === t.months}
                       onClick={() => {
                         setTerm(t.months);
                         setStep("plan");
@@ -358,20 +383,20 @@ function ClientCheckoutInner() {
                         term === t.months ? "plan-option-selected" : ""
                       }`}
                     >
-                      <div className="font-display text-2xl font-bold text-mist">
+                      <div className="font-display text-[length:var(--text-2xl)] font-bold text-text-primary">
                         {t.months} mo
                       </div>
-                      <div className="mt-2 text-sm text-sage">
+                      <div className="mt-2 text-[length:var(--text-sm)] text-text-secondary">
                         {formatCad(t.monthlyCents)}/mo
                       </div>
-                      <div className="mt-1 text-xs text-sage/60">
+                      <div className="mt-1 text-[length:var(--text-xs)] text-text-muted">
                         Total {formatCad(t.totalCents)}
                       </div>
                     </button>
                   ))}
                 </div>
 
-                <p className="mt-4 text-sm text-sage">
+                <p className="mt-4 text-[length:var(--text-sm)] text-text-secondary">
                   Selected: <strong>{term} months</strong>
                   {selectedTerm ? (
                     <>
@@ -400,25 +425,33 @@ function ClientCheckoutInner() {
                 />
 
                 <div className="mt-6 grid gap-3">
-                  <label className="text-sm">
-                    <FieldLabel>Account holder name</FieldLabel>
+                  <div>
+                    <FieldLabel htmlFor="pad-payor-name">Account holder name</FieldLabel>
                     <input
+                      id="pad-payor-name"
                       className="input"
                       value={pad.payorName}
                       onChange={(e) => setPad({ ...pad, payorName: e.target.value })}
+                      autoComplete="name"
+                      aria-invalid={Boolean(error)}
+                      aria-describedby={error ? "client-checkout-error" : undefined}
                     />
-                  </label>
-                  <label className="text-sm">
-                    <FieldLabel>Institution</FieldLabel>
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor="pad-institution">Institution</FieldLabel>
                     <input
+                      id="pad-institution"
                       className="input"
                       value={pad.institutionName}
                       onChange={(e) => setPad({ ...pad, institutionName: e.target.value })}
+                      aria-invalid={Boolean(error)}
+                      aria-describedby={error ? "client-checkout-error" : undefined}
                     />
-                  </label>
-                  <label className="text-sm">
-                    <FieldLabel>Account last 4</FieldLabel>
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor="pad-last4">Account last 4</FieldLabel>
                     <input
+                      id="pad-last4"
                       className="input"
                       maxLength={4}
                       inputMode="numeric"
@@ -426,33 +459,53 @@ function ClientCheckoutInner() {
                       onChange={(e) =>
                         setPad({ ...pad, bankLast4: e.target.value.replace(/\D/g, "") })
                       }
+                      aria-invalid={Boolean(error)}
+                      aria-describedby={
+                        error ? "pad-last4-hint client-checkout-error" : "pad-last4-hint"
+                      }
                     />
-                  </label>
-                  <details className="text-sm text-sage" open>
-                    <summary className="cursor-pointer font-semibold text-sage">
+                    <p id="pad-last4-hint" className="mt-1 text-[length:var(--text-xs)] text-text-muted">
+                      Last four digits of the account to debit.
+                    </p>
+                  </div>
+                  <details className="text-[length:var(--text-sm)] text-text-secondary" open>
+                    <summary className="cursor-pointer font-semibold text-text-secondary">
                       Bank routing details (required for live Stripe)
                     </summary>
                     <div className="mt-3 grid gap-3">
-                      <input
-                        className="input"
-                        placeholder="Transit number (5 digits)"
-                        value={pad.transitNumber}
-                        onChange={(e) => setPad({ ...pad, transitNumber: e.target.value })}
-                      />
-                      <input
-                        className="input"
-                        placeholder="Institution number (3 digits)"
-                        value={pad.institutionNumber}
-                        onChange={(e) =>
-                          setPad({ ...pad, institutionNumber: e.target.value })
-                        }
-                      />
-                      <input
-                        className="input"
-                        placeholder="Account number"
-                        value={pad.accountNumber}
-                        onChange={(e) => setPad({ ...pad, accountNumber: e.target.value })}
-                      />
+                      <div>
+                        <FieldLabel htmlFor="pad-transit">Transit number</FieldLabel>
+                        <input
+                          id="pad-transit"
+                          className="input"
+                          placeholder="5 digits"
+                          value={pad.transitNumber}
+                          onChange={(e) => setPad({ ...pad, transitNumber: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel htmlFor="pad-fi">Institution number</FieldLabel>
+                        <input
+                          id="pad-fi"
+                          className="input"
+                          placeholder="3 digits"
+                          value={pad.institutionNumber}
+                          onChange={(e) =>
+                            setPad({ ...pad, institutionNumber: e.target.value })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <FieldLabel htmlFor="pad-account">Account number</FieldLabel>
+                        <input
+                          id="pad-account"
+                          className="input"
+                          placeholder="Account number"
+                          value={pad.accountNumber}
+                          onChange={(e) => setPad({ ...pad, accountNumber: e.target.value })}
+                          autoComplete="off"
+                        />
+                      </div>
                     </div>
                   </details>
                 </div>
@@ -497,10 +550,13 @@ function ClientCheckoutInner() {
                   </pre>
                 </div>
 
-                <p className="mt-4 text-sm text-sage/80">{PAD_NSF_POLICY}</p>
+                <p className="mt-4 text-[length:var(--text-sm)] text-text-secondary">
+                  {PAD_NSF_POLICY}
+                </p>
 
-                <label className="checkbox-row mt-6">
+                <label className="checkbox-row mt-6" htmlFor="pad-accept">
                   <input
+                    id="pad-accept"
                     type="checkbox"
                     checked={pad.accepted}
                     onChange={(e) => setPad({ ...pad, accepted: e.target.checked })}
@@ -512,8 +568,9 @@ function ClientCheckoutInner() {
                     immediately.
                   </span>
                 </label>
-                <label className="checkbox-row mt-3">
+                <label className="checkbox-row mt-3" htmlFor="pad-settlement">
                   <input
+                    id="pad-settlement"
                     type="checkbox"
                     checked={pad.settlementAccepted}
                     onChange={(e) =>
@@ -565,9 +622,11 @@ function ClientCheckoutInner() {
                   </button>
                 </div>
                 {skipInfo && !skipInfo.ok ? (
-                  <p className="mt-3 text-sm text-warning">{skipInfo.reason}</p>
+                  <div className="mt-3">
+                    <FormNotice tone="warning">{skipInfo.reason}</FormNotice>
+                  </div>
                 ) : (
-                  <p className="mt-3 text-sm text-sage/70">
+                  <p className="mt-3 text-[length:var(--text-sm)] text-text-muted">
                     Skips need ≥{skipInfo?.noticeRequired ?? 3} business days&apos;
                     notice
                     {skipInfo?.sequence
@@ -580,12 +639,13 @@ function ClientCheckoutInner() {
 
                 <div className="mt-6 overflow-x-auto">
                   <table className="data-table min-w-[520px]">
+                    <caption className="sr-only">Installment schedule</caption>
                     <thead>
                       <tr>
-                        <th>#</th>
-                        <th>Due</th>
-                        <th>Amount</th>
-                        <th>Status</th>
+                        <th scope="col">#</th>
+                        <th scope="col">Due</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Status</th>
                       </tr>
                     </thead>
                     <tbody>

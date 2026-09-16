@@ -123,14 +123,14 @@ export function OnboardingChecklist({
               : "Three steps. Principal stays with you — Pymtx only takes an application fee."
           }
         />
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <StatusPill tone={snap.complete ? "success" : "warning"}>
             {snap.doneCount}/{snap.total} done
           </StatusPill>
           {(snap.complete || snap.doneCount > 0) && (
             <button
               type="button"
-              className="btn-ghost !px-3 !py-2 text-sm"
+              className="btn-ghost btn-toolbar"
               onClick={dismiss}
             >
               Dismiss
@@ -153,14 +153,21 @@ export function OnboardingChecklist({
               ]
                 .filter(Boolean)
                 .join(" ")}
+              aria-current={isCurrent ? "step" : undefined}
             >
               <div className="onboarding-step-index" aria-hidden>
                 {step.done ? "✓" : index + 1}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <p className="font-display text-lg font-bold text-mist">
+                  <p className="font-display text-[length:var(--text-lg)] font-bold text-text-primary">
                     {step.title}
+                    {step.done ? (
+                      <span className="sr-only"> (completed)</span>
+                    ) : null}
+                    {step.locked ? (
+                      <span className="sr-only"> (locked)</span>
+                    ) : null}
                   </p>
                   {step.done ? (
                     <StatusPill tone="success">Done</StatusPill>
@@ -170,7 +177,7 @@ export function OnboardingChecklist({
                     <StatusPill>Locked</StatusPill>
                   ) : null}
                 </div>
-                <p className="mt-1 text-sm leading-relaxed text-sage/80">
+                <p className="mt-1 text-[length:var(--text-sm)] leading-relaxed text-text-secondary">
                   {step.description}
                 </p>
                 {!step.done && !step.locked ? (
@@ -192,12 +199,15 @@ export function OnboardingChecklist({
                 ) : null}
                 {step.id === "invite" && step.done && inviteHref ? (
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <a className="btn-ghost !py-2 text-sm" href={inviteHref}>
+                    <a
+                      className="btn-ghost btn-toolbar"
+                      href={inviteHref}
+                    >
                       Open invite
                     </a>
                     <button
                       type="button"
-                      className="btn-ghost !py-2 text-sm"
+                      className="btn-ghost btn-toolbar"
                       onClick={copyInvite}
                     >
                       {copied ? "Copied" : "Copy link"}
@@ -239,11 +249,12 @@ function StepActions({
   onOpenInvite: () => void;
 }) {
   const primary = isCurrent ? "btn-primary" : "btn-ghost";
+  const size = `${primary} btn-toolbar`;
 
   if (id === "connect") {
     if (!canConnect) {
       return (
-        <a className="btn-ghost !py-2 text-sm" href="/business/settings">
+        <a className="btn-ghost btn-toolbar" href="/business/settings">
           Open settings
         </a>
       );
@@ -251,9 +262,10 @@ function StepActions({
     return (
       <button
         type="button"
-        className={`${primary} !py-2 text-sm`}
+        className={size}
         disabled={busy}
         onClick={onConnect}
+        aria-busy={busy}
       >
         Connect Canadian bank
       </button>
@@ -265,17 +277,19 @@ function StepActions({
       <>
         <button
           type="button"
-          className={`${primary} !py-2 text-sm`}
+          className={size}
           disabled={busy}
           onClick={onOpenCsvPicker}
+          aria-busy={busy}
         >
           Upload CSV
         </button>
         <button
           type="button"
-          className="btn-ghost !py-2 text-sm"
+          className="btn-ghost btn-toolbar"
           disabled={busy}
           onClick={onUploadSample}
+          aria-busy={busy}
         >
           Quick sample invite
         </button>
@@ -286,17 +300,13 @@ function StepActions({
   return (
     <>
       {inviteHref ? (
-        <a
-          className={`${primary} !py-2 text-sm`}
-          href={inviteHref}
-          onClick={onOpenInvite}
-        >
+        <a className={size} href={inviteHref} onClick={onOpenInvite}>
           Open invite
         </a>
       ) : null}
       <button
         type="button"
-        className="btn-ghost !py-2 text-sm"
+        className="btn-ghost btn-toolbar"
         disabled={!inviteHref}
         onClick={onCopyInvite}
       >
