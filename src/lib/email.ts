@@ -79,23 +79,58 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   return { ok: true, provider: "demo" };
 }
 
+/** HIG email tokens — light canvas (matches tokens.css light / React Email shell). */
+const emailTone = {
+  canvas: "#f5f7f5",
+  card: "#ffffff",
+  textPrimary: "#202b31",
+  textSecondary: "#30484a",
+  textMuted: "#4e6260",
+  actionPrimary: "#3b5b53",
+  textOnPrimary: "#ffffff",
+  borderSubtle: "#cad2c5",
+  danger: "#b3261e",
+} as const;
+
 function brandedShell(opts: {
   eyebrow: string;
   title: string;
   bodyHtml: string;
   footerNote?: string;
+  titleTone?: "default" | "danger";
 }) {
+  const titleColor =
+    opts.titleTone === "danger" ? emailTone.danger : emailTone.textPrimary;
   return `
-    <div style="font-family:Figtree,system-ui,sans-serif;background:#2F3E46;color:#CAD2C5;padding:32px">
-      <div style="max-width:480px;margin:0 auto">
-        <p style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#84A98C;font-weight:700">${escapeHtml(opts.eyebrow)}</p>
-        <h1 style="font-size:22px;line-height:1.3;color:#CAD2C5;margin:12px 0 16px">${escapeHtml(opts.title)}</h1>
+    <div style="font-family:Figtree,system-ui,sans-serif;background:${emailTone.canvas};color:${emailTone.textPrimary};padding:32px">
+      <div style="max-width:480px;margin:0 auto;background:${emailTone.card};border:1px solid ${emailTone.borderSubtle};border-radius:12px;padding:28px 24px">
+        <p style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:${emailTone.actionPrimary};font-weight:700;margin:0">${escapeHtml(opts.eyebrow)}</p>
+        <h1 style="font-size:22px;line-height:1.3;color:${titleColor};margin:12px 0 16px">${escapeHtml(opts.title)}</h1>
         ${opts.bodyHtml}
-        <p style="margin-top:28px;font-size:11px;color:#84A98C;line-height:1.5">
+        <p style="margin-top:28px;font-size:11px;color:${emailTone.textMuted};line-height:1.5">
           ${opts.footerNote || ""}${escapeHtml(PROVIDER.legalName)} · ${escapeHtml(PROVIDER.addressLine)} · ${escapeHtml(PROVIDER.email)}
         </p>
       </div>
     </div>
+  `.trim();
+}
+
+function emailBody(html: string) {
+  return html
+    .replaceAll("{{textSecondary}}", emailTone.textSecondary)
+    .replaceAll("{{textPrimary}}", emailTone.textPrimary)
+    .replaceAll("{{textMuted}}", emailTone.textMuted)
+    .replaceAll("{{actionPrimary}}", emailTone.actionPrimary)
+    .replaceAll("{{textOnPrimary}}", emailTone.textOnPrimary);
+}
+
+function ctaButton(href: string, label: string) {
+  return `
+      <p style="margin:28px 0">
+        <a href="${escapeHtml(href)}" style="display:inline-block;background:${emailTone.actionPrimary};color:${emailTone.textOnPrimary};text-decoration:none;font-weight:700;padding:12px 18px;border-radius:8px">
+          ${escapeHtml(label)}
+        </a>
+      </p>
   `.trim();
 }
 
@@ -119,15 +154,11 @@ export function magicLinkEmail(opts: {
   const html = brandedShell({
     eyebrow: PROVIDER.legalName,
     title: `Sign in to settle with ${opts.tradeName}`,
-    bodyHtml: `
-      <p style="color:#84A98C;line-height:1.5">Use this one-time link. It expires in ${opts.minutes} minutes.</p>
-      <p style="margin:28px 0">
-        <a href="${opts.url}" style="display:inline-block;background:#52796F;color:#2F3E46;text-decoration:none;font-weight:700;padding:12px 18px">
-          Open secure sign-in
-        </a>
-      </p>
-      <p style="font-size:12px;color:#84A98C;word-break:break-all">${escapeHtml(opts.url)}</p>
-    `,
+    bodyHtml: emailBody(`
+      <p style="color:{{textSecondary}};line-height:1.5">Use this one-time link. It expires in ${opts.minutes} minutes.</p>
+      ${ctaButton(opts.url, "Open secure sign-in")}
+      <p style="font-size:12px;color:{{textMuted}};word-break:break-all">${escapeHtml(opts.url)}</p>
+    `),
   });
 
   return { subject, text, html };
@@ -157,16 +188,12 @@ export function passwordResetEmail(opts: {
   const html = brandedShell({
     eyebrow: PROVIDER.brand,
     title: "Reset your password",
-    bodyHtml: `
-      <p style="color:#84A98C;line-height:1.5">Hi ${escapeHtml(opts.name)}, use this one-time link to choose a new password. It expires in ${opts.minutes} minutes.</p>
-      <p style="margin:28px 0">
-        <a href="${opts.url}" style="display:inline-block;background:#52796F;color:#2F3E46;text-decoration:none;font-weight:700;padding:12px 18px">
-          Choose a new password
-        </a>
-      </p>
-      <p style="font-size:12px;color:#84A98C;word-break:break-all">${escapeHtml(opts.url)}</p>
-      <p style="color:#84A98C;line-height:1.5;margin-top:20px">If you did not request this, ignore this email.</p>
-    `,
+    bodyHtml: emailBody(`
+      <p style="color:{{textSecondary}};line-height:1.5">Hi ${escapeHtml(opts.name)}, use this one-time link to choose a new password. It expires in ${opts.minutes} minutes.</p>
+      ${ctaButton(opts.url, "Choose a new password")}
+      <p style="font-size:12px;color:{{textMuted}};word-break:break-all">${escapeHtml(opts.url)}</p>
+      <p style="color:{{textSecondary}};line-height:1.5;margin-top:20px">If you did not request this, ignore this email.</p>
+    `),
   });
 
   return { subject, text, html };
@@ -204,16 +231,16 @@ export function padConfirmationEmail(opts: {
   const html = brandedShell({
     eyebrow: opts.tradeName,
     title: "Personal PAD confirmation",
-    bodyHtml: `
-      <p style="color:#84A98C;line-height:1.55">Written confirmation of your Pre-Authorized Debit with <strong style="color:#CAD2C5">${escapeHtml(opts.tradeName)}</strong> (Merchant of Record).</p>
-      <ul style="color:#84A98C;line-height:1.7;padding-left:18px">
+    bodyHtml: emailBody(`
+      <p style="color:{{textSecondary}};line-height:1.55">Written confirmation of your Pre-Authorized Debit with <strong style="color:{{textPrimary}}">${escapeHtml(opts.tradeName)}</strong> (Merchant of Record).</p>
+      <ul style="color:{{textSecondary}};line-height:1.7;padding-left:18px">
         <li>Invoice ${escapeHtml(opts.invoiceRef)}</li>
         <li>${escapeHtml(formatCad(opts.monthlyAmountCents))} monthly</li>
         <li>Account •••• ${escapeHtml(opts.bankLast4)}</li>
         <li>First debit on or after ${escapeHtml(opts.firstDebitDate)}</li>
       </ul>
-      <p style="color:#84A98C;line-height:1.55">Cancel with at least 10 days' written notice before a scheduled debit (Rule H1).</p>
-    `,
+      <p style="color:{{textSecondary}};line-height:1.55">Cancel with at least 10 days' written notice before a scheduled debit (Rule H1).</p>
+    `),
   });
 
   return { subject, text, html };
@@ -242,14 +269,14 @@ export function receiptEmail(opts: {
   const html = brandedShell({
     eyebrow: opts.tradeName,
     title: "Payment receipt",
-    bodyHtml: `
-      <p style="color:#84A98C;line-height:1.55">We received your installment payment.</p>
-      <ul style="color:#84A98C;line-height:1.7;padding-left:18px">
+    bodyHtml: emailBody(`
+      <p style="color:{{textSecondary}};line-height:1.55">We received your installment payment.</p>
+      <ul style="color:{{textSecondary}};line-height:1.7;padding-left:18px">
         <li>Invoice ${escapeHtml(opts.invoiceRef)}</li>
         <li>Installment #${opts.sequence}: ${escapeHtml(formatCad(opts.amountCents))}</li>
         <li>Date ${escapeHtml(paid)}</li>
       </ul>
-    `,
+    `),
   });
 
   return { subject, text, html };
@@ -281,14 +308,15 @@ export function nsfAlertEmail(opts: {
   const html = brandedShell({
     eyebrow: opts.tradeName,
     title: "Payment unsuccessful",
-    bodyHtml: `
-      <p style="color:#84A98C;line-height:1.55">A Pre-Authorized Debit could not be completed (often NSF).</p>
-      <ul style="color:#84A98C;line-height:1.7;padding-left:18px">
+    titleTone: "danger",
+    bodyHtml: emailBody(`
+      <p style="color:{{textSecondary}};line-height:1.55">A Pre-Authorized Debit could not be completed (often NSF).</p>
+      <ul style="color:{{textSecondary}};line-height:1.7;padding-left:18px">
         <li>Invoice ${escapeHtml(opts.invoiceRef)}</li>
         <li>Installment #${opts.sequence}: ${escapeHtml(formatCad(opts.amountCents))}</li>
       </ul>
-      <p style="color:#84A98C;line-height:1.55">${escapeHtml(retryLine)}</p>
-    `,
+      <p style="color:{{textSecondary}};line-height:1.55">${escapeHtml(retryLine)}</p>
+    `),
   });
 
   return { subject, text, html };
@@ -314,11 +342,11 @@ export function skipConfirmationEmail(opts: {
   const html = brandedShell({
     eyebrow: opts.tradeName,
     title: "Payment skip confirmed",
-    bodyHtml: `
-      <p style="color:#84A98C;line-height:1.55">Your ${escapeHtml(formatCad(opts.amountCents))} debit due ${escapeHtml(opts.skippedDue)} was skipped.</p>
-      <p style="color:#84A98C;line-height:1.55">Replacement installment #${opts.appendedSequence} is scheduled for ${escapeHtml(opts.appendedDue)}.</p>
-      <p style="color:#84A98C;line-height:1.55">Next skip available ${escapeHtml(opts.nextSkipAvailable)}.</p>
-    `,
+    bodyHtml: emailBody(`
+      <p style="color:{{textSecondary}};line-height:1.55">Your ${escapeHtml(formatCad(opts.amountCents))} debit due ${escapeHtml(opts.skippedDue)} was skipped.</p>
+      <p style="color:{{textSecondary}};line-height:1.55">Replacement installment #${opts.appendedSequence} is scheduled for ${escapeHtml(opts.appendedDue)}.</p>
+      <p style="color:{{textSecondary}};line-height:1.55">Next skip available ${escapeHtml(opts.nextSkipAvailable)}.</p>
+    `),
   });
 
   return { subject, text, html };

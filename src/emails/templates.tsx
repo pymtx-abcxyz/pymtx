@@ -11,25 +11,42 @@ import {
   Text,
 } from "@react-email/components";
 
-const navy = "#2F3E46";
-const mist = "#CAD2C5";
-const sage = "#84A98C";
+/** HIG email tokens — light canvas, WCAG AA+ on card (matches tokens.css light). */
+const canvas = "#f5f7f5";
+const card = "#ffffff";
+const textPrimary = "#202b31";
+const textSecondary = "#30484a";
+const textMuted = "#4e6260";
+const actionPrimary = "#3b5b53";
+const borderSubtle = "#cad2c5";
+const danger = "#b3261e";
 
 function Shell(props: {
   preview: string;
   eyebrow: string;
   title: string;
+  titleTone?: "default" | "danger";
   children: React.ReactNode;
 }) {
+  const titleColor = props.titleTone === "danger" ? danger : textPrimary;
   return (
     <Html>
       <Head />
       <Preview>{props.preview}</Preview>
-      <Body style={{ backgroundColor: navy, margin: 0, padding: "32px 16px" }}>
-        <Container style={{ maxWidth: 480, margin: "0 auto" }}>
+      <Body style={{ backgroundColor: canvas, margin: 0, padding: "32px 16px" }}>
+        <Container
+          style={{
+            maxWidth: 480,
+            margin: "0 auto",
+            backgroundColor: card,
+            borderRadius: 12,
+            border: `1px solid ${borderSubtle}`,
+            padding: "28px 24px",
+          }}
+        >
           <Text
             style={{
-              color: sage,
+              color: actionPrimary,
               fontSize: 12,
               fontWeight: 700,
               letterSpacing: "0.14em",
@@ -41,7 +58,7 @@ function Shell(props: {
           </Text>
           <Heading
             style={{
-              color: mist,
+              color: titleColor,
               fontSize: 22,
               lineHeight: "1.3",
               margin: "12px 0 16px",
@@ -50,8 +67,8 @@ function Shell(props: {
             {props.title}
           </Heading>
           <Section>{props.children}</Section>
-          <Hr style={{ borderColor: "rgba(132,169,140,0.35)", margin: "28px 0 12px" }} />
-          <Text style={{ color: sage, fontSize: 11, lineHeight: "1.5", margin: 0 }}>
+          <Hr style={{ borderColor: borderSubtle, margin: "28px 0 12px" }} />
+          <Text style={{ color: textMuted, fontSize: 11, lineHeight: "1.5", margin: 0 }}>
             1001527397 ONTARIO INC. · MB055-70 Taunton Rd E, Whitby, ON L1R 3L5 ·
             info@pymtx.com
           </Text>
@@ -63,7 +80,9 @@ function Shell(props: {
 
 function Line({ children }: { children: React.ReactNode }) {
   return (
-    <Text style={{ color: sage, fontSize: 14, lineHeight: "1.55", margin: "0 0 10px" }}>
+    <Text
+      style={{ color: textSecondary, fontSize: 14, lineHeight: "1.55", margin: "0 0 10px" }}
+    >
       {children}
     </Text>
   );
@@ -91,7 +110,7 @@ export function PadConfirmationEmail(props: {
     >
       <Line>
         Written confirmation of your Pre-Authorized Debit with{" "}
-        <strong style={{ color: mist }}>{props.tradeName}</strong> (Merchant of
+        <strong style={{ color: textPrimary }}>{props.tradeName}</strong> (Merchant of
         Record).
       </Line>
       <Line>Invoice {props.invoiceRef}</Line>
@@ -144,6 +163,7 @@ export function NsfAlertEmail(props: {
       preview={`Payment unsuccessful — ${props.tradeName}`}
       eyebrow={props.tradeName}
       title="Payment unsuccessful"
+      titleTone="danger"
     >
       <Line>
         A Pre-Authorized Debit could not be completed (often NSF).
