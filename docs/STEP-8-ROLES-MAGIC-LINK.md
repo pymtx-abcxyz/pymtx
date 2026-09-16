@@ -31,7 +31,7 @@ REDIS_URL="redis://127.0.0.1:6379"
 
 1. Customer visits `/login/customer` and submits email
 2. `POST /api/auth/magic-link` creates a one-time `MagicLink` (20 min TTL)
-3. Demo mode returns `demoUrl`; production would email the link (CASL `MAGIC_LINK` log)
+3. With `EMAIL_PROVIDER=demo` (default), response includes `demoUrl`. With `EMAIL_PROVIDER=resend` + `RESEND_API_KEY`, the link is emailed (CASL `MAGIC_LINK` log still written).
 4. `GET /api/auth/magic-link/verify?token=` sets `pymtx_session` (customer session) and redirects to `/client?token=<inviteToken>`
 
 Anti-enumeration: unknown emails still return a generic success message.
