@@ -2,7 +2,17 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PortalNav, SectionHeading } from "@/components/ui";
+import {
+  PortalNav,
+  PortalShell,
+  PortalMain,
+  PortalFooter,
+  SectionHeading,
+  SectionTitle,
+  FieldLabel,
+  StatusPill,
+  LoadingScreen,
+} from "@/components/ui";
 
 type Business = {
   id: string;
@@ -221,7 +231,7 @@ function BusinessSettingsInner() {
   }
 
   return (
-    <div className="portal-shell">
+    <PortalShell>
       <PortalNav
         portal="Business"
         links={[
@@ -229,7 +239,7 @@ function BusinessSettingsInner() {
           { href: "/business/settings", label: "Settings" },
         ]}
       />
-      <main className="mx-auto max-w-6xl px-6 py-10">
+      <PortalMain>
         <SectionHeading
           title="Stripe Connect onboarding"
           subtitle="Connect a Canadian bank. You remain Merchant of Record — Pymtx never holds principal. Debits run as Direct Charges with an application fee only."
@@ -248,7 +258,7 @@ function BusinessSettingsInner() {
             ] as const
           ).map(([key, label]) => (
             <label key={key} className="block text-sm">
-              <span className="mb-1 block font-semibold text-sage">{label}</span>
+              <FieldLabel>{label}</FieldLabel>
               <input
                 className="input"
                 required={
@@ -262,10 +272,9 @@ function BusinessSettingsInner() {
               />
             </label>
           ))}
-          <label className="flex items-start gap-2 text-sm text-sage">
+          <label className="checkbox-row">
             <input
               type="checkbox"
-              className="mt-1"
               checked={form.saasAgreementAccepted}
               onChange={(e) =>
                 setForm({ ...form, saasAgreementAccepted: e.target.checked })
@@ -277,31 +286,32 @@ function BusinessSettingsInner() {
                 href="/legal/saas"
                 target="_blank"
                 rel="noreferrer"
-                className="text-sage-bright underline"
+                className="link-accent"
               >
                 Master SaaS Agreement &amp; Merchant Indemnity
               </a>{" "}
               (electronic acceptance binds my business as Licensee).
             </span>
           </label>
-          <label className="flex items-start gap-2 text-sm text-sage">
+          <label className="checkbox-row">
             <input
               type="checkbox"
-              className="mt-1"
               checked={form.caslConsent}
               onChange={(e) => setForm({ ...form, caslConsent: e.target.checked })}
             />
-            I confirm customer outreach will be sent under our business identity (CASL
-            EBR / PIPEDA). See{" "}
-            <a
-              href="/legal/privacy"
-              target="_blank"
-              rel="noreferrer"
-              className="text-sage-bright underline"
-            >
-              Privacy &amp; CASL
-            </a>
-            .
+            <span>
+              I confirm customer outreach will be sent under our business identity (CASL
+              EBR / PIPEDA). See{" "}
+              <a
+                href="/legal/privacy"
+                target="_blank"
+                rel="noreferrer"
+                className="link-accent"
+              >
+                Privacy &amp; CASL
+              </a>
+              .
+            </span>
           </label>
           <button
             className="btn-primary w-fit"
@@ -312,14 +322,14 @@ function BusinessSettingsInner() {
           </button>
         </form>
 
-        <section className="mt-14 max-w-xl">
-          <h2 className="font-display text-2xl font-bold">Connect Canadian bank</h2>
-          <p className="mt-1 text-sm text-sage/75">
-            Stripe Connect Express · CA · ACSS Debit Direct Charges (zero custody)
-          </p>
+        <section className="section-block max-w-xl">
+          <SectionTitle
+            title="Connect Canadian bank"
+            subtitle="Stripe Connect Express · CA · ACSS Debit Direct Charges (zero custody)"
+          />
 
           <label className="mt-4 block text-sm">
-            <span className="mb-1 block font-semibold text-sage">Business</span>
+            <FieldLabel>Business</FieldLabel>
             <select
               className="input"
               value={selectedId}
@@ -370,11 +380,11 @@ function BusinessSettingsInner() {
         </section>
 
         {canManageTeam ? (
-          <section className="mt-14 max-w-xl">
-            <h2 className="font-display text-2xl font-bold">Team</h2>
-            <p className="mt-1 text-sm text-sage/75">
-              Owners manage Connect and staff. Clerks can upload invoices and view aging.
-            </p>
+          <section className="section-block max-w-xl">
+            <SectionTitle
+              title="Team"
+              subtitle="Owners manage Connect and staff. Clerks can upload invoices and view aging."
+            />
 
             <ul className="mt-4 space-y-2 text-sm">
               {staff.map((s) => (
@@ -386,7 +396,7 @@ function BusinessSettingsInner() {
                     <span className="font-medium text-mist">{s.name}</span>
                     <span className="text-sage/70"> · {s.email}</span>
                   </span>
-                  <span className="status-pill">{s.role}</span>
+                  <StatusPill>{s.role}</StatusPill>
                 </li>
               ))}
               {staff.length === 0 ? (
@@ -396,7 +406,7 @@ function BusinessSettingsInner() {
 
             <form onSubmit={inviteStaff} className="mt-6 grid gap-3">
               <label className="block text-sm">
-                <span className="mb-1 block font-semibold text-sage">Name</span>
+                <FieldLabel>Name</FieldLabel>
                 <input
                   className="input"
                   required
@@ -405,7 +415,7 @@ function BusinessSettingsInner() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-semibold text-sage">Email</span>
+                <FieldLabel>Email</FieldLabel>
                 <input
                   className="input"
                   type="email"
@@ -415,7 +425,7 @@ function BusinessSettingsInner() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-semibold text-sage">Temp password</span>
+                <FieldLabel>Temp password</FieldLabel>
                 <input
                   className="input"
                   type="password"
@@ -428,7 +438,7 @@ function BusinessSettingsInner() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-semibold text-sage">Role</span>
+                <FieldLabel>Role</FieldLabel>
                 <select
                   className="input"
                   value={staffForm.role}
@@ -445,17 +455,16 @@ function BusinessSettingsInner() {
           </section>
         ) : null}
 
-        {message ? (
-          <p className="notice mt-8">{message}</p>
-        ) : null}
-      </main>
-    </div>
+        {message ? <p className="notice mt-8">{message}</p> : null}
+      </PortalMain>
+      <PortalFooter />
+    </PortalShell>
   );
 }
 
 export default function BusinessSettingsPage() {
   return (
-    <Suspense fallback={<div className="portal-shell p-10">Loading settings…</div>}>
+    <Suspense fallback={<LoadingScreen label="Loading settings…" />}>
       <BusinessSettingsInner />
     </Suspense>
   );

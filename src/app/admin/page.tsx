@@ -1,4 +1,15 @@
-import { PortalNav, SectionHeading, Metric, formatCad } from "@/components/ui";
+import {
+  PortalNav,
+  PortalShell,
+  PortalMain,
+  PortalFooter,
+  SectionHeading,
+  SectionTitle,
+  Metric,
+  StatusPill,
+  EmptyRow,
+  formatCad,
+} from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { UserRole } from "@/lib/domain";
 import { prisma } from "@/lib/db";
@@ -39,7 +50,7 @@ export default async function AdminPage() {
   const health = businesses ? Math.round((connectReady / businesses) * 100) : 0;
 
   return (
-    <div className="portal-shell">
+    <PortalShell>
       <PortalNav
         portal="Admin"
         links={[
@@ -48,7 +59,7 @@ export default async function AdminPage() {
           { href: "/", label: "Marketing" },
         ]}
       />
-      <main className="mx-auto max-w-6xl px-6 py-10">
+      <PortalMain>
         <SectionHeading
           title="Platform control"
           subtitle="Path B compliance posture: Pymtx collects only application fees. Principal settles on connected accounts via Direct Charges."
@@ -69,84 +80,93 @@ export default async function AdminPage() {
           />
         </div>
 
-        <section className="mt-14">
-          <h2 className="font-display text-2xl font-bold text-mist">Invoice pipeline</h2>
-          <p className="mt-1 text-sm text-sage/75">Aging and settlement statuses across the network.</p>
+        <section className="section-block">
+          <SectionTitle
+            title="Invoice pipeline"
+            subtitle="Aging and settlement statuses across the network."
+          />
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[520px] text-left text-sm">
+            <table className="data-table min-w-[520px]">
               <thead>
-                <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
-                  <th className="pb-3 font-semibold">Status</th>
-                  <th className="pb-3 font-semibold">Count</th>
-                  <th className="pb-3 font-semibold">Open balance</th>
+                <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+                  <th>Open balance</th>
                 </tr>
               </thead>
               <tbody>
                 {invoiceGroups.map((g) => (
                   <tr key={g.status} className="table-row">
-                    <td className="py-3 font-medium">{g.status}</td>
-                    <td className="py-3">{g._count}</td>
-                    <td className="py-3">{formatCad(g._sum.balanceCents || 0)}</td>
+                    <td className="font-medium">{g.status}</td>
+                    <td>{g._count}</td>
+                    <td>{formatCad(g._sum.balanceCents || 0)}</td>
                   </tr>
                 ))}
                 {invoiceGroups.length === 0 ? (
-                  <tr>
-                    <td colSpan={3} className="py-6 text-sage/70">
-                      No invoices yet — seed demo data or upload from the business portal.
-                    </td>
-                  </tr>
+                  <EmptyRow colSpan={3}>
+                    No invoices yet — seed demo data or upload from the business portal.
+                  </EmptyRow>
                 ) : null}
               </tbody>
             </table>
           </div>
         </section>
 
-        <section className="mt-14">
-          <h2 className="font-display text-2xl font-bold text-mist">Daily debit runs</h2>
-          <p className="mt-1 text-sm text-sage/75">
-            Inngest cron (America/Toronto midnight) and inline{" "}
-            <code className="text-xs">POST /api/jobs/daily-debit</code>.
-          </p>
+        <section className="section-block">
+          <SectionTitle
+            title="Daily debit runs"
+            subtitle="Inngest cron (America/Toronto midnight) and inline POST /api/jobs/daily-debit."
+          />
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
+            <table className="data-table min-w-[640px]">
               <thead>
-                <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
-                  <th className="pb-3 font-semibold">Run date</th>
-                  <th className="pb-3 font-semibold">Status</th>
-                  <th className="pb-3 font-semibold">Scanned</th>
-                  <th className="pb-3 font-semibold">OK</th>
-                  <th className="pb-3 font-semibold">Failed</th>
-                  <th className="pb-3 font-semibold">Skipped</th>
+                <tr>
+                  <th>Run date</th>
+                  <th>Status</th>
+                  <th>Scanned</th>
+                  <th>OK</th>
+                  <th>Failed</th>
+                  <th>Skipped</th>
                 </tr>
               </thead>
               <tbody>
                 {debitRuns.map((r) => (
                   <tr key={r.id} className="table-row">
-                    <td className="py-3 font-medium">{r.runDate}</td>
-                    <td className="py-3">
-                      <span className="status-pill">{r.status}</span>
+                    <td className="font-medium">{r.runDate}</td>
+                    <td>
+                      <StatusPill
+                        tone={
+                          r.status === "SUCCEEDED"
+                            ? "success"
+                            : r.status === "FAILED"
+                              ? "danger"
+                              : r.status === "PARTIAL"
+                                ? "warning"
+                                : "default"
+                        }
+                      >
+                        {r.status}
+                      </StatusPill>
                     </td>
-                    <td className="py-3">{r.scannedCount}</td>
-                    <td className="py-3">{r.succeededCount}</td>
-                    <td className="py-3">{r.failedCount}</td>
-                    <td className="py-3">{r.skippedCount}</td>
+                    <td>{r.scannedCount}</td>
+                    <td>{r.succeededCount}</td>
+                    <td>{r.failedCount}</td>
+                    <td>{r.skippedCount}</td>
                   </tr>
                 ))}
                 {debitRuns.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-6 text-sage/70">
-                      No debit job runs yet — trigger via Inngest or{" "}
-                      <code className="text-xs">npm run job:daily-debit</code>.
-                    </td>
-                  </tr>
+                  <EmptyRow colSpan={6}>
+                    No debit job runs yet — trigger via Inngest or{" "}
+                    <code className="text-xs">npm run job:daily-debit</code>.
+                  </EmptyRow>
                 ) : null}
               </tbody>
             </table>
           </div>
         </section>
 
-        <section className="mt-14">
-          <h2 className="font-display text-2xl font-bold text-mist">Rule H1 & CDSSA posture</h2>
+        <section className="section-block">
+          <SectionTitle title="Rule H1 & CDSSA posture" />
           <ul className="mt-4 space-y-2 text-sm leading-relaxed text-sage">
             <li>Zero-custody Direct Charges (`stripeAccount` on connected business) — Pymtx is not a collection agency.</li>
             <li>ACSS Debit Personal PAD with written confirmation before first debit.</li>
@@ -155,36 +175,37 @@ export default async function AdminPage() {
           </ul>
         </section>
 
-        <section className="mt-14 mb-10">
-          <h2 className="font-display text-2xl font-bold text-mist">Recent businesses</h2>
+        <section className="section-block mb-4">
+          <SectionTitle title="Recent businesses" />
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-sm">
+            <table className="data-table min-w-[560px]">
               <thead>
-                <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
-                  <th className="pb-3 font-semibold">Trade name</th>
-                  <th className="pb-3 font-semibold">Connect</th>
-                  <th className="pb-3 font-semibold">Customers</th>
-                  <th className="pb-3 font-semibold">Invoices</th>
+                <tr>
+                  <th>Trade name</th>
+                  <th>Connect</th>
+                  <th>Customers</th>
+                  <th>Invoices</th>
                 </tr>
               </thead>
               <tbody>
                 {recent.map((b) => (
                   <tr key={b.id} className="table-row">
-                    <td className="py-3 font-medium">{b.tradeName}</td>
-                    <td className="py-3">
-                      <span className="status-pill">
+                    <td className="font-medium">{b.tradeName}</td>
+                    <td>
+                      <StatusPill tone={b.stripeOnboardingComplete ? "success" : "warning"}>
                         {b.stripeOnboardingComplete ? "Ready" : "Pending"}
-                      </span>
+                      </StatusPill>
                     </td>
-                    <td className="py-3">{b._count.customers}</td>
-                    <td className="py-3">{b._count.invoices}</td>
+                    <td>{b._count.customers}</td>
+                    <td>{b._count.invoices}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </section>
-      </main>
-    </div>
+      </PortalMain>
+      <PortalFooter />
+    </PortalShell>
   );
 }

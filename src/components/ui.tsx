@@ -1,12 +1,43 @@
 import Link from "next/link";
 import { PymtxLogotype } from "@/components/pymtx-mark";
+import { PROVIDER } from "@/lib/legal";
+
+export function PortalShell({
+  children,
+  grain = false,
+}: {
+  children: React.ReactNode;
+  grain?: boolean;
+}) {
+  return (
+    <div className="relative min-h-screen overflow-x-hidden portal-shell">
+      {grain ? <div className="pointer-events-none absolute inset-0 pymtx-grain" aria-hidden /> : null}
+      <div className="relative z-10 flex min-h-screen flex-col">{children}</div>
+    </div>
+  );
+}
+
+export function AuthShell({ children }: { children: React.ReactNode }) {
+  return (
+    <PortalShell grain>
+      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-16">
+        <Link href="/" className="text-2xl text-sage-bright">
+          <PymtxLogotype />
+        </Link>
+        {children}
+      </main>
+    </PortalShell>
+  );
+}
 
 export function PortalNav({
   portal,
   links,
+  actions,
 }: {
   portal: "Admin" | "Business" | "Client";
   links: { href: string; label: string }[];
+  actions?: React.ReactNode;
 }) {
   return (
     <header className="portal-nav sticky top-0 z-20">
@@ -19,61 +50,181 @@ export function PortalNav({
             {portal}
           </span>
         </div>
-        <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm font-medium text-sage/80">
-          {links.map((l) => (
-            <Link
-              key={l.href + l.label}
-              href={l.href}
-              className="hover:text-sage-bright"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
+          <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm font-medium text-sage/80">
+            {links.map((l) => (
+              <Link
+                key={l.href + l.label}
+                href={l.href}
+                className="hover:text-sage-bright"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+          {actions}
+        </div>
       </div>
     </header>
+  );
+}
+
+export function PortalMain({
+  children,
+  narrow = false,
+}: {
+  children: React.ReactNode;
+  narrow?: boolean;
+}) {
+  return (
+    <main
+      className={`mx-auto w-full flex-1 px-6 py-10 ${narrow ? "max-w-3xl" : "max-w-6xl"}`}
+    >
+      {children}
+    </main>
+  );
+}
+
+export function PortalFooter({
+  narrow = false,
+  children,
+}: {
+  narrow?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <footer
+      className={`mx-auto w-full px-6 pb-10 pt-2 text-xs leading-relaxed text-sage/55 ${
+        narrow ? "max-w-3xl" : "max-w-6xl"
+      }`}
+    >
+      {children ?? (
+        <div className="flex flex-col gap-2 border-t border-mist/10 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
+          <span>
+            Debits settle to the merchant as Merchant of Record. {PROVIDER.legalName}{" "}
+            never holds principal (Path B / zero-custody).
+          </span>
+          <span className="shrink-0 text-sage/65">
+            {PROVIDER.legalName} · {PROVIDER.addressLine} · {PROVIDER.email}
+          </span>
+        </div>
+      )}
+    </footer>
   );
 }
 
 export function SectionHeading({
   title,
   subtitle,
+  actions,
 }: {
   title: string;
   subtitle?: string;
+  actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-8">
-      <h1 className="font-display text-3xl font-bold tracking-tight text-mist sm:text-4xl">
-        {title}
-      </h1>
-      {subtitle ? <p className="mt-2 max-w-2xl text-sage/85">{subtitle}</p> : null}
+    <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+      <div className="min-w-0">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-mist sm:text-4xl">
+          {title}
+        </h1>
+        {subtitle ? (
+          <p className="mt-2 max-w-2xl text-sage/85">{subtitle}</p>
+        ) : null}
+      </div>
+      {actions ? <div className="flex shrink-0 flex-wrap gap-3">{actions}</div> : null}
     </div>
   );
+}
+
+export function SectionTitle({
+  title,
+  subtitle,
+  className = "",
+}: {
+  title: string;
+  subtitle?: string;
+  className?: string;
+}) {
+  return (
+    <div className={className}>
+      <h2 className="font-display text-2xl font-bold text-mist">{title}</h2>
+      {subtitle ? <p className="mt-1 text-sm text-sage/75">{subtitle}</p> : null}
+    </div>
+  );
+}
+
+export function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <span className="field-label">{children}</span>;
 }
 
 export function Metric({
   label,
   value,
   hint,
+  size = "lg",
 }: {
   label: string;
   value: string;
   hint?: string;
+  size?: "lg" | "md";
 }) {
   return (
-    <div className="border-t border-mist/10 pt-4">
+    <div className="metric-tile">
       <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
         {label}
       </div>
-      <div className="mt-2 font-display text-3xl font-bold text-mist">{value}</div>
+      <div
+        className={`mt-2 font-display font-bold text-mist ${
+          size === "md" ? "text-xl leading-snug" : "text-3xl"
+        }`}
+      >
+        {value}
+      </div>
       {hint ? <div className="mt-1 text-sm text-sage/70">{hint}</div> : null}
     </div>
   );
 }
 
-export function formatCad(cents: number) {
-  return new Intl.NumberFormat("en-CA", { style: "currency", currency: "CAD" }).format(
-    cents / 100,
+export function StatusPill({
+  children,
+  tone = "default",
+}: {
+  children: React.ReactNode;
+  tone?: "default" | "success" | "warning" | "danger";
+}) {
+  return <span className={`status-pill status-pill-${tone}`}>{children}</span>;
+}
+
+export function LoadingScreen({ label = "Loading…" }: { label?: string }) {
+  return (
+    <PortalShell>
+      <div className="flex min-h-screen items-center justify-center px-6 text-sm text-sage">
+        {label}
+      </div>
+    </PortalShell>
   );
+}
+
+export function EmptyRow({
+  colSpan,
+  children,
+}: {
+  colSpan: number;
+  children: React.ReactNode;
+}) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="py-8 text-sage/70">
+        {children}
+      </td>
+    </tr>
+  );
+}
+
+export function formatCad(cents: number) {
+  return new Intl.NumberFormat("en-CA", {
+    style: "currency",
+    currency: "CAD",
+  }).format(cents / 100);
 }

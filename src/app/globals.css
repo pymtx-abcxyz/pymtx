@@ -79,6 +79,89 @@ body {
   min-height: 100vh;
 }
 
+.field-label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--sage);
+}
+
+.metric-tile {
+  border-top: 1px solid var(--line);
+  padding-top: 1rem;
+}
+
+.section-block {
+  margin-top: 3.5rem;
+}
+
+.data-table {
+  width: 100%;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.data-table thead tr {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(159, 184, 154, 0.6);
+}
+
+.data-table th {
+  padding-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+.data-table td {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.plan-option {
+  border: 1px solid rgba(232, 238, 233, 0.15);
+  padding: 1.25rem 1rem;
+  text-align: left;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.plan-option:hover {
+  border-color: rgba(159, 184, 154, 0.4);
+}
+
+.plan-option-selected {
+  border-color: var(--sage);
+  background: rgba(159, 184, 154, 0.15);
+}
+
+.legal-scroll {
+  max-height: 18rem;
+  overflow-y: auto;
+  border: 1px solid rgba(232, 238, 233, 0.15);
+  background: rgba(11, 28, 51, 0.4);
+  padding: 1rem;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: rgba(159, 184, 154, 0.9);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--sage);
+}
+
+.checkbox-row input[type="checkbox"] {
+  margin-top: 0.2rem;
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--sage);
+  flex-shrink: 0;
+}
+
 .pymtx-grain::before {
   content: "";
   pointer-events: none;
@@ -199,6 +282,22 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-weight: 700;
+  color: var(--sage-bright);
+}
+
+.status-pill-success {
+  color: var(--success);
+}
+
+.status-pill-warning {
+  color: var(--warning);
+}
+
+.status-pill-danger {
+  color: var(--coral);
+}
+
+.status-pill-default {
   color: var(--sage-bright);
 }
 

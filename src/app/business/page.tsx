@@ -2,7 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PortalNav, SectionHeading, formatCad } from "@/components/ui";
+import {
+  PortalNav,
+  PortalShell,
+  PortalMain,
+  PortalFooter,
+  SectionHeading,
+  SectionTitle,
+  Metric,
+  StatusPill,
+  EmptyRow,
+  FieldLabel,
+  formatCad,
+} from "@/components/ui";
 
 type AuthUser = {
   id: string;
@@ -212,33 +224,34 @@ export default function BusinessPortalPage() {
   }
 
   return (
-    <div className="portal-shell">
+    <PortalShell>
       <PortalNav
         portal="Business"
         links={[
           { href: "/business", label: "Dashboard" },
           { href: "/business/settings", label: "Settings" },
-          { href: "/login", label: user ? `Sign out (${user.name})` : "Sign in" },
         ]}
+        actions={
+          user ? (
+            <button className="btn-ghost !px-3 !py-2 text-sm" type="button" onClick={logout}>
+              Sign out
+            </button>
+          ) : null
+        }
       />
-      <main className="mx-auto max-w-6xl px-6 py-10">
-        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-          <SectionHeading
-            title="Your receivables, your bank"
-            subtitle={
-              user?.role === "CLERK"
-                ? "Upload past-due accounts and track aging. Connect and staff settings are owner-only."
-                : "Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through Pymtx."
-            }
-          />
-          <button className="btn-ghost" type="button" onClick={logout}>
-            Sign out
-          </button>
-        </div>
+      <PortalMain>
+        <SectionHeading
+          title="Your receivables, your bank"
+          subtitle={
+            user?.role === "CLERK"
+              ? "Upload past-due accounts and track aging. Connect and staff settings are owner-only."
+              : "Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through Pymtx."
+          }
+        />
 
         <div className="mb-8 flex flex-wrap items-end gap-4">
           <label className="block min-w-[240px] flex-1 text-sm">
-            <span className="mb-1 block font-semibold text-sage">Business</span>
+            <FieldLabel>Business</FieldLabel>
             <select
               className="input"
               value={selectedId}
@@ -288,69 +301,54 @@ export default function BusinessPortalPage() {
 
         {selected ? (
           <div className="mb-10 grid gap-6 sm:grid-cols-3">
-            <div className="border-t border-mist/10 pt-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
-                Merchant of Record
-              </div>
-              <div className="mt-2 font-display text-xl font-bold">{selected.legalName}</div>
-            </div>
-            <div className="border-t border-mist/10 pt-4">
+            <Metric label="Merchant of Record" value={selected.legalName} size="md" />
+            <div className="metric-tile">
               <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
                 Stripe Connect
               </div>
               <div className="mt-2 font-medium">
                 {selected.stripeOnboardingComplete ? (
-                  <span className="text-success">Ready · {selected.stripeAccountId}</span>
+                  <StatusPill tone="success">Ready · {selected.stripeAccountId}</StatusPill>
                 ) : (
-                  <span className="text-warning">Onboarding required</span>
+                  <StatusPill tone="warning">Onboarding required</StatusPill>
                 )}
               </div>
             </div>
-            <div className="border-t border-mist/10 pt-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
-                Settlement rail
-              </div>
-              <div className="mt-2 font-medium">ACSS Debit (PAD / EFT)</div>
-            </div>
+            <Metric label="Settlement rail" value="ACSS Debit (PAD / EFT)" size="md" />
           </div>
         ) : null}
 
-        {message ? (
-          <p className="notice mb-8">
-            {message}
-          </p>
-        ) : null}
+        {message ? <p className="notice mb-8">{message}</p> : null}
 
-        <h2 className="font-display text-2xl font-bold text-mist">Aging & settlement</h2>
-        <p className="mt-1 text-sm text-sage/75">
-          CSV columns: external_ref, description, amount (CAD dollars or cents), due_date,
-          first_name, last_name, email, phone.
-        </p>
+        <SectionTitle
+          title="Aging & settlement"
+          subtitle="CSV columns: external_ref, description, amount (CAD dollars or cents), due_date, first_name, last_name, email, phone."
+        />
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="data-table min-w-[720px]">
             <thead>
-              <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
-                <th className="pb-3 font-semibold">Ref</th>
-                <th className="pb-3 font-semibold">Customer</th>
-                <th className="pb-3 font-semibold">Aging</th>
-                <th className="pb-3 font-semibold">Balance</th>
-                <th className="pb-3 font-semibold">Status</th>
-                <th className="pb-3 font-semibold">Invite</th>
+              <tr>
+                <th>Ref</th>
+                <th>Customer</th>
+                <th>Aging</th>
+                <th>Balance</th>
+                <th>Status</th>
+                <th>Invite</th>
               </tr>
             </thead>
             <tbody>
               {invoices.map((inv) => (
                 <tr key={inv.id} className="table-row">
-                  <td className="py-3 font-medium">{inv.externalRef}</td>
-                  <td className="py-3">
+                  <td className="font-medium">{inv.externalRef}</td>
+                  <td>
                     {inv.customer.firstName} {inv.customer.lastName}
                   </td>
-                  <td className="py-3">{inv.agingBucket}</td>
-                  <td className="py-3">{formatCad(inv.balanceCents)}</td>
-                  <td className="py-3">
-                    <span className="status-pill">{inv.status}</span>
+                  <td>{inv.agingBucket}</td>
+                  <td>{formatCad(inv.balanceCents)}</td>
+                  <td>
+                    <StatusPill>{inv.status}</StatusPill>
                   </td>
-                  <td className="py-3">
+                  <td>
                     <a
                       className="link-accent"
                       href={`/client?token=${inv.customer.inviteToken}`}
@@ -361,16 +359,15 @@ export default function BusinessPortalPage() {
                 </tr>
               ))}
               {invoices.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-sage/70">
-                    No invoices yet — upload a CSV or send a sample invite.
-                  </td>
-                </tr>
+                <EmptyRow colSpan={6}>
+                  No invoices yet — upload a CSV or send a sample invite.
+                </EmptyRow>
               ) : null}
             </tbody>
           </table>
         </div>
-      </main>
-    </div>
+      </PortalMain>
+      <PortalFooter />
+    </PortalShell>
   );
 }

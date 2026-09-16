@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PymtxLogotype, PymtxWordmark } from "@/components/pymtx-mark";
+import { PROVIDER } from "@/lib/legal";
 
 export default function HomePage() {
   return (
@@ -45,12 +46,12 @@ export default function HomePage() {
           </Link>
         </div>
         <p className="animate-rise-delay-2 mt-14 max-w-xl text-xs leading-relaxed text-sage/55">
-          Technology by 1001527397 ONTARIO INC. ·{" "}
-          <Link href="/legal/saas" className="underline hover:text-sage">
+          Technology by {PROVIDER.legalName} ·{" "}
+          <Link href="/legal/saas" className="link-accent">
             SaaS Agreement
           </Link>{" "}
           ·{" "}
-          <Link href="/legal/privacy" className="underline hover:text-sage">
+          <Link href="/legal/privacy" className="link-accent">
             Privacy &amp; CASL
           </Link>
         </p>

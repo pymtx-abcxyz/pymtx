@@ -2,7 +2,19 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PortalNav, SectionHeading, formatCad } from "@/components/ui";
+import {
+  PortalNav,
+  PortalShell,
+  PortalMain,
+  PortalFooter,
+  SectionHeading,
+  SectionTitle,
+  FieldLabel,
+  StatusPill,
+  Metric,
+  LoadingScreen,
+  formatCad,
+} from "@/components/ui";
 import { PAD_NSF_POLICY } from "@/lib/compliance";
 import {
   PROVIDER,
@@ -251,15 +263,16 @@ function ClientCheckoutInner() {
   }
 
   return (
-    <div className="portal-shell">
+    <PortalShell>
       <PortalNav
         portal="Client"
         links={[
           { href: "/client", label: "Checkout" },
+          { href: "/login/customer", label: "Sign in" },
           { href: "/", label: "About pymtx" },
         ]}
       />
-      <main className="mx-auto max-w-3xl px-6 py-10">
+      <PortalMain narrow>
         <SectionHeading
           title="Settle your balance"
           subtitle="Choose a plan and authorize a Personal PAD. Communications come from your creditor — 1001527397 ONTARIO INC. never holds your payment."
@@ -268,7 +281,7 @@ function ClientCheckoutInner() {
         {!preview ? (
           <div className="max-w-md">
             <label className="block text-sm">
-              <span className="mb-1 block font-semibold text-sage">Invite token</span>
+              <FieldLabel>Invite token</FieldLabel>
               <input
                 className="input"
                 value={token}
@@ -290,11 +303,11 @@ function ClientCheckoutInner() {
           <>
             <Stepper step={step} />
 
-            <div className="mb-8 border-t border-mist/10 pt-4">
+            <div className="mb-8 metric-tile">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
                 Creditor (Merchant of Record)
               </p>
-              <p className="mt-1 font-display text-2xl font-bold">
+              <p className="mt-1 font-display text-2xl font-bold text-mist">
                 {preview.businessTradeName}
               </p>
               <p className="text-sm text-sage/75">
@@ -309,25 +322,17 @@ function ClientCheckoutInner() {
               </p>
             ) : null}
 
-            {notice ? (
-              <p className="notice mb-6">
-                {notice}
-              </p>
-            ) : null}
+            {notice ? <p className="notice mb-6">{notice}</p> : null}
             {error ? <p className="mb-6 text-sm text-coral">{error}</p> : null}
 
             {(step === "review" || step === "plan") && !plan ? (
               <section>
                 <div className="mb-8 grid gap-6 sm:grid-cols-2">
-                  <div className="border-t border-mist/10 pt-4">
-                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
-                      Balance due
-                    </div>
-                    <div className="mt-2 font-display text-4xl font-bold">
-                      {formatCad(preview.balanceCents)}
-                    </div>
-                  </div>
-                  <div className="border-t border-mist/10 pt-4">
+                  <Metric
+                    label="Balance due"
+                    value={formatCad(preview.balanceCents)}
+                  />
+                  <div className="metric-tile">
                     <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
                       For
                     </div>
@@ -335,11 +340,10 @@ function ClientCheckoutInner() {
                   </div>
                 </div>
 
-                <h2 className="font-display text-2xl font-bold">Choose your plan</h2>
-                <p className="mt-1 text-sm text-sage/75">
-                  Monthly Pre-Authorized Debits (PAD) from your Canadian bank — 6, 12, or 18
-                  months. One skip every 6 months.
-                </p>
+                <SectionTitle
+                  title="Choose your plan"
+                  subtitle="Monthly Pre-Authorized Debits (PAD) from your Canadian bank — 6, 12, or 18 months. One skip every 6 months."
+                />
 
                 <div className="mt-6 grid gap-3 sm:grid-cols-3">
                   {preview.terms.map((t) => (
@@ -350,13 +354,13 @@ function ClientCheckoutInner() {
                         setTerm(t.months);
                         setStep("plan");
                       }}
-                      className={`border px-4 py-5 text-left transition ${
-                        term === t.months
-                          ? "border-sage bg-sage/15"
-                          : "border-mist/15 hover:border-sage/40"
+                      className={`plan-option ${
+                        term === t.months ? "plan-option-selected" : ""
                       }`}
                     >
-                      <div className="font-display text-2xl font-bold">{t.months} mo</div>
+                      <div className="font-display text-2xl font-bold text-mist">
+                        {t.months} mo
+                      </div>
                       <div className="mt-2 text-sm text-sage">
                         {formatCad(t.monthlyCents)}/mo
                       </div>
@@ -390,16 +394,14 @@ function ClientCheckoutInner() {
 
             {step === "pad" && plan && preview ? (
               <section>
-                <h2 className="font-display text-2xl font-bold">Personal PAD agreement</h2>
-                <p className="mt-2 text-sm leading-relaxed text-sage">
-                  Payments Canada Rule H1 Personal PAD. Debits are drawn by{" "}
-                  <strong>{preview.businessLegalName}</strong> as Merchant of Record.{" "}
-                  {PROVIDER.legalName} is an automated technological conduit only.
-                </p>
+                <SectionTitle
+                  title="Personal PAD agreement"
+                  subtitle={`Payments Canada Rule H1 Personal PAD. Debits are drawn by ${preview.businessLegalName} as Merchant of Record. ${PROVIDER.legalName} is an automated technological conduit only.`}
+                />
 
                 <div className="mt-6 grid gap-3">
                   <label className="text-sm">
-                    <span className="mb-1 block font-semibold">Account holder name</span>
+                    <FieldLabel>Account holder name</FieldLabel>
                     <input
                       className="input"
                       value={pad.payorName}
@@ -407,7 +409,7 @@ function ClientCheckoutInner() {
                     />
                   </label>
                   <label className="text-sm">
-                    <span className="mb-1 block font-semibold">Institution</span>
+                    <FieldLabel>Institution</FieldLabel>
                     <input
                       className="input"
                       value={pad.institutionName}
@@ -415,7 +417,7 @@ function ClientCheckoutInner() {
                     />
                   </label>
                   <label className="text-sm">
-                    <span className="mb-1 block font-semibold">Account last 4</span>
+                    <FieldLabel>Account last 4</FieldLabel>
                     <input
                       className="input"
                       maxLength={4}
@@ -427,7 +429,7 @@ function ClientCheckoutInner() {
                     />
                   </label>
                   <details className="text-sm text-sage" open>
-                    <summary className="cursor-pointer font-semibold">
+                    <summary className="cursor-pointer font-semibold text-sage">
                       Bank routing details (required for live Stripe)
                     </summary>
                     <div className="mt-3 grid gap-3">
@@ -455,7 +457,7 @@ function ClientCheckoutInner() {
                   </details>
                 </div>
 
-                <div className="mt-8 max-h-72 overflow-y-auto rounded-sm border border-mist/15 bg-navy/40 p-4 text-xs leading-relaxed text-sage/90">
+                <div className="legal-scroll mt-8">
                   <pre className="whitespace-pre-wrap font-sans">
                     {renderPadAgreement({
                       customerFullName:
@@ -482,7 +484,7 @@ function ClientCheckoutInner() {
                   </pre>
                 </div>
 
-                <div className="mt-4 max-h-56 overflow-y-auto rounded-sm border border-mist/15 bg-navy/40 p-4 text-xs leading-relaxed text-sage/90">
+                <div className="legal-scroll mt-4">
                   <pre className="whitespace-pre-wrap font-sans">
                     {renderSettlementTerms({
                       merchantLegalName: preview.businessLegalName,
@@ -497,30 +499,32 @@ function ClientCheckoutInner() {
 
                 <p className="mt-4 text-sm text-sage/80">{PAD_NSF_POLICY}</p>
 
-                <label className="mt-6 flex items-start gap-2 text-sm">
+                <label className="checkbox-row mt-6">
                   <input
                     type="checkbox"
-                    className="mt-1"
                     checked={pad.accepted}
                     onChange={(e) => setPad({ ...pad, accepted: e.target.checked })}
                   />
-                  I authorize {preview.businessLegalName} to debit my account under this
-                  Personal PAD Agreement (Payments Canada Rule H1). I waive fixed-amount
-                  pre-notification as described above. A confirmation PDF will be emailed
-                  immediately.
+                  <span>
+                    I authorize {preview.businessLegalName} to debit my account under this
+                    Personal PAD Agreement (Payments Canada Rule H1). I waive fixed-amount
+                    pre-notification as described above. A confirmation PDF will be emailed
+                    immediately.
+                  </span>
                 </label>
-                <label className="mt-3 flex items-start gap-2 text-sm">
+                <label className="checkbox-row mt-3">
                   <input
                     type="checkbox"
-                    className="mt-1"
                     checked={pad.settlementAccepted}
                     onChange={(e) =>
                       setPad({ ...pad, settlementAccepted: e.target.checked })
                     }
                   />
-                  I acknowledge the Settlement Terms &amp; Cost of Credit Disclosure
-                  (0% APR / $0 platform fees to me) and that {PROVIDER.legalName} owns no
-                  interest in this debt.
+                  <span>
+                    I acknowledge the Settlement Terms &amp; Cost of Credit Disclosure
+                    (0% APR / $0 platform fees to me) and that {PROVIDER.legalName} owns no
+                    interest in this debt.
+                  </span>
                 </label>
 
                 <button
@@ -542,17 +546,14 @@ function ClientCheckoutInner() {
             {step === "active" && plan ? (
               <section>
                 <div className="flex flex-wrap items-end justify-between gap-4">
-                  <div>
-                    <h2 className="font-display text-2xl font-bold">
-                      {plan.termMonths}-month schedule
-                    </h2>
-                    <p className="mt-1 text-sm text-sage/75">
-                      {formatCad(plan.monthlyAmountCents)} · ACSS Debit · 1 skip / 6 months
-                      {plan.padMandate?.bankLast4
+                  <SectionTitle
+                    title={`${plan.termMonths}-month schedule`}
+                    subtitle={`${formatCad(plan.monthlyAmountCents)} · ACSS Debit · 1 skip / 6 months${
+                      plan.padMandate?.bankLast4
                         ? ` · •••• ${plan.padMandate.bankLast4}`
-                        : ""}
-                    </p>
-                  </div>
+                        : ""
+                    }`}
+                  />
                   <button
                     className="btn-ghost"
                     type="button"
@@ -578,25 +579,35 @@ function ClientCheckoutInner() {
                 )}
 
                 <div className="mt-6 overflow-x-auto">
-                  <table className="w-full min-w-[520px] text-left text-sm">
+                  <table className="data-table min-w-[520px]">
                     <thead>
-                      <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
-                        <th className="pb-3 font-semibold">#</th>
-                        <th className="pb-3 font-semibold">Due</th>
-                        <th className="pb-3 font-semibold">Amount</th>
-                        <th className="pb-3 font-semibold">Status</th>
+                      <tr>
+                        <th>#</th>
+                        <th>Due</th>
+                        <th>Amount</th>
+                        <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {plan.installments.map((i) => (
                         <tr key={i.id} className="table-row">
-                          <td className="py-3">{i.sequence}</td>
-                          <td className="py-3">
-                            {new Date(i.dueDate).toLocaleDateString("en-CA")}
-                          </td>
-                          <td className="py-3">{formatCad(i.amountCents)}</td>
-                          <td className="py-3">
-                            <span className="status-pill">{i.status}</span>
+                          <td>{i.sequence}</td>
+                          <td>{new Date(i.dueDate).toLocaleDateString("en-CA")}</td>
+                          <td>{formatCad(i.amountCents)}</td>
+                          <td>
+                            <StatusPill
+                              tone={
+                                i.status === "SUCCEEDED"
+                                  ? "success"
+                                  : i.status === "FAILED" || i.status === "FAILED_NSF"
+                                    ? "danger"
+                                    : i.status === "SKIPPED"
+                                      ? "warning"
+                                      : "default"
+                              }
+                            >
+                              {i.status}
+                            </StatusPill>
                           </td>
                         </tr>
                       ))}
@@ -607,24 +618,15 @@ function ClientCheckoutInner() {
             ) : null}
           </>
         )}
-      </main>
-      <footer className="mx-auto flex max-w-3xl flex-col gap-2 px-6 pb-10 pt-2 text-xs text-sage/55 sm:flex-row sm:items-center sm:justify-between">
-        <span>
-          Debits are drawn by your creditor as Merchant of Record. 1001527397
-          ONTARIO INC. never holds principal (Path B / zero-custody).
-        </span>
-        <span className="shrink-0 text-sage/70">
-          Technical processing: 1001527397 ONTARIO INC. · MB055-70 Taunton Rd E,
-          Whitby, ON L1R 3L5 · info@pymtx.com
-        </span>
-      </footer>
-    </div>
+      </PortalMain>
+      <PortalFooter narrow />
+    </PortalShell>
   );
 }
 
 export default function ClientCheckoutPage() {
   return (
-    <Suspense fallback={<div className="portal-shell p-10">Loading checkout…</div>}>
+    <Suspense fallback={<LoadingScreen label="Loading checkout…" />}>
       <ClientCheckoutInner />
     </Suspense>
   );
