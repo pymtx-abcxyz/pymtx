@@ -33,7 +33,7 @@ export function AuthShell({
       >
         <Link
           href="/"
-          className="animate-rise text-2xl text-ash"
+          className="animate-rise text-2xl text-text-primary"
           aria-label="pymtx home"
         >
           <PymtxLogotype />
@@ -41,7 +41,7 @@ export function AuthShell({
         <div className="animate-rise-delay-1 glass-panel mt-6 px-6 py-7 sm:px-7">
           {children}
         </div>
-        <p className="animate-rise-delay-2 mt-10 text-xs leading-relaxed text-sage/50">
+        <p className="animate-rise-delay-2 mt-10 text-xs leading-relaxed text-text-muted">
           <Link href="/legal/saas" className="link-accent">
             SaaS Agreement
           </Link>
@@ -49,7 +49,7 @@ export function AuthShell({
           <Link href="/legal/privacy" className="link-accent">
             Privacy &amp; CASL
           </Link>
-          <span className="mt-1 block text-sage/40">{PROVIDER.legalName}</span>
+          <span className="mt-1 block text-text-muted">{PROVIDER.legalName}</span>
         </p>
       </main>
     </PortalShell>
@@ -116,20 +116,20 @@ export function PortalNav({
     <header className="portal-nav sticky top-0 z-20">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <div className="flex min-w-0 items-baseline gap-3">
-          <Link href="/" className="shrink-0 text-xl text-ash">
+          <Link href="/" className="shrink-0 text-xl text-text-primary">
             <PymtxLogotype />
           </Link>
-          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-sage">
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">
             {portal}
           </span>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2">
-          <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm font-medium text-sage/80">
+          <nav className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm font-medium text-text-secondary">
             {links.map((l) => (
               <Link
                 key={l.href + l.label}
                 href={l.href}
-                className="hover:text-ash"
+                className="hover:text-text-primary"
               >
                 {l.label}
               </Link>

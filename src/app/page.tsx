@@ -8,11 +8,11 @@ export default function HomePage() {
       <div className="absolute inset-0 pymtx-grain" aria-hidden />
 
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-        <PymtxLogotype className="text-lg text-ash" />
+        <PymtxLogotype className="text-lg text-text-primary" />
         <nav className="flex items-center gap-3 text-sm font-medium">
           <Link
             href="/login"
-            className="hidden text-sage/90 hover:text-ash sm:inline"
+            className="hidden text-text-secondary hover:text-text-primary sm:inline"
           >
             Sign in
           </Link>
@@ -26,14 +26,14 @@ export default function HomePage() {
       </header>
 
       <section className="relative z-10 mx-auto flex min-h-[calc(100vh-5.5rem)] w-full max-w-6xl flex-col justify-center px-6 pb-16 pt-4">
-        <p className="animate-rise font-display text-6xl font-bold tracking-tight text-ash sm:text-7xl md:text-8xl">
+        <p className="animate-rise font-display text-[length:var(--text-display)] font-bold tracking-tight text-text-primary">
           pymtx
         </p>
 
-        <h1 className="animate-rise-delay-1 mt-8 max-w-xl font-display text-2xl font-medium leading-snug text-mist sm:text-3xl">
+        <h1 className="animate-rise-delay-1 mt-8 max-w-xl font-display text-[length:var(--text-3xl)] font-medium leading-snug text-text-primary">
           Past-due balances, settled directly — your business stays the creditor.
         </h1>
-        <p className="animate-rise-delay-1 mt-4 max-w-lg text-base leading-relaxed text-sage/85">
+        <p className="animate-rise-delay-1 mt-4 max-w-lg text-base leading-relaxed text-text-secondary">
           Zero-custody AR for Ontario SMBs. Customers choose a PAD plan; funds go
           straight to your bank. pymtx never holds the debt.
         </p>
@@ -45,7 +45,7 @@ export default function HomePage() {
             Settle as a customer
           </Link>
         </div>
-        <p className="animate-rise-delay-2 mt-14 max-w-xl text-xs leading-relaxed text-sage/55">
+        <p className="animate-rise-delay-2 mt-14 max-w-xl text-xs leading-relaxed text-text-muted">
           Technology by {PROVIDER.legalName} ·{" "}
           <Link href="/legal/saas" className="link-accent">
             SaaS Agreement
