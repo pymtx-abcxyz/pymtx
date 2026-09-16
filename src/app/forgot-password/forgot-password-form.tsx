@@ -2,7 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { AuthShell, FieldLabel } from "@/components/ui";
+import {
+  AuthAltLink,
+  AuthHeading,
+  AuthShell,
+  FieldLabel,
+  FormError,
+  FormNotice,
+} from "@/components/ui";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -34,16 +41,9 @@ export default function ForgotPasswordForm() {
 
   return (
     <AuthShell>
-      <h1 className="mt-6 font-display text-3xl font-bold text-mist">
-        Forgot password
-      </h1>
-      <p className="mt-2 text-sm text-sage/85">
-        Enter your work email and we&apos;ll send a one-time reset link.{" "}
-        <Link className="link-accent" href="/login">
-          Back to sign in
-        </Link>
-        .
-      </p>
+      <AuthHeading title="Forgot password">
+        Enter your work email and we&apos;ll send a one-time reset link.
+      </AuthHeading>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         <label className="block text-sm">
@@ -57,20 +57,32 @@ export default function ForgotPasswordForm() {
             required
           />
         </label>
-        {error ? <p className="text-sm text-coral">{error}</p> : null}
-        {message ? <p className="notice text-sm">{message}</p> : null}
+        <FormError>{error}</FormError>
+        <FormNotice>{message}</FormNotice>
         {demoUrl ? (
           <p className="text-sm text-sage/85">
             Demo link:{" "}
             <Link className="link-accent break-all" href={demoUrl}>
-              {demoUrl}
+              Open reset page
             </Link>
           </p>
         ) : null}
-        <button className="btn-primary w-full" type="submit" disabled={busy}>
+        <button
+          className="btn-primary w-full"
+          type="submit"
+          disabled={busy}
+          aria-busy={busy}
+        >
           {busy ? "Sending…" : "Send reset link"}
         </button>
       </form>
+
+      <AuthAltLink>
+        Remembered it?{" "}
+        <Link className="link-accent" href="/login">
+          Back to sign in
+        </Link>
+      </AuthAltLink>
     </AuthShell>
   );
 }

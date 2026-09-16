@@ -4,8 +4,12 @@ import { FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
+  AuthAltLink,
+  AuthHeading,
   AuthShell,
   FieldLabel,
+  FormError,
+  FormNotice,
   LoadingScreen,
 } from "@/components/ui";
 
@@ -16,6 +20,7 @@ function CustomerLoginForm({ allowDemo }: { allowDemo: boolean }) {
     allowDemo ? "aisha.rahman@example.com" : "",
   );
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
   const [demoUrl, setDemoUrl] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -32,6 +37,7 @@ function CustomerLoginForm({ allowDemo }: { allowDemo: boolean }) {
     e.preventDefault();
     setBusy(true);
     setMessage("");
+    setError("");
     setDemoUrl("");
     const res = await fetch("/api/auth/magic-link", {
       method: "POST",
@@ -41,7 +47,7 @@ function CustomerLoginForm({ allowDemo }: { allowDemo: boolean }) {
     const data = await res.json();
     setBusy(false);
     if (!res.ok) {
-      setMessage(data.error || "Could not send link");
+      setError(data.error || "Could not send link");
       return;
     }
     setMessage(data.message || "Check your email for a sign-in link.");
@@ -50,12 +56,10 @@ function CustomerLoginForm({ allowDemo }: { allowDemo: boolean }) {
 
   return (
     <AuthShell>
-      <h1 className="mt-6 font-display text-3xl font-bold text-mist">
-        Customer sign-in
-      </h1>
-      <p className="mt-2 text-sm text-sage/85">
-        Enter the email on your invite. We send a one-time magic link — no password.
-      </p>
+      <AuthHeading title="Customer sign-in">
+        Enter the email on your invite. We send a one-time magic link — no
+        password.
+      </AuthHeading>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         <label className="block text-sm">
@@ -69,27 +73,32 @@ function CustomerLoginForm({ allowDemo }: { allowDemo: boolean }) {
             required
           />
         </label>
-        {errorHint ? <p className="text-sm text-coral">{errorHint}</p> : null}
-        {message ? <p className="notice">{message}</p> : null}
+        <FormError>{errorHint || error}</FormError>
+        <FormNotice>{message}</FormNotice>
         {demoUrl ? (
-          <p className="text-sm">
+          <p className="text-sm text-sage/85">
             <span className="font-semibold text-sage">Demo link: </span>
             <a className="link-accent break-all" href={demoUrl}>
               Open portal
             </a>
           </p>
         ) : null}
-        <button className="btn-primary w-full" type="submit" disabled={busy}>
+        <button
+          className="btn-primary w-full"
+          type="submit"
+          disabled={busy}
+          aria-busy={busy}
+        >
           {busy ? "Sending…" : "Email me a sign-in link"}
         </button>
       </form>
 
-      <p className="mt-8 text-sm text-sage/70">
+      <AuthAltLink>
         Staff?{" "}
         <Link className="link-accent" href="/login">
           Business / admin login
         </Link>
-      </p>
+      </AuthAltLink>
     </AuthShell>
   );
 }

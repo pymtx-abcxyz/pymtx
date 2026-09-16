@@ -14,10 +14,10 @@ export default function HomePage() {
             href="/login"
             className="hidden text-sage/90 hover:text-sage-bright sm:inline"
           >
-            Staff sign in
+            Sign in
           </Link>
-          <Link href="/business" className="btn-ghost !py-2 !px-3 text-sm">
-            Business
+          <Link href="/register" className="btn-ghost !py-2 !px-3 text-sm">
+            Register
           </Link>
           <Link href="/login/customer" className="btn-primary !py-2 !px-3 text-sm">
             Customer
@@ -38,8 +38,8 @@ export default function HomePage() {
           straight to your bank. pymtx never holds the debt.
         </p>
         <div className="animate-rise-delay-2 mt-10 flex flex-wrap gap-3">
-          <Link href="/business" className="btn-primary">
-            Open business portal
+          <Link href="/register" className="btn-primary">
+            Create merchant account
           </Link>
           <Link href="/login/customer" className="btn-ghost">
             Settle as a customer

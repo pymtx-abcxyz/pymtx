@@ -4,8 +4,11 @@ import { FormEvent, Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
+  AuthAltLink,
+  AuthHeading,
   AuthShell,
   FieldLabel,
+  FormError,
   LoadingScreen,
 } from "@/components/ui";
 
@@ -45,14 +48,13 @@ function LoginForm({ allowDemo }: { allowDemo: boolean }) {
 
   return (
     <AuthShell>
-      <h1 className="mt-6 font-display text-3xl font-bold text-mist">Sign in</h1>
-      <p className="mt-2 text-sm text-sage/85">
+      <AuthHeading title="Sign in">
         Owners, clerks, and platform admins. Customers use{" "}
         <Link className="link-accent" href="/login/customer">
           magic-link sign-in
         </Link>
         .
-      </p>
+      </AuthHeading>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
         <label className="block text-sm">
@@ -67,7 +69,15 @@ function LoginForm({ allowDemo }: { allowDemo: boolean }) {
           />
         </label>
         <label className="block text-sm">
-          <FieldLabel>Password</FieldLabel>
+          <span className="mb-1.5 flex items-center justify-between gap-3">
+            <span className="field-label !mb-0">Password</span>
+            <Link
+              className="text-xs font-medium text-sage-bright underline-offset-2 hover:text-sage hover:underline"
+              href="/forgot-password"
+            >
+              Forgot password?
+            </Link>
+          </span>
           <input
             className="input"
             type="password"
@@ -77,23 +87,23 @@ function LoginForm({ allowDemo }: { allowDemo: boolean }) {
             required
           />
         </label>
-        <div className="flex justify-end">
-          <Link className="link-accent text-sm" href="/forgot-password">
-            Forgot password?
-          </Link>
-        </div>
-        {error ? <p className="text-sm text-coral">{error}</p> : null}
-        <button className="btn-primary w-full" type="submit" disabled={busy}>
+        <FormError>{error}</FormError>
+        <button
+          className="btn-primary w-full"
+          type="submit"
+          disabled={busy}
+          aria-busy={busy}
+        >
           {busy ? "Signing in…" : "Sign in"}
         </button>
       </form>
 
-      <p className="mt-6 text-sm text-sage/85">
+      <AuthAltLink>
         New merchant?{" "}
         <Link className="link-accent" href="/register">
           Create an account
         </Link>
-      </p>
+      </AuthAltLink>
 
       {allowDemo ? (
         <div className="mt-8 border-t border-mist/10 pt-6 text-xs leading-relaxed text-sage/70">

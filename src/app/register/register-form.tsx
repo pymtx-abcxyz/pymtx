@@ -3,7 +3,14 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AuthShell, FieldLabel } from "@/components/ui";
+import {
+  AuthAltLink,
+  AuthHeading,
+  AuthShell,
+  FieldLabel,
+  FormError,
+  FormSectionLabel,
+} from "@/components/ui";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -56,19 +63,13 @@ export default function RegisterForm() {
   }
 
   return (
-    <AuthShell>
-      <h1 className="mt-6 font-display text-3xl font-bold text-mist">
-        Create your account
-      </h1>
-      <p className="mt-2 text-sm text-sage/85">
-        Register as a merchant Owner. Already have an account?{" "}
-        <Link className="link-accent" href="/login">
-          Sign in
-        </Link>
-        .
-      </p>
+    <AuthShell wide>
+      <AuthHeading title="Create your account">
+        Register as a merchant Owner to open the business portal.
+      </AuthHeading>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4">
+        <FormSectionLabel>Your details</FormSectionLabel>
         <label className="block text-sm">
           <FieldLabel>Your name</FieldLabel>
           <input
@@ -90,37 +91,35 @@ export default function RegisterForm() {
             required
           />
         </label>
-        <label className="block text-sm">
-          <FieldLabel>Password</FieldLabel>
-          <input
-            className="input"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            minLength={8}
-            required
-          />
-        </label>
-        <label className="block text-sm">
-          <FieldLabel>Confirm password</FieldLabel>
-          <input
-            className="input"
-            type="password"
-            autoComplete="new-password"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            minLength={8}
-            required
-          />
-        </label>
-
-        <div className="border-t border-mist/10 pt-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sage">
-            Business
-          </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block text-sm">
+            <FieldLabel>Password</FieldLabel>
+            <input
+              className="input"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={8}
+              required
+            />
+          </label>
+          <label className="block text-sm">
+            <FieldLabel>Confirm</FieldLabel>
+            <input
+              className="input"
+              type="password"
+              autoComplete="new-password"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              minLength={8}
+              required
+            />
+          </label>
         </div>
+        <p className="text-xs text-sage/60">At least 8 characters.</p>
 
+        <FormSectionLabel>Business</FormSectionLabel>
         <label className="block text-sm">
           <FieldLabel>Legal name</FieldLabel>
           <input
@@ -140,36 +139,39 @@ export default function RegisterForm() {
           />
         </label>
         <label className="block text-sm">
-          <FieldLabel>Phone (optional)</FieldLabel>
+          <FieldLabel>Phone</FieldLabel>
           <input
             className="input"
             type="tel"
             autoComplete="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            placeholder="Optional"
           />
         </label>
         <label className="block text-sm">
-          <FieldLabel>Ontario corp number (optional)</FieldLabel>
+          <FieldLabel>Ontario corp number</FieldLabel>
           <input
             className="input"
             value={ontarioCorpNumber}
             onChange={(e) => setOntarioCorpNumber(e.target.value)}
+            placeholder="Optional"
           />
         </label>
         <label className="block text-sm">
-          <FieldLabel>Physical address (optional)</FieldLabel>
+          <FieldLabel>Physical address</FieldLabel>
           <input
             className="input"
             value={physicalAddress}
             onChange={(e) => setPhysicalAddress(e.target.value)}
+            placeholder="Optional"
           />
         </label>
 
-        <label className="flex items-start gap-3 text-sm text-sage/85">
+        <FormSectionLabel>Agreements</FormSectionLabel>
+        <label className="checkbox-row">
           <input
             type="checkbox"
-            className="mt-1"
             checked={saasAgreementAccepted}
             onChange={(e) => setSaasAgreementAccepted(e.target.checked)}
             required
@@ -182,25 +184,36 @@ export default function RegisterForm() {
             .
           </span>
         </label>
-        <label className="flex items-start gap-3 text-sm text-sage/85">
+        <label className="checkbox-row">
           <input
             type="checkbox"
-            className="mt-1"
             checked={caslConsent}
             onChange={(e) => setCaslConsent(e.target.checked)}
             required
           />
           <span>
-            I consent to CASL commercial electronic messages sent in our trade
-            name for settlement notices.
+            I consent to CASL commercial messages sent in our trade name for
+            settlement notices.
           </span>
         </label>
 
-        {error ? <p className="text-sm text-coral">{error}</p> : null}
-        <button className="btn-primary w-full" type="submit" disabled={busy}>
+        <FormError>{error}</FormError>
+        <button
+          className="btn-primary w-full"
+          type="submit"
+          disabled={busy}
+          aria-busy={busy}
+        >
           {busy ? "Creating account…" : "Create account"}
         </button>
       </form>
+
+      <AuthAltLink>
+        Already registered?{" "}
+        <Link className="link-accent" href="/login">
+          Sign in
+        </Link>
+      </AuthAltLink>
     </AuthShell>
   );
 }

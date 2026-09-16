@@ -149,9 +149,10 @@ body {
 .checkbox-row {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: 0.65rem;
   font-size: 0.875rem;
-  color: var(--sage);
+  line-height: 1.45;
+  color: rgba(159, 184, 154, 0.9);
 }
 
 .checkbox-row input[type="checkbox"] {
@@ -160,6 +161,20 @@ body {
   height: 1rem;
   accent-color: var(--sage);
   flex-shrink: 0;
+}
+
+.input::placeholder {
+  color: rgba(159, 184, 154, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise,
+  .animate-rise-delay-1,
+  .animate-rise-delay-2,
+  .animate-mark,
+  .animate-drift {
+    animation: none !important;
+  }
 }
 
 .pymtx-grain::before {

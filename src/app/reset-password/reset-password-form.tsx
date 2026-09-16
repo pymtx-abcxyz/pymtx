@@ -3,7 +3,14 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AuthShell, FieldLabel } from "@/components/ui";
+import {
+  AuthAltLink,
+  AuthHeading,
+  AuthShell,
+  FieldLabel,
+  FormError,
+  FormNotice,
+} from "@/components/ui";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -47,18 +54,12 @@ export default function ResetPasswordForm() {
 
   return (
     <AuthShell>
-      <h1 className="mt-6 font-display text-3xl font-bold text-mist">
-        Choose a new password
-      </h1>
-      <p className="mt-2 text-sm text-sage/85">
-        Enter a new password for your pymtx portal account.{" "}
-        <Link className="link-accent" href="/login">
-          Sign in
-        </Link>
-      </p>
+      <AuthHeading title="Choose a new password">
+        Enter a new password for your pymtx portal account.
+      </AuthHeading>
 
       {!token ? (
-        <p className="mt-8 text-sm text-coral">
+        <p className="mt-8 text-sm text-coral" role="alert">
           This reset link is missing a token.{" "}
           <Link className="link-accent" href="/forgot-password">
             Request a new one
@@ -91,13 +92,25 @@ export default function ResetPasswordForm() {
               required
             />
           </label>
-          {error ? <p className="text-sm text-coral">{error}</p> : null}
-          {message ? <p className="notice text-sm">{message}</p> : null}
-          <button className="btn-primary w-full" type="submit" disabled={busy}>
+          <p className="text-xs text-sage/60">At least 8 characters.</p>
+          <FormError>{error}</FormError>
+          <FormNotice>{message}</FormNotice>
+          <button
+            className="btn-primary w-full"
+            type="submit"
+            disabled={busy}
+            aria-busy={busy}
+          >
             {busy ? "Updating…" : "Update password"}
           </button>
         </form>
       )}
+
+      <AuthAltLink>
+        <Link className="link-accent" href="/login">
+          Back to sign in
+        </Link>
+      </AuthAltLink>
     </AuthShell>
   );
 }

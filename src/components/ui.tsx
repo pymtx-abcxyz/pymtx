@@ -17,16 +17,87 @@ export function PortalShell({
   );
 }
 
-export function AuthShell({ children }: { children: React.ReactNode }) {
+export function AuthShell({
+  children,
+  wide = false,
+}: {
+  children: React.ReactNode;
+  wide?: boolean;
+}) {
   return (
     <PortalShell grain>
-      <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-16">
-        <Link href="/" className="text-2xl text-sage-bright">
+      <main
+        className={`mx-auto flex min-h-screen w-full flex-col justify-center px-6 py-16 ${
+          wide ? "max-w-lg" : "max-w-md"
+        }`}
+      >
+        <Link
+          href="/"
+          className="animate-rise text-2xl text-sage-bright"
+          aria-label="pymtx home"
+        >
           <PymtxLogotype />
         </Link>
-        {children}
+        <div className="animate-rise-delay-1">{children}</div>
+        <p className="animate-rise-delay-2 mt-10 text-xs leading-relaxed text-sage/50">
+          <Link href="/legal/saas" className="link-accent">
+            SaaS Agreement
+          </Link>
+          {" · "}
+          <Link href="/legal/privacy" className="link-accent">
+            Privacy &amp; CASL
+          </Link>
+          <span className="mt-1 block text-sage/40">{PROVIDER.legalName}</span>
+        </p>
       </main>
     </PortalShell>
+  );
+}
+
+export function AuthHeading({
+  title,
+  children,
+}: {
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="mt-6">
+      <h1 className="font-display text-3xl font-bold tracking-tight text-mist">
+        {title}
+      </h1>
+      {children ? (
+        <p className="mt-2 text-sm leading-relaxed text-sage/85">{children}</p>
+      ) : null}
+    </div>
+  );
+}
+
+export function FormError({ children }: { children: React.ReactNode }) {
+  if (!children) return null;
+  return (
+    <p className="text-sm text-coral" role="alert">
+      {children}
+    </p>
+  );
+}
+
+export function FormNotice({ children }: { children: React.ReactNode }) {
+  if (!children) return null;
+  return <p className="notice">{children}</p>;
+}
+
+export function AuthAltLink({ children }: { children: React.ReactNode }) {
+  return <p className="mt-6 text-sm text-sage/80">{children}</p>;
+}
+
+export function FormSectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="border-t border-mist/10 pt-5">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-sage/75">
+        {children}
+      </p>
+    </div>
   );
 }
 
