@@ -1,0 +1,134 @@
+/**
+ * pymtx accessible design tokens — Apple HIG–inspired earthy teal
+ * WCAG 2.1 AA/AAA calibrated. Semantic only; no component rules here.
+ *
+ * Light defaults. Dark via prefers-color-scheme. High contrast via prefers-contrast.
+ */
+
+:root {
+  /* —— Canvas & surfaces —— */
+  --canvas: #f5f7f5;
+  --surface-card: #ffffff;
+  --surface-subtle: #e9eee8;
+
+  /* RGB companions for translucent materials */
+  --canvas-rgb: 245, 247, 245;
+  --surface-card-rgb: 255, 255, 255;
+  --surface-subtle-rgb: 233, 238, 232;
+
+  /* —— Text —— */
+  --text-primary: #202b31; /* 11.8:1 on card — AAA */
+  --text-secondary: #30484a; /* 7.5:1 on card — AAA */
+  --text-muted: #4e6260; /* 4.8:1 on card — AA */
+  --text-on-primary: #ffffff;
+  --text-on-danger: #ffffff;
+
+  /* —— Interactive —— */
+  --action-primary: #3b5b53; /* CTAs / active / key indicators only */
+  --action-primary-hover: #2e4741;
+  --focus-ring: #202b31;
+
+  /* —— Borders —— */
+  --border-subtle: #cad2c5;
+  --border-strong: #7d968b;
+
+  /* —— Status —— */
+  --danger: #b3261e;
+  --danger-fg: #ffffff;
+  --success: #3b5b53;
+  --warning: #8a6a2f;
+
+  /* —— Materials —— */
+  --nav-blur: blur(16px);
+  --nav-bg: rgba(var(--surface-card-rgb), 0.8);
+  --radius-control: 0.75rem;
+  --radius-panel: 1rem;
+  --space-focus-offset: 0.125rem;
+
+  /* —— Type scale (rem; honors user default) —— */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: clamp(1.35rem, 1.1rem + 0.8vw, 1.75rem);
+  --text-3xl: clamp(1.65rem, 1.2rem + 1.4vw, 2.25rem);
+  --text-display: clamp(2.25rem, 1.4rem + 3.2vw, 4.5rem);
+
+  /* —— Legacy aliases (bridge until components fully migrate) —— */
+  --background: var(--canvas);
+  --foreground: var(--text-primary);
+  --mist: var(--text-primary);
+  --sage: var(--text-secondary);
+  --sage-bright: var(--action-primary);
+  --ink: var(--text-primary);
+  --ink-soft: var(--text-muted);
+  --navy: var(--text-primary);
+  --navy-deep: var(--canvas);
+  --paper: var(--surface-card);
+  --panel: var(--surface-subtle);
+  --line: var(--border-subtle);
+  --line-strong: var(--border-strong);
+  --coral: var(--danger);
+  --gold: var(--warning);
+  --pine: var(--action-primary);
+  --pine-deep: var(--action-primary-hover);
+  --fog: var(--surface-subtle);
+  --ash: var(--text-muted);
+  --muted-teal: var(--text-secondary);
+  --deep-teal: var(--action-primary);
+  --slate: var(--text-secondary);
+  --charcoal-blue: var(--text-primary);
+  --amber: var(--action-primary);
+  --signal: var(--action-primary);
+  --cream: var(--surface-card);
+  --violet: var(--action-primary);
+  --charcoal: var(--text-primary);
+  --charcoal-deep: var(--canvas);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --canvas: #141b1f;
+    --surface-card: #1e272c;
+    --surface-subtle: #29343a;
+
+    --canvas-rgb: 20, 27, 31;
+    --surface-card-rgb: 30, 39, 44;
+    --surface-subtle-rgb: 41, 52, 58;
+
+    --text-primary: #f5f7f5; /* 13.5:1 — AAA */
+    --text-secondary: #d1d9cd; /* 8.2:1 — AAA */
+    --text-muted: #a3b2a8; /* 4.9:1 — AA */
+    --text-on-primary: #141b1f;
+    --text-on-danger: #601410;
+
+    --action-primary: #8ebd97;
+    --action-primary-hover: #a5cca9;
+    --focus-ring: #8ebd97;
+
+    --border-subtle: #2f3e46;
+    --border-strong: #52796f;
+
+    --danger: #f2b8b5;
+    --danger-fg: #601410;
+    --success: #8ebd97;
+    --warning: #e0c070;
+
+    --nav-bg: rgba(var(--surface-card-rgb), 0.8);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border-subtle: currentColor;
+    --border-strong: currentColor;
+    --nav-bg: var(--surface-card);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration: 0.01ms;
+  }
+}

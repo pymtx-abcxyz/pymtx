@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Figtree, Syne } from "next/font/google";
+import "./tokens.css";
 import "./globals.css";
 
 const syne = Syne({
