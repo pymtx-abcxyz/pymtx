@@ -62,12 +62,12 @@ export default async function AdminPage() {
         </div>
 
         <section className="mt-14">
-          <h2 className="font-display text-2xl font-bold text-ink">Invoice pipeline</h2>
-          <p className="mt-1 text-sm text-ink-soft/75">Aging and settlement statuses across the network.</p>
+          <h2 className="font-display text-2xl font-bold text-mist">Invoice pipeline</h2>
+          <p className="mt-1 text-sm text-sage/75">Aging and settlement statuses across the network.</p>
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[520px] text-left text-sm">
               <thead>
-                <tr className="text-xs uppercase tracking-[0.1em] text-ink-soft/60">
+                <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
                   <th className="pb-3 font-semibold">Status</th>
                   <th className="pb-3 font-semibold">Count</th>
                   <th className="pb-3 font-semibold">Open balance</th>
@@ -83,7 +83,7 @@ export default async function AdminPage() {
                 ))}
                 {invoiceGroups.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="py-6 text-ink-soft/70">
+                    <td colSpan={3} className="py-6 text-sage/70">
                       No invoices yet — seed demo data or upload from the business portal.
                     </td>
                   </tr>
@@ -94,15 +94,15 @@ export default async function AdminPage() {
         </section>
 
         <section className="mt-14">
-          <h2 className="font-display text-2xl font-bold text-ink">Daily debit runs</h2>
-          <p className="mt-1 text-sm text-ink-soft/75">
+          <h2 className="font-display text-2xl font-bold text-mist">Daily debit runs</h2>
+          <p className="mt-1 text-sm text-sage/75">
             Inngest cron (America/Toronto midnight) and inline{" "}
             <code className="text-xs">POST /api/jobs/daily-debit</code>.
           </p>
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[640px] text-left text-sm">
               <thead>
-                <tr className="text-xs uppercase tracking-[0.1em] text-ink-soft/60">
+                <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
                   <th className="pb-3 font-semibold">Run date</th>
                   <th className="pb-3 font-semibold">Status</th>
                   <th className="pb-3 font-semibold">Scanned</th>
@@ -126,7 +126,7 @@ export default async function AdminPage() {
                 ))}
                 {debitRuns.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-6 text-ink-soft/70">
+                    <td colSpan={6} className="py-6 text-sage/70">
                       No debit job runs yet — trigger via Inngest or{" "}
                       <code className="text-xs">npm run job:daily-debit</code>.
                     </td>
@@ -138,8 +138,8 @@ export default async function AdminPage() {
         </section>
 
         <section className="mt-14">
-          <h2 className="font-display text-2xl font-bold text-ink">Rule H1 & CDSSA posture</h2>
-          <ul className="mt-4 space-y-2 text-sm leading-relaxed text-ink-soft">
+          <h2 className="font-display text-2xl font-bold text-mist">Rule H1 & CDSSA posture</h2>
+          <ul className="mt-4 space-y-2 text-sm leading-relaxed text-sage">
             <li>Zero-custody Direct Charges (`stripeAccount` on connected business) — Pymtx is not a collection agency.</li>
             <li>ACSS Debit Personal PAD with written confirmation before first debit.</li>
             <li>NSF: max 1 retry within 30 days. Skip: ≥3 business days notice, 180-day cooldown.</li>
@@ -148,11 +148,11 @@ export default async function AdminPage() {
         </section>
 
         <section className="mt-14 mb-10">
-          <h2 className="font-display text-2xl font-bold text-ink">Recent businesses</h2>
+          <h2 className="font-display text-2xl font-bold text-mist">Recent businesses</h2>
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[560px] text-left text-sm">
               <thead>
-                <tr className="text-xs uppercase tracking-[0.1em] text-ink-soft/60">
+                <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
                   <th className="pb-3 font-semibold">Trade name</th>
                   <th className="pb-3 font-semibold">Connect</th>
                   <th className="pb-3 font-semibold">Customers</th>

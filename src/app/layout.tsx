@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-CA" className={`${syne.variable} ${figtree.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col font-sans text-ink">{children}</body>
+      <body className="min-h-full flex flex-col font-sans text-mist">{children}</body>
     </html>
   );
 }

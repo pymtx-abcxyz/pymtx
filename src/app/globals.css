@@ -1,24 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  /* Banknote / patch mark inspired */
+  /* Navy / sage brand — consistent across marketing + portals */
   --navy: #0b1c33;
   --navy-deep: #071426;
-  --ink: #0f1f33;
-  --ink-soft: #3a4d63;
+  --ink: #e8eee9;
+  --ink-soft: #9fb89a;
   --sage: #9fb89a;
   --sage-bright: #b7cdb2;
-  --pine: #2f5d4a;
-  --pine-deep: #1e4335;
+  --pine: #9fb89a;
+  --pine-deep: #b7cdb2;
   --mist: #e8eee9;
   --fog: #d4ddd6;
-  --paper: #f3f6f4;
+  --paper: #0b1c33;
+  --panel: rgba(159, 184, 154, 0.1);
   --gold: #c4a35a;
-  --coral: #c45c4a;
-  --success: #2f7d5b;
-  --warning: #b8860b;
-  --background: var(--paper);
-  --foreground: var(--ink);
+  --coral: #e07a6a;
+  --success: #6fbf93;
+  --warning: #d4a84b;
+  --background: var(--navy-deep);
+  --foreground: var(--mist);
+  --line: rgba(232, 238, 233, 0.12);
+  --line-strong: rgba(232, 238, 233, 0.22);
 }
 
 @theme inline {
@@ -35,6 +38,7 @@
   --color-mist: var(--mist);
   --color-fog: var(--fog);
   --color-paper: var(--paper);
+  --color-panel: var(--panel);
   --color-gold: var(--gold);
   --color-coral: var(--coral);
   --color-success: var(--success);
@@ -61,13 +65,18 @@ body {
   font-family: var(--font-syne), system-ui, sans-serif;
 }
 
-/* Landing: deep navy field from the wordmark */
-.pymtx-atmosphere {
+/* Shared navy field (landing + portals + auth) */
+.pymtx-atmosphere,
+.portal-shell {
   background:
-    radial-gradient(900px 520px at 85% 15%, rgba(159, 184, 154, 0.16), transparent 55%),
-    radial-gradient(700px 480px at 8% 80%, rgba(47, 93, 74, 0.22), transparent 50%),
+    radial-gradient(900px 520px at 85% 15%, rgba(159, 184, 154, 0.14), transparent 55%),
+    radial-gradient(700px 480px at 8% 80%, rgba(47, 93, 74, 0.2), transparent 50%),
     linear-gradient(165deg, #0b1c33 0%, #0a182c 48%, #071426 100%);
-  color: #e8eee9;
+  color: var(--mist);
+}
+
+.portal-shell {
+  min-height: 100vh;
 }
 
 .pymtx-grain::before {
@@ -132,17 +141,10 @@ body {
   animation: drift 8s ease-in-out infinite;
 }
 
-.portal-shell {
-  min-height: 100vh;
-  background:
-    radial-gradient(900px 400px at 100% 0%, rgba(159, 184, 154, 0.14), transparent 55%),
-    linear-gradient(180deg, #f3f6f4 0%, #e7eee9 100%);
-}
-
 .portal-nav {
-  border-bottom: 1px solid rgba(15, 31, 51, 0.08);
-  background: rgba(243, 246, 244, 0.88);
-  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+  background: rgba(7, 20, 38, 0.78);
+  backdrop-filter: blur(12px);
 }
 
 .btn-primary {
@@ -163,13 +165,19 @@ body {
   transform: translateY(-1px);
 }
 
+.btn-primary:disabled {
+  opacity: 0.55;
+  transform: none;
+  cursor: not-allowed;
+}
+
 .btn-ghost {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 1px solid rgba(232, 238, 233, 0.35);
-  color: #e8eee9;
+  border: 1px solid var(--line-strong);
+  color: var(--mist);
   padding: 0.85rem 1.4rem;
   font-weight: 600;
   transition: border-color 0.2s ease, background 0.2s ease;
@@ -180,23 +188,9 @@ body {
   background: rgba(159, 184, 154, 0.1);
 }
 
-.portal-shell .btn-ghost {
-  border-color: rgba(15, 31, 51, 0.18);
-  color: var(--ink);
-}
-
-.portal-shell .btn-ghost:hover {
-  border-color: var(--pine);
-  background: rgba(47, 93, 74, 0.06);
-}
-
-.portal-shell .btn-primary {
-  background: var(--pine-deep);
-  color: #f3f6f4;
-}
-
-.portal-shell .btn-primary:hover {
-  background: var(--pine);
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .status-pill {
@@ -205,22 +199,53 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-weight: 700;
-  color: var(--pine-deep);
+  color: var(--sage-bright);
 }
 
 .table-row {
-  border-bottom: 1px solid rgba(15, 31, 51, 0.08);
+  border-bottom: 1px solid var(--line);
 }
 
 .input {
   width: 100%;
-  border: 1px solid rgba(15, 31, 51, 0.14);
-  background: #fff;
+  border: 1px solid var(--line-strong);
+  background: rgba(7, 20, 38, 0.55);
   padding: 0.75rem 0.9rem;
-  color: var(--ink);
+  color: var(--mist);
   outline: none;
 }
 
+.input::placeholder {
+  color: rgba(159, 184, 154, 0.55);
+}
+
 .input:focus {
-  border-color: var(--pine);
+  border-color: var(--sage);
+}
+
+.input option {
+  background: #0b1c33;
+  color: #e8eee9;
+}
+
+.notice {
+  border-left: 2px solid var(--sage);
+  background: var(--panel);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--mist);
+}
+
+.notice-warning {
+  border-left-color: var(--warning);
+}
+
+.link-accent {
+  color: var(--sage-bright);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link-accent:hover {
+  color: var(--sage);
 }

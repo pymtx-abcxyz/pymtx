@@ -43,21 +43,22 @@ function CustomerLoginForm() {
   }
 
   return (
-    <div className="portal-shell min-h-screen">
-      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
-        <Link href="/" className="text-2xl text-ink">
+    <div className="relative min-h-screen overflow-hidden portal-shell">
+      <div className="absolute inset-0 pymtx-grain" aria-hidden />
+      <main className="relative z-10 mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
+        <Link href="/" className="text-2xl text-sage-bright">
           <PymtxLogotype />
         </Link>
-        <h1 className="mt-6 font-display text-3xl font-bold text-ink">
+        <h1 className="mt-6 font-display text-3xl font-bold text-mist">
           Customer sign-in
         </h1>
-        <p className="mt-2 text-sm text-ink-soft/80">
+        <p className="mt-2 text-sm text-sage/85">
           Enter the email on your invite. We send a one-time magic link — no password.
         </p>
 
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-ink-soft">Email</span>
+            <span className="mb-1 block font-semibold text-sage">Email</span>
             <input
               className="input w-full"
               type="email"
@@ -68,11 +69,11 @@ function CustomerLoginForm() {
             />
           </label>
           {errorHint ? <p className="text-sm text-coral">{errorHint}</p> : null}
-          {message ? <p className="text-sm text-ink-soft">{message}</p> : null}
+          {message ? <p className="text-sm text-sage/90">{message}</p> : null}
           {demoUrl ? (
             <p className="text-sm">
-              <span className="font-semibold text-ink-soft">Demo link: </span>
-              <a className="text-pine underline break-all" href={demoUrl}>
+              <span className="font-semibold text-sage">Demo link: </span>
+              <a className="link-accent break-all" href={demoUrl}>
                 Open portal
               </a>
             </p>
@@ -82,9 +83,9 @@ function CustomerLoginForm() {
           </button>
         </form>
 
-        <p className="mt-8 text-sm text-ink-soft/70">
+        <p className="mt-8 text-sm text-sage/70">
           Staff?{" "}
-          <Link className="text-pine underline" href="/login">
+          <Link className="link-accent" href="/login">
             Business / admin login
           </Link>
         </p>
@@ -95,7 +96,7 @@ function CustomerLoginForm() {
 
 export default function CustomerLoginPage() {
   return (
-    <Suspense fallback={<div className="portal-shell p-10 text-ink-soft">Loading…</div>}>
+    <Suspense fallback={<div className="portal-shell p-10 text-sage">Loading…</div>}>
       <CustomerLoginForm />
     </Suspense>
   );

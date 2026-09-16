@@ -63,7 +63,7 @@ function Stepper({ step }: { step: Step }) {
         <li
           key={s.id}
           className={`border-b-2 pb-1 ${
-            i <= idx ? "border-pine text-ink" : "border-ink/10 text-ink-soft/50"
+            i <= idx ? "border-sage text-mist" : "border-mist/10 text-sage/50"
           }`}
         >
           {i + 1}. {s.label}
@@ -263,7 +263,7 @@ function ClientCheckoutInner() {
         {!preview ? (
           <div className="max-w-md">
             <label className="block text-sm">
-              <span className="mb-1 block font-semibold text-ink-soft">Invite token</span>
+              <span className="mb-1 block font-semibold text-sage">Invite token</span>
               <input
                 className="input"
                 value={token}
@@ -285,27 +285,27 @@ function ClientCheckoutInner() {
           <>
             <Stepper step={step} />
 
-            <div className="mb-8 border-t border-ink/10 pt-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft/70">
+            <div className="mb-8 border-t border-mist/10 pt-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
                 Creditor (Merchant of Record)
               </p>
               <p className="mt-1 font-display text-2xl font-bold">
                 {preview.businessTradeName}
               </p>
-              <p className="text-sm text-ink-soft/75">
+              <p className="text-sm text-sage/75">
                 Hi {preview.firstName} — invoice {preview.invoiceRef}
               </p>
             </div>
 
             {!preview.connectReady ? (
-              <p className="mb-6 border-l-2 border-warning bg-mist/60 px-4 py-3 text-sm">
+              <p className="notice notice-warning mb-6">
                 Your creditor is still connecting their bank. Checkout will unlock when
                 Stripe Connect is ready.
               </p>
             ) : null}
 
             {notice ? (
-              <p className="mb-6 border-l-2 border-pine bg-mist/60 px-4 py-3 text-sm">
+              <p className="notice mb-6">
                 {notice}
               </p>
             ) : null}
@@ -314,24 +314,24 @@ function ClientCheckoutInner() {
             {(step === "review" || step === "plan") && !plan ? (
               <section>
                 <div className="mb-8 grid gap-6 sm:grid-cols-2">
-                  <div className="border-t border-ink/10 pt-4">
-                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft/70">
+                  <div className="border-t border-mist/10 pt-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
                       Balance due
                     </div>
                     <div className="mt-2 font-display text-4xl font-bold">
                       {formatCad(preview.balanceCents)}
                     </div>
                   </div>
-                  <div className="border-t border-ink/10 pt-4">
-                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft/70">
+                  <div className="border-t border-mist/10 pt-4">
+                    <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
                       For
                     </div>
-                    <div className="mt-2 text-ink-soft">{preview.description}</div>
+                    <div className="mt-2 text-sage">{preview.description}</div>
                   </div>
                 </div>
 
                 <h2 className="font-display text-2xl font-bold">Choose your plan</h2>
-                <p className="mt-1 text-sm text-ink-soft/75">
+                <p className="mt-1 text-sm text-sage/75">
                   Monthly Pre-Authorized Debits (PAD) from your Canadian bank — 6, 12, or 18
                   months. One skip every 6 months.
                 </p>
@@ -347,22 +347,22 @@ function ClientCheckoutInner() {
                       }}
                       className={`border px-4 py-5 text-left transition ${
                         term === t.months
-                          ? "border-pine bg-mist"
-                          : "border-ink/15 hover:border-pine/40"
+                          ? "border-sage bg-sage/15"
+                          : "border-mist/15 hover:border-sage/40"
                       }`}
                     >
                       <div className="font-display text-2xl font-bold">{t.months} mo</div>
-                      <div className="mt-2 text-sm text-ink-soft">
+                      <div className="mt-2 text-sm text-sage">
                         {formatCad(t.monthlyCents)}/mo
                       </div>
-                      <div className="mt-1 text-xs text-ink-soft/60">
+                      <div className="mt-1 text-xs text-sage/60">
                         Total {formatCad(t.totalCents)}
                       </div>
                     </button>
                   ))}
                 </div>
 
-                <p className="mt-4 text-sm text-ink-soft">
+                <p className="mt-4 text-sm text-sage">
                   Selected: <strong>{term} months</strong>
                   {selectedTerm ? (
                     <>
@@ -386,14 +386,14 @@ function ClientCheckoutInner() {
             {step === "pad" && plan ? (
               <section>
                 <h2 className="font-display text-2xl font-bold">Personal PAD agreement</h2>
-                <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+                <p className="mt-2 text-sm leading-relaxed text-sage">
                   Payments Canada Rule H1 requires an electronic Personal PAD mandate with
                   recourse and cancellation terms, plus written confirmation before the first
                   debit. Debits are drawn by{" "}
                   <strong>{preview.businessTradeName}</strong> (not Pymtx).
                 </p>
 
-                <div className="mt-4 space-y-3 border-t border-ink/10 pt-4 text-sm leading-relaxed text-ink-soft/90">
+                <div className="mt-4 space-y-3 border-t border-mist/10 pt-4 text-sm leading-relaxed text-sage/90">
                   <p>{PAD_RECOURSE_TERMS}</p>
                   <p>{PAD_CANCELLATION_TERMS}</p>
                   <p>{PAD_NSF_POLICY}</p>
@@ -428,7 +428,7 @@ function ClientCheckoutInner() {
                       }
                     />
                   </label>
-                  <details className="text-sm text-ink-soft">
+                  <details className="text-sm text-sage">
                     <summary className="cursor-pointer font-semibold">
                       Full bank details (required for live Stripe)
                     </summary>
@@ -485,7 +485,7 @@ function ClientCheckoutInner() {
                     <h2 className="font-display text-2xl font-bold">
                       {plan.termMonths}-month schedule
                     </h2>
-                    <p className="mt-1 text-sm text-ink-soft/75">
+                    <p className="mt-1 text-sm text-sage/75">
                       {formatCad(plan.monthlyAmountCents)} · ACSS Debit · 1 skip / 6 months
                       {plan.padMandate?.bankLast4
                         ? ` · •••• ${plan.padMandate.bankLast4}`
@@ -505,7 +505,7 @@ function ClientCheckoutInner() {
                 {skipInfo && !skipInfo.ok ? (
                   <p className="mt-3 text-sm text-warning">{skipInfo.reason}</p>
                 ) : (
-                  <p className="mt-3 text-sm text-ink-soft/70">
+                  <p className="mt-3 text-sm text-sage/70">
                     Skips need ≥{skipInfo?.noticeRequired ?? 3} business days&apos;
                     notice
                     {skipInfo?.sequence
@@ -519,7 +519,7 @@ function ClientCheckoutInner() {
                 <div className="mt-6 overflow-x-auto">
                   <table className="w-full min-w-[520px] text-left text-sm">
                     <thead>
-                      <tr className="text-xs uppercase tracking-[0.1em] text-ink-soft/60">
+                      <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
                         <th className="pb-3 font-semibold">#</th>
                         <th className="pb-3 font-semibold">Due</th>
                         <th className="pb-3 font-semibold">Amount</th>

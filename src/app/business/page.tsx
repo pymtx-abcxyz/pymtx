@@ -238,7 +238,7 @@ export default function BusinessPortalPage() {
 
         <div className="mb-8 flex flex-wrap items-end gap-4">
           <label className="block min-w-[240px] flex-1 text-sm">
-            <span className="mb-1 block font-semibold text-ink-soft">Business</span>
+            <span className="mb-1 block font-semibold text-sage">Business</span>
             <select
               className="input"
               value={selectedId}
@@ -288,14 +288,14 @@ export default function BusinessPortalPage() {
 
         {selected ? (
           <div className="mb-10 grid gap-6 sm:grid-cols-3">
-            <div className="border-t border-ink/10 pt-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft/70">
+            <div className="border-t border-mist/10 pt-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
                 Merchant of Record
               </div>
               <div className="mt-2 font-display text-xl font-bold">{selected.legalName}</div>
             </div>
-            <div className="border-t border-ink/10 pt-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft/70">
+            <div className="border-t border-mist/10 pt-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
                 Stripe Connect
               </div>
               <div className="mt-2 font-medium">
@@ -306,8 +306,8 @@ export default function BusinessPortalPage() {
                 )}
               </div>
             </div>
-            <div className="border-t border-ink/10 pt-4">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-soft/70">
+            <div className="border-t border-mist/10 pt-4">
+              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
                 Settlement rail
               </div>
               <div className="mt-2 font-medium">ACSS Debit (PAD / EFT)</div>
@@ -316,20 +316,20 @@ export default function BusinessPortalPage() {
         ) : null}
 
         {message ? (
-          <p className="mb-8 border-l-2 border-pine bg-mist/60 px-4 py-3 text-sm text-ink-soft">
+          <p className="notice mb-8">
             {message}
           </p>
         ) : null}
 
-        <h2 className="font-display text-2xl font-bold text-ink">Aging & settlement</h2>
-        <p className="mt-1 text-sm text-ink-soft/75">
+        <h2 className="font-display text-2xl font-bold text-mist">Aging & settlement</h2>
+        <p className="mt-1 text-sm text-sage/75">
           CSV columns: external_ref, description, amount (CAD dollars or cents), due_date,
           first_name, last_name, email, phone.
         </p>
         <div className="mt-4 overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
-              <tr className="text-xs uppercase tracking-[0.1em] text-ink-soft/60">
+              <tr className="text-xs uppercase tracking-[0.1em] text-sage/60">
                 <th className="pb-3 font-semibold">Ref</th>
                 <th className="pb-3 font-semibold">Customer</th>
                 <th className="pb-3 font-semibold">Aging</th>
@@ -352,7 +352,7 @@ export default function BusinessPortalPage() {
                   </td>
                   <td className="py-3">
                     <a
-                      className="text-pine underline"
+                      className="link-accent"
                       href={`/client?token=${inv.customer.inviteToken}`}
                     >
                       Open
@@ -362,7 +362,7 @@ export default function BusinessPortalPage() {
               ))}
               {invoices.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-ink-soft/70">
+                  <td colSpan={6} className="py-8 text-sage/70">
                     No invoices yet — upload a CSV or send a sample invite.
                   </td>
                 </tr>

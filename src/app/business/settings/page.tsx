@@ -36,8 +36,8 @@ type ConnectStatus = {
 
 function Flag({ label, ok }: { label: string; ok: boolean }) {
   return (
-    <div className="flex items-center justify-between border-t border-ink/10 py-3 text-sm">
-      <span className="text-ink-soft">{label}</span>
+    <div className="flex items-center justify-between border-t border-mist/10 py-3 text-sm">
+      <span className="text-sage">{label}</span>
       <span className={ok ? "font-semibold text-success" : "font-semibold text-warning"}>
         {ok ? "Yes" : "No"}
       </span>
@@ -243,7 +243,7 @@ function BusinessSettingsInner() {
             ] as const
           ).map(([key, label]) => (
             <label key={key} className="block text-sm">
-              <span className="mb-1 block font-semibold text-ink-soft">{label}</span>
+              <span className="mb-1 block font-semibold text-sage">{label}</span>
               <input
                 className="input"
                 required={key !== "phone" && key !== "ontarioCorpNumber"}
@@ -253,7 +253,7 @@ function BusinessSettingsInner() {
               />
             </label>
           ))}
-          <label className="flex items-start gap-2 text-sm text-ink-soft">
+          <label className="flex items-start gap-2 text-sm text-sage">
             <input
               type="checkbox"
               className="mt-1"
@@ -269,12 +269,12 @@ function BusinessSettingsInner() {
 
         <section className="mt-14 max-w-xl">
           <h2 className="font-display text-2xl font-bold">Connect Canadian bank</h2>
-          <p className="mt-1 text-sm text-ink-soft/75">
+          <p className="mt-1 text-sm text-sage/75">
             Stripe Connect Express · CA · ACSS Debit Direct Charges (zero custody)
           </p>
 
           <label className="mt-4 block text-sm">
-            <span className="mb-1 block font-semibold text-ink-soft">Business</span>
+            <span className="mb-1 block font-semibold text-sage">Business</span>
             <select
               className="input"
               value={selectedId}
@@ -296,7 +296,7 @@ function BusinessSettingsInner() {
               <Flag label="Payouts enabled" ok={connect.payoutsEnabled} />
               <Flag label="Ready for ACSS Debit" ok={connect.readyForDebits} />
               {connect.stripeAccountId ? (
-                <p className="mt-3 text-xs text-ink-soft/70">
+                <p className="mt-3 text-xs text-sage/70">
                   Connected account: {connect.stripeAccountId}
                   {connect.demo ? " (demo)" : ""}
                 </p>
@@ -327,7 +327,7 @@ function BusinessSettingsInner() {
         {canManageTeam ? (
           <section className="mt-14 max-w-xl">
             <h2 className="font-display text-2xl font-bold">Team</h2>
-            <p className="mt-1 text-sm text-ink-soft/75">
+            <p className="mt-1 text-sm text-sage/75">
               Owners manage Connect and staff. Clerks can upload invoices and view aging.
             </p>
 
@@ -335,23 +335,23 @@ function BusinessSettingsInner() {
               {staff.map((s) => (
                 <li
                   key={s.id}
-                  className="flex flex-wrap items-center justify-between gap-2 border-t border-ink/10 py-3"
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-mist/10 py-3"
                 >
                   <span>
-                    <span className="font-medium text-ink">{s.name}</span>
-                    <span className="text-ink-soft/70"> · {s.email}</span>
+                    <span className="font-medium text-mist">{s.name}</span>
+                    <span className="text-sage/70"> · {s.email}</span>
                   </span>
                   <span className="status-pill">{s.role}</span>
                 </li>
               ))}
               {staff.length === 0 ? (
-                <li className="py-3 text-ink-soft/70">No staff yet.</li>
+                <li className="py-3 text-sage/70">No staff yet.</li>
               ) : null}
             </ul>
 
             <form onSubmit={inviteStaff} className="mt-6 grid gap-3">
               <label className="block text-sm">
-                <span className="mb-1 block font-semibold text-ink-soft">Name</span>
+                <span className="mb-1 block font-semibold text-sage">Name</span>
                 <input
                   className="input"
                   required
@@ -360,7 +360,7 @@ function BusinessSettingsInner() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-semibold text-ink-soft">Email</span>
+                <span className="mb-1 block font-semibold text-sage">Email</span>
                 <input
                   className="input"
                   type="email"
@@ -370,7 +370,7 @@ function BusinessSettingsInner() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-semibold text-ink-soft">Temp password</span>
+                <span className="mb-1 block font-semibold text-sage">Temp password</span>
                 <input
                   className="input"
                   type="password"
@@ -383,7 +383,7 @@ function BusinessSettingsInner() {
                 />
               </label>
               <label className="block text-sm">
-                <span className="mb-1 block font-semibold text-ink-soft">Role</span>
+                <span className="mb-1 block font-semibold text-sage">Role</span>
                 <select
                   className="input"
                   value={staffForm.role}
@@ -401,7 +401,7 @@ function BusinessSettingsInner() {
         ) : null}
 
         {message ? (
-          <p className="mt-8 border-l-2 border-pine bg-mist/60 px-4 py-3 text-sm">{message}</p>
+          <p className="notice mt-8">{message}</p>
         ) : null}
       </main>
     </div>

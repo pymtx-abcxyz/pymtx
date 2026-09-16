@@ -38,15 +38,16 @@ function LoginForm() {
   }
 
   return (
-    <div className="portal-shell min-h-screen">
-      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
-        <Link href="/" className="text-2xl text-ink">
+    <div className="relative min-h-screen overflow-hidden portal-shell">
+      <div className="absolute inset-0 pymtx-grain" aria-hidden />
+      <main className="relative z-10 mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-16">
+        <Link href="/" className="text-2xl text-sage-bright">
           <PymtxLogotype />
         </Link>
-        <h1 className="mt-6 font-display text-3xl font-bold text-ink">Sign in</h1>
-        <p className="mt-2 text-sm text-ink-soft/80">
+        <h1 className="mt-6 font-display text-3xl font-bold text-mist">Sign in</h1>
+        <p className="mt-2 text-sm text-sage/85">
           Owners, clerks, and platform admins. Customers use{" "}
-          <Link className="text-pine underline" href="/login/customer">
+          <Link className="link-accent" href="/login/customer">
             magic-link sign-in
           </Link>
           .
@@ -54,7 +55,7 @@ function LoginForm() {
 
         <form onSubmit={onSubmit} className="mt-8 space-y-4">
           <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-ink-soft">Email</span>
+            <span className="mb-1 block font-semibold text-sage">Email</span>
             <input
               className="input w-full"
               type="email"
@@ -65,7 +66,7 @@ function LoginForm() {
             />
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block font-semibold text-ink-soft">Password</span>
+            <span className="mb-1 block font-semibold text-sage">Password</span>
             <input
               className="input w-full"
               type="password"
@@ -81,8 +82,8 @@ function LoginForm() {
           </button>
         </form>
 
-        <div className="mt-8 border-t border-ink/10 pt-6 text-xs leading-relaxed text-ink-soft/70">
-          <p className="font-semibold text-ink-soft">Demo accounts</p>
+        <div className="mt-8 border-t border-mist/10 pt-6 text-xs leading-relaxed text-sage/70">
+          <p className="font-semibold text-sage">Demo accounts</p>
           <p className="mt-2">
             Owner: billing@mapleridgedental.example / pymtx-business-demo
           </p>
@@ -96,7 +97,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="portal-shell p-10 text-ink-soft">Loading…</div>}>
+    <Suspense fallback={<div className="portal-shell p-10 text-sage">Loading…</div>}>
       <LoginForm />
     </Suspense>
   );
