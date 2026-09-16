@@ -38,9 +38,17 @@ curl -X POST http://localhost:3000/api/jobs/daily-debit \
   -d '{"mode":"inline"}'
 ```
 
-## Env (optional for Cloud)
+## Env (Cloud / Vercel)
 
 ```
 INNGEST_EVENT_KEY=
 INNGEST_SIGNING_KEY=
 ```
+
+Production uses the **Inngest** Vercel Marketplace integration (`account-cyclamen-queen`).  
+Serve URL: `https://pymtx.com/api/inngest`
+
+- Unsigned `GET` → `401` (signing required) is expected  
+- App sync / register → `PUT /api/inngest` returns `Successfully registered`  
+- Cron: `TZ=America/Toronto 0 0 * * *` (`pymtx-daily-debits`)  
+- Manual: event `pymtx/debits.run` or `POST /api/jobs/daily-debit` with `{ "mode": "inngest" }` (ADMIN)
