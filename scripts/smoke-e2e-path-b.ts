@@ -199,9 +199,10 @@ async function main() {
       mode: "inline",
       asOf: new Date().toISOString(),
     });
-    ok("daily-debit job runs", debit.status === 200, {
-      presented: debit.json.presented,
-      skipped: debit.json.skipped,
+    ok("daily-debit job runs", debit.status === 200 && debit.json.status === "SUCCEEDED", {
+      scanned: debit.json.scannedCount,
+      skipped: debit.json.skippedCount,
+      succeeded: debit.json.succeededCount,
       error: debit.json.error,
     });
 
