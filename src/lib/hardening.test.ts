@@ -4,6 +4,7 @@ import { rateLimit, rateLimitBackend, pruneRateLimits } from "./rate-limit";
 import {
   allowDemoMode,
   assertLiveStripeOrDemoAllowed,
+  goLiveReport,
   isProduction,
   isStripeDemoMode,
   isWebhookDemoMode,
@@ -98,5 +99,15 @@ describe("env guards", () => {
       expect(allowDemoMode()).toBe(true);
       expect(() => assertLiveStripeOrDemoAllowed("test")).not.toThrow();
     }
+  });
+
+  it("goLiveReport returns structured checks without secrets", () => {
+    const report = goLiveReport();
+    expect(report).toHaveProperty("locked");
+    expect(report).toHaveProperty("checks");
+    expect(Array.isArray(report.blockers)).toBe(true);
+    expect(["missing", "placeholder", "test", "live", "unknown"]).toContain(
+      report.stripeSecret,
+    );
   });
 });

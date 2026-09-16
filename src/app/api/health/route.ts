@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import Redis from "ioredis";
-import { isProduction } from "@/lib/env";
+import { goLiveReport, isProduction } from "@/lib/env";
 import { rateLimitBackend } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Lightweight ops probe — no secrets; production returns minimal fields.
+ * Lightweight ops probe — no secrets.
+ * Production returns { ok, app, rails } with mode classifications only.
  */
 export async function GET() {
   const configured = Boolean(
@@ -40,20 +41,38 @@ export async function GET() {
     }
   }
 
-  const ok = !configured || redis === "ok";
+  const report = goLiveReport();
+  const redisOk = redis !== "error";
+
+  const rails = {
+    locked: report.locked,
+    readyForMoneyRails: report.readyForMoneyRails,
+    readyForLiveMoney: report.readyForLiveMoney,
+    stripeSecret: report.stripeSecret,
+    stripePublishable: report.stripePublishable,
+    webhook: report.webhook,
+    email: report.email,
+    redis: report.redis,
+    blockerCount: report.blockers.length,
+  };
 
   if (isProduction()) {
-    return NextResponse.json({ ok, app: "pymtx" }, { status: ok ? 200 : 503 });
+    return NextResponse.json(
+      { ok: redisOk, app: "pymtx", rails },
+      { status: redisOk ? 200 : 503 },
+    );
   }
 
   return NextResponse.json(
     {
-      ok,
+      ok: redisOk,
       app: "pymtx",
       rateLimitBackend: rateLimitBackend(),
       redis,
+      rails,
+      blockers: report.blockers,
       ...(detail ? { detail } : {}),
     },
-    { status: ok ? 200 : 503 },
+    { status: redisOk ? 200 : 503 },
   );
 }

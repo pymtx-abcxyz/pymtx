@@ -17,7 +17,7 @@ import {
   PaymentPlanStatus,
   type PlanTermMonths,
 } from "./domain";
-import { assertLiveStripeOrDemoAllowed, isStripeDemoMode } from "./env";
+import { assertMoneyRailsReady, assertLiveStripeOrDemoAllowed, isStripeDemoMode } from "./env";
 import { sendPadConfirmationNotice } from "./notifications";
 import { stripe } from "./stripe";
 
@@ -177,7 +177,7 @@ export async function createCheckoutPlan(params: {
   termMonths: PlanTermMonths;
   startDate?: Date;
 }) {
-  assertLiveStripeOrDemoAllowed("checkout create_plan");
+  assertMoneyRailsReady("checkout create_plan");
   const invoice = await prisma.invoice.findUniqueOrThrow({
     where: { id: params.invoiceId },
     include: {
@@ -280,7 +280,7 @@ export async function completeCheckoutPad(params: {
   ipAddress?: string;
   userAgent?: string;
 }) {
-  assertLiveStripeOrDemoAllowed("checkout accept_pad");
+  assertMoneyRailsReady("checkout accept_pad");
   if (!/^\d{4}$/.test(params.bankLast4)) {
     throw new Error("Bank last 4 digits required");
   }

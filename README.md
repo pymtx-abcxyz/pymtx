@@ -88,3 +88,5 @@ npm test
 ## Docs
 
 Step write-ups live under `docs/STEP-*.md` (Connect → Checkout → Inngest → Skip → Auth → Hardening → Roles/Magic-link).
+
+Go-live lock & live Stripe cutover: [`docs/GO-LIVE.md`](docs/GO-LIVE.md).

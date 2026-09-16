@@ -15,7 +15,7 @@ import {
   assertConnectedAccountDirectCharge,
   assertNoDestinationChargePayload,
 } from "./path-b";
-import { assertLiveStripeOrDemoAllowed, isStripeDemoMode } from "./env";
+import { assertMoneyRailsReady, isStripeDemoMode } from "./env";
 
 /**
  * Zero-custody Direct Charge on the connected business account.
@@ -26,7 +26,7 @@ import { assertLiveStripeOrDemoAllowed, isStripeDemoMode } from "./env";
  * so webhook delivery and immediate PI status stay consistent.
  */
 export async function chargeInstallment(installmentId: string) {
-  assertLiveStripeOrDemoAllowed("chargeInstallment");
+  assertMoneyRailsReady("chargeInstallment");
 
   const installment = await prisma.installment.findUnique({
     where: { id: installmentId },
@@ -120,7 +120,7 @@ export async function chargeInstallment(installmentId: string) {
   });
 
   if (isStripeDemoMode()) {
-    // Locked production already failed assertLiveStripeOrDemoAllowed above.
+    // Locked production already failed assertMoneyRailsReady above.
     await applyInstallmentSuccess({
       installmentId,
       paymentIntentId: `pi_demo_${installmentId}`,

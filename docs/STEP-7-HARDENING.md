@@ -57,4 +57,6 @@ npm run job:daily-debit   # authenticates as seeded admin, runs inline job
 ```
 
 Demo still works locally (`ALLOW_DEMO_MODE=true` or non-production).  
-For locked production: real Stripe keys, Connect webhook secret, Redis for distributed rate limits, and `ALLOW_DEMO_MODE=false`.
+For locked production: real Stripe keys, Connect webhook secret, Redis for distributed rate limits, Resend, and `ALLOW_DEMO_MODE=false`.
+
+See also [`docs/GO-LIVE.md`](GO-LIVE.md) for money-rails readiness (`assertMoneyRailsReady`, `/api/admin/golive`, health `rails` field).

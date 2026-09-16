@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthUser, requireUser } from "@/lib/auth";
 import { UserRole } from "@/lib/domain";
-import { assertLiveStripeOrDemoAllowed } from "@/lib/env";
 import { clientIp, publicError } from "@/lib/http";
 import { acceptPadMandate, createPaymentPlan } from "@/lib/plans";
+import { assertMoneyRailsReady } from "@/lib/env";
 import { prisma } from "@/lib/db";
 
 /**
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "accept_pad") {
-      assertLiveStripeOrDemoAllowed("plans accept_pad");
+      assertMoneyRailsReady("plans accept_pad");
       const plan = await acceptPadMandate({
         paymentPlanId: body.paymentPlanId,
         payorName: body.payorName,

@@ -11,7 +11,7 @@ import {
   PaymentPlanStatus,
   type PlanTermMonths,
 } from "./domain";
-import { assertLiveStripeOrDemoAllowed, isStripeDemoMode } from "./env";
+import { assertMoneyRailsReady, isStripeDemoMode } from "./env";
 
 export async function createPaymentPlan(params: {
   invoiceId: string;
@@ -79,7 +79,7 @@ export async function acceptPadMandate(params: {
   stripePaymentMethodId?: string;
   stripeMandateId?: string;
 }) {
-  assertLiveStripeOrDemoAllowed("plans accept_pad");
+  assertMoneyRailsReady("plans accept_pad");
   const now = new Date();
   const demo = isStripeDemoMode();
 

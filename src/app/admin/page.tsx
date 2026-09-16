@@ -13,6 +13,7 @@ import {
 import { getCurrentUser } from "@/lib/auth";
 import { UserRole } from "@/lib/domain";
 import { prisma } from "@/lib/db";
+import { goLiveReport } from "@/lib/env";
 import { platformFeeBps } from "@/lib/stripe";
 import { redirect } from "next/navigation";
 
@@ -48,6 +49,7 @@ export default async function AdminPage() {
 
   const feeBps = settings?.applicationFeeBps ?? platformFeeBps();
   const health = businesses ? Math.round((connectReady / businesses) * 100) : 0;
+  const golive = goLiveReport();
 
   return (
     <PortalShell>
@@ -64,6 +66,52 @@ export default async function AdminPage() {
           title="Platform control"
           subtitle="Path B compliance posture: Pymtx collects only application fees. Principal settles on connected accounts via Direct Charges."
         />
+
+        <section className="mb-12">
+          <SectionTitle
+            title="Go-live rails"
+            subtitle="Non-secret readiness — money paths fail closed until blockers clear."
+          />
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <Metric
+              label="Demo lock"
+              value={golive.locked ? "Locked" : "Open"}
+              hint={golive.locked ? "ALLOW_DEMO_MODE off" : "Demo still allowed"}
+              size="md"
+            />
+            <Metric
+              label="Money rails"
+              value={golive.readyForMoneyRails ? "Ready" : "Blocked"}
+              hint={`Stripe ${golive.stripeSecret}/${golive.stripePublishable}`}
+              size="md"
+            />
+            <Metric
+              label="Live money"
+              value={golive.readyForLiveMoney ? "Live" : "Not live"}
+              hint={
+                golive.requireLiveStripe
+                  ? "REQUIRE_LIVE_STRIPE=true"
+                  : "Test keys OK until REQUIRE_LIVE_STRIPE"
+              }
+              size="md"
+            />
+            <Metric
+              label="Blockers"
+              value={String(golive.blockers.length)}
+              hint={golive.email === "resend" ? "Email: resend" : `Email: ${golive.email}`}
+              size="md"
+            />
+          </div>
+          {golive.blockers.length > 0 ? (
+            <ul className="notice notice-warning mt-6 space-y-1 text-sm">
+              {golive.blockers.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="notice mt-6 text-sm">All go-live checks passed for this environment.</p>
+          )}
+        </section>
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <Metric label="Take-rate" value={`${(feeBps / 100).toFixed(2)}%`} hint="application_fee_amount" />

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAuthUser, requireUser } from "@/lib/auth";
 import { UserRole } from "@/lib/domain";
-import { assertLiveStripeOrDemoAllowed } from "@/lib/env";
+import { assertMoneyRailsReady } from "@/lib/env";
 import { publicError } from "@/lib/http";
 import { chargeInstallment } from "@/lib/payments";
 
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   if (!isAuthUser(user)) return user;
 
   try {
-    assertLiveStripeOrDemoAllowed("manual charge");
+    assertMoneyRailsReady("manual charge");
   } catch {
     return NextResponse.json(
       { error: "Payment rail misconfigured" },
