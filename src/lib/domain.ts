@@ -91,6 +91,7 @@ export const CaslMessageKind = {
   RECEIPT: "RECEIPT",
   SKIP_CONFIRMATION: "SKIP_CONFIRMATION",
   MAGIC_LINK: "MAGIC_LINK",
+  NSF_ALERT: "NSF_ALERT",
 } as const;
 export type CaslMessageKind =
   (typeof CaslMessageKind)[keyof typeof CaslMessageKind];

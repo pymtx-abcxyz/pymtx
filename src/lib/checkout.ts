@@ -5,7 +5,6 @@ import {
   buildInstallmentSchedule,
 } from "./compliance";
 import {
-  CaslMessageKind,
   InstallmentStatus,
   InvoiceStatus,
   PadMandateType,
@@ -13,6 +12,7 @@ import {
   type PlanTermMonths,
 } from "./domain";
 import { assertLiveStripeOrDemoAllowed, isStripeDemoMode } from "./env";
+import { sendPadConfirmationNotice } from "./notifications";
 import { stripe } from "./stripe";
 
 export type CheckoutPreview = {
@@ -314,10 +314,11 @@ export async function completeCheckoutPad(params: {
         : setupIntent.mandate?.id || `mandate_${pm.id}`;
   }
 
-  const subject = `PAD confirmation — ${business.tradeName}`;
-  const bodyPreview = `Written confirmation of your Personal PAD for ${plan.invoice.externalRef}. First debit on or after ${plan.startDate?.toISOString().slice(0, 10)}. Cancel with at least 10 days' notice.`;
+  const firstDebitDate =
+    plan.startDate?.toISOString().slice(0, 10) ||
+    now.toISOString().slice(0, 10);
 
-  return prisma.$transaction(async (tx) => {
+  const updated = await prisma.$transaction(async (tx) => {
     await tx.padMandate.create({
       data: {
         paymentPlanId: plan.id,
@@ -333,18 +334,6 @@ export async function completeCheckoutPad(params: {
         confirmationSentAt: now,
         cancellationTerms: PAD_CANCELLATION_TERMS,
         recourseTerms: PAD_RECOURSE_TERMS,
-      },
-    });
-
-    await tx.caslMessage.create({
-      data: {
-        businessId: business.id,
-        customerId: plan.customerId,
-        kind: CaslMessageKind.PAD_CONFIRMATION,
-        fromName: business.tradeName,
-        toEmail: params.payorEmail,
-        subject,
-        bodyPreview,
       },
     });
 
@@ -365,4 +354,20 @@ export async function completeCheckoutPad(params: {
       },
     });
   });
+
+  // Rule H1 written confirmation — merchant From identity via Resend when configured.
+  await sendPadConfirmationNotice({
+    businessId: business.id,
+    customerId: plan.customerId,
+    tradeName: business.tradeName,
+    toEmail: params.payorEmail,
+    invoiceRef: plan.invoice.externalRef,
+    firstDebitDate,
+    monthlyAmountCents: plan.monthlyAmountCents,
+    bankLast4: params.bankLast4,
+  }).catch((err) => {
+    console.error("[checkout] PAD confirmation email failed", err);
+  });
+
+  return updated;
 }

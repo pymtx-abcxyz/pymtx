@@ -7,6 +7,10 @@ import {
   InvoiceStatus,
   PaymentPlanStatus,
 } from "./domain";
+import {
+  sendNsfAlertNotice,
+  sendReceiptNotice,
+} from "./notifications";
 
 /** Stripe / ACSS failure codes that map to Rule H1 NSF. */
 export function isNsfFailure(
@@ -111,6 +115,10 @@ export async function applyInstallmentSuccess(input: SettlementSuccessInput) {
   });
 
   await maybeCompletePlan(installment.paymentPlanId);
+  await notifyReceipt(installment.id).catch((err) => {
+    console.error("[settlement] receipt email failed", err);
+  });
+
   return { alreadySettled: false as const, installmentId: installment.id };
 }
 
@@ -162,6 +170,12 @@ export async function applyInstallmentFailure(input: SettlementFailureInput) {
     failureCode: input.failureCode,
     failureMessage: input.failureMessage,
   });
+
+  if (nsf) {
+    await notifyNsfAlert(installment.id, !wasNsfRetry).catch((err) => {
+      console.error("[settlement] NSF alert email failed", err);
+    });
+  }
 
   return {
     ignored: false as const,
@@ -235,4 +249,56 @@ export async function maybeCompletePlan(planId: string) {
       data: { status: InvoiceStatus.SETTLED, balanceCents: 0 },
     });
   }
+}
+
+async function notifyReceipt(installmentId: string) {
+  const installment = await prisma.installment.findUnique({
+    where: { id: installmentId },
+    include: {
+      paymentPlan: {
+        include: {
+          invoice: true,
+          customer: { include: { business: true } },
+        },
+      },
+    },
+  });
+  if (!installment) return;
+  const { customer, invoice } = installment.paymentPlan;
+  await sendReceiptNotice({
+    businessId: customer.businessId,
+    customerId: customer.id,
+    tradeName: customer.business.tradeName,
+    toEmail: customer.email,
+    invoiceRef: invoice.externalRef,
+    amountCents: installment.amountCents,
+    sequence: installment.sequence,
+    paidAt: installment.paidAt || new Date(),
+  });
+}
+
+async function notifyNsfAlert(installmentId: string, retryAvailable: boolean) {
+  const installment = await prisma.installment.findUnique({
+    where: { id: installmentId },
+    include: {
+      paymentPlan: {
+        include: {
+          invoice: true,
+          customer: { include: { business: true } },
+        },
+      },
+    },
+  });
+  if (!installment) return;
+  const { customer, invoice } = installment.paymentPlan;
+  await sendNsfAlertNotice({
+    businessId: customer.businessId,
+    customerId: customer.id,
+    tradeName: customer.business.tradeName,
+    toEmail: customer.email,
+    invoiceRef: invoice.externalRef,
+    amountCents: installment.amountCents,
+    sequence: installment.sequence,
+    retryAvailable,
+  });
 }

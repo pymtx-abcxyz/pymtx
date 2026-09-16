@@ -1,19 +1,24 @@
 import { inngest } from "./client";
-import { runDailyDebitJob } from "@/lib/debit-job";
+import {
+  processDailyInstallments,
+  runDailyDebitJob,
+} from "@/lib/debit-job";
 
 /**
  * Daily ACSS Debit presenter — midnight America/Toronto.
- * Inngest v4: { id, triggers } + handler.
+ * Alias: processDailyInstallments → runDailyDebitJob
+ * Direct Charges on connected accounts with application_fee_amount.
  */
 export const dailyDebitJob = inngest.createFunction(
   {
     id: "pymtx-daily-debits",
+    name: "processDailyInstallments",
     retries: 2,
     triggers: [{ cron: "TZ=America/Toronto 0 0 * * *" }],
   },
   async ({ step }) => {
-    const result = await step.run("run-daily-debit-job", () =>
-      runDailyDebitJob(new Date()),
+    const result = await step.run("processDailyInstallments", () =>
+      processDailyInstallments(new Date()),
     );
     return result;
   },

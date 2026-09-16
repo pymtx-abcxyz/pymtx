@@ -150,7 +150,7 @@ function ClientCheckoutInner() {
       setSkipInfo(null);
       return;
     }
-    fetch(`/api/skip?paymentPlanId=${plan.id}&token=${encodeURIComponent(token || "")}`)
+    fetch(`/api/client/skip-payment?paymentPlanId=${plan.id}&token=${encodeURIComponent(token || "")}`)
       .then((r) => r.json())
       .then(setSkipInfo);
   }, [plan?.id, plan?.status, notice]);
@@ -195,11 +195,10 @@ function ClientCheckoutInner() {
     setBusy(true);
     setError("");
     setNotice("");
-    const res = await fetch("/api/checkout", {
+    const res = await fetch("/api/pad-mandates/record", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action: "accept_pad",
         token,
         paymentPlanId: plan.id,
         payorName: pad.payorName,
@@ -228,7 +227,7 @@ function ClientCheckoutInner() {
     if (!plan) return;
     setBusy(true);
     setNotice("");
-    const res = await fetch("/api/skip", {
+    const res = await fetch("/api/client/skip-payment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ paymentPlanId: plan.id, token }),
@@ -547,6 +546,15 @@ function ClientCheckoutInner() {
           </>
         )}
       </main>
+      <footer className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 pb-10 pt-2 text-xs text-sage/55">
+        <span>
+          Debits are drawn by your creditor as Merchant of Record. Pymtx never
+          holds principal (Path B / zero-custody).
+        </span>
+        <span className="shrink-0 font-semibold tracking-[0.08em] text-sage/70">
+          Powered by pymtx
+        </span>
+      </footer>
     </div>
   );
 }

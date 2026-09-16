@@ -13,8 +13,17 @@ export function isStripeDemoMode() {
   return !key || key.includes("placeholder");
 }
 
+/** Prefer Connect-specific secret; fall back to platform webhook secret. */
+export function stripeWebhookSecret() {
+  return (
+    process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim() ||
+    process.env.STRIPE_WEBHOOK_SECRET?.trim() ||
+    ""
+  );
+}
+
 export function isWebhookDemoMode() {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const secret = stripeWebhookSecret();
   return !secret || secret.includes("placeholder");
 }
 
@@ -34,7 +43,7 @@ export function assertLiveStripeOrDemoAllowed(context: string) {
 export function assertLiveWebhookOrDemoAllowed() {
   if (isWebhookDemoMode() && !allowDemoMode()) {
     throw new Error(
-      "STRIPE_WEBHOOK_SECRET is placeholder but ALLOW_DEMO_MODE is not set in production",
+      "STRIPE_CONNECT_WEBHOOK_SECRET / STRIPE_WEBHOOK_SECRET is placeholder but ALLOW_DEMO_MODE is not set in production",
     );
   }
 }

@@ -24,6 +24,8 @@ export type DebitJobResult = {
  * - Written PAD confirmation required
  * - NSF: max 1 retry within platform window (default 30 days)
  * - One DebitJobRun row per calendar day (idempotent on SUCCEEDED)
+ *
+ * Also exported as `processDailyInstallments` for Path B naming.
  */
 export async function runDailyDebitJob(asOf = new Date()): Promise<DebitJobResult> {
   const runDate = format(asOf, "yyyy-MM-dd");
@@ -203,3 +205,6 @@ function dedupeById<T extends { id: string }>(items: T[]): T[] {
     return true;
   });
 }
+
+/** Path B alias for the daily Direct Charge presenter. */
+export const processDailyInstallments = runDailyDebitJob;

@@ -1,12 +1,12 @@
 import { addDays, addMonths } from "date-fns";
 import { prisma } from "./db";
-import { businessDaysUntil, formatCad, formatDate } from "./compliance";
+import { businessDaysUntil, formatDate } from "./compliance";
 import {
-  CaslMessageKind,
   InstallmentStatus,
   PaymentPlanStatus,
   SkipRequestStatus,
 } from "./domain";
+import { sendSkipConfirmationNotice } from "./notifications";
 
 const DEFAULT_SKIP_NOTICE_BUSINESS_DAYS = 3;
 const DEFAULT_SKIP_COOLDOWN_DAYS = 180;
@@ -217,19 +217,6 @@ export async function executeSkip(paymentPlanId: string) {
         },
       });
 
-      const business = plan.customer.business;
-      await tx.caslMessage.create({
-        data: {
-          businessId: business.id,
-          customerId: plan.customerId,
-          kind: CaslMessageKind.SKIP_CONFIRMATION,
-          fromName: business.tradeName,
-          toEmail: plan.customer.email,
-          subject: `Payment skip confirmed — ${business.tradeName}`,
-          bodyPreview: `Your ${formatCad(target.amountCents)} debit due ${formatDate(target.dueDate)} was skipped. A replacement payment (seq ${appendedSequence}) is scheduled for ${formatDate(appendedDue)}. Next skip available ${formatDate(nextSkipAt)}.`,
-        },
-      });
-
       return {
         skippedInstallmentId: target.id,
         skippedSequence: target.sequence,
@@ -238,10 +225,38 @@ export async function executeSkip(paymentPlanId: string) {
         amountCents: target.amountCents,
         nextSkipAvailableAt: nextSkipAt,
         cooldownDays: policy.cooldownDays,
+        tradeName: plan.customer.business.tradeName,
+        customerId: plan.customerId,
+        businessId: plan.customer.business.id,
+        customerEmail: plan.customer.email,
+        skippedDue: target.dueDate,
       };
     });
 
-    return { success: true as const, ...result };
+    await sendSkipConfirmationNotice({
+      businessId: result.businessId,
+      customerId: result.customerId,
+      tradeName: result.tradeName,
+      toEmail: result.customerEmail,
+      amountCents: result.amountCents,
+      skippedDue: formatDate(result.skippedDue),
+      appendedSequence: result.appendedSequence,
+      appendedDue: formatDate(result.appendedDue),
+      nextSkipAvailable: formatDate(result.nextSkipAvailableAt),
+    }).catch((err) => {
+      console.error("[skip] confirmation email failed", err);
+    });
+
+    return {
+      success: true as const,
+      skippedInstallmentId: result.skippedInstallmentId,
+      skippedSequence: result.skippedSequence,
+      appendedSequence: result.appendedSequence,
+      appendedDue: result.appendedDue,
+      amountCents: result.amountCents,
+      nextSkipAvailableAt: result.nextSkipAvailableAt,
+      cooldownDays: result.cooldownDays,
+    };
   } catch (e) {
     return {
       success: false as const,

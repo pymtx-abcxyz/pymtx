@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import {
   assertLiveWebhookOrDemoAllowed,
   isWebhookDemoMode,
+  stripeWebhookSecret,
 } from "@/lib/env";
 import {
   findBusinessByStripeAccount,
@@ -14,13 +15,20 @@ import {
   applyInstallmentFailure,
   applyInstallmentSuccess,
 } from "@/lib/settlement";
+import { InstallmentStatus } from "@/lib/domain";
 
 /**
- * Stripe webhook — Connect + ACSS Debit.
- * Enable connected-account events for Direct Charges.
+ * Stripe webhook — Connect + ACSS Debit Direct Charges.
+ * Enable connected-account events for Path B.
  *
- * Hardening: live webhook secret required in production (unless ALLOW_DEMO_MODE);
- * Stripe event.id stored for idempotent retries.
+ * Listens for:
+ * - payment_intent.processing
+ * - payment_intent.succeeded
+ * - payment_intent.payment_failed
+ * - account.updated
+ *
+ * Secret: STRIPE_CONNECT_WEBHOOK_SECRET || STRIPE_WEBHOOK_SECRET
+ * Also mounted at /api/webhooks/stripe
  */
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -43,13 +51,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Missing stripe-signature" }, { status: 400 });
   }
 
+  const secret = stripeWebhookSecret();
+  if (!secret) {
+    return NextResponse.json({ error: "Webhook secret not configured" }, { status: 503 });
+  }
+
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET!,
-    );
+    event = stripe.webhooks.constructEvent(body, sig, secret);
   } catch (err) {
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Invalid signature" },
@@ -86,6 +95,38 @@ export async function POST(req: NextRequest) {
         summary = `synced business ${business.id}`;
       } else {
         summary = "account.updated unmatched";
+      }
+    } else if (event.type === "payment_intent.processing") {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const installmentId = pi.metadata?.pymtx_installment_id;
+      if (!installmentId) {
+        summary = "payment_intent.processing without pymtx_installment_id";
+      } else {
+        await prisma.installment.updateMany({
+          where: {
+            id: installmentId,
+            status: {
+              in: [
+                InstallmentStatus.QUEUED,
+                InstallmentStatus.SCHEDULED,
+                InstallmentStatus.PROCESSING,
+                InstallmentStatus.FAILED_NSF,
+              ],
+            },
+          },
+          data: {
+            status: InstallmentStatus.PROCESSING,
+            stripePaymentIntentId: pi.id,
+            lastAttemptAt: new Date(),
+          },
+        });
+        if (pi.metadata?.pymtx_attempt_id) {
+          await prisma.debitAttempt.updateMany({
+            where: { id: pi.metadata.pymtx_attempt_id },
+            data: { stripePaymentIntentId: pi.id },
+          });
+        }
+        summary = `processing ${installmentId}`;
       }
     } else if (
       event.type === "payment_intent.succeeded" ||

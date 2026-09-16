@@ -67,10 +67,20 @@ export async function chargeInstallment(installmentId: string) {
     if (installment.nsfRetryUsed) {
       throw new Error("NSF retry already used (Rule H1: max 1 re-try)");
     }
+    const settings = await prisma.platformSettings.findUnique({
+      where: { id: "platform" },
+    });
+    const windowDays = settings?.nsfRetryWindowDays ?? 30;
+    const maxRetries = settings?.nsfRetryMax ?? 1;
+    if (maxRetries < 1) {
+      throw new Error("NSF retries disabled by platform settings");
+    }
     const anchor = installment.originalPresentmentAt ?? installment.lastAttemptAt;
     if (!anchor) throw new Error("Missing presentment timestamp for NSF retry");
-    if (new Date() > addDays(anchor, 30)) {
-      throw new Error("NSF retry window expired (Rule H1: within 30 days)");
+    if (new Date() > addDays(anchor, windowDays)) {
+      throw new Error(
+        `NSF retry window expired (Rule H1: within ${windowDays} days)`,
+      );
     }
   }
 
