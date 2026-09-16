@@ -12,7 +12,7 @@
  * - Stripe secret must be sk_live_…
  * - Publishable key must be pk_live_…
  *
- * Env aliases (first non-empty, non-placeholder wins):
+ * Env aliases (valid-shaped key preferred over garbage/shadow values):
  * - Secret: STRIPE_SECRET_KEY | PYMTX_STRIPE_SECRET_KEY | PYMTX_STRIPE_MCP_KEY
  * - Publishable: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY | STRIPE_PUBLISHABLE_KEY |
  *                NEXT_PUBLIC_PYMTX_STRIPE_PUBLISHABLE_KEY | PYMTX_STRIPE_PUBLISHABLE_KEY
@@ -32,8 +32,25 @@ function firstReal(...candidates: (string | undefined | null)[]): string {
   return "";
 }
 
+/** Prefer candidates that match a Stripe key shape; skip placeholders and junk. */
+function firstMatching(
+  re: RegExp,
+  ...candidates: (string | undefined | null)[]
+): string {
+  for (const c of candidates) {
+    const v = c?.trim();
+    if (v && !v.includes("placeholder") && re.test(v)) return v;
+  }
+  return firstReal(...candidates);
+}
+
+const SK_RE = /^sk_(test|live)_/;
+const PK_RE = /^pk_(test|live)_/;
+const WHSEC_RE = /^whsec_/;
+
 export function stripeSecretKey(): string {
-  return firstReal(
+  return firstMatching(
+    SK_RE,
     process.env.STRIPE_SECRET_KEY,
     process.env.PYMTX_STRIPE_SECRET_KEY,
     process.env.PYMTX_STRIPE_MCP_KEY,
@@ -41,7 +58,8 @@ export function stripeSecretKey(): string {
 }
 
 export function stripePublishableKey(): string {
-  return firstReal(
+  return firstMatching(
+    PK_RE,
     process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
     process.env.STRIPE_PUBLISHABLE_KEY,
     process.env.NEXT_PUBLIC_PYMTX_STRIPE_PUBLISHABLE_KEY,
@@ -88,7 +106,8 @@ export function stripePublishableMode(): StripeKeyMode {
 
 /** Prefer Connect webhook secret (required for Path B Connect events). */
 export function stripeWebhookSecret() {
-  return firstReal(
+  return firstMatching(
+    WHSEC_RE,
     process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
     process.env.STRIPE_WEBHOOK_SECRET,
     process.env.PYMTX_STRIPE_WEBHOOK_SECRET,

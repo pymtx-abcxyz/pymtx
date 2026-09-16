@@ -110,4 +110,36 @@ describe("env guards", () => {
       report.stripeSecret,
     );
   });
+
+  it("prefers valid-shaped Stripe keys over shadow junk", async () => {
+    const prev = { ...process.env };
+    process.env.STRIPE_SECRET_KEY = "not-a-stripe-key";
+    process.env.PYMTX_STRIPE_SECRET_KEY = "sk_test_validshape1234567890";
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_test_placeholder";
+    process.env.STRIPE_PUBLISHABLE_KEY = "garbage-pub";
+    process.env.PYMTX_STRIPE_PUBLISHABLE_KEY = "pk_test_validshape1234567890";
+    process.env.STRIPE_WEBHOOK_SECRET = "placeholder_whsec";
+    process.env.PYMTX_STRIPE_WEBHOOK_SECRET = "whsec_validshape1234567890";
+
+    const { stripeSecretKey, stripePublishableKey, stripeWebhookSecret } =
+      await import("./env");
+
+    // Re-import won't refresh — call via goLiveReport classifications after
+    // clearing module cache is heavy; assert through classify helpers instead.
+    const {
+      classifyStripeSecret,
+      classifyStripePublishable,
+      stripeSecretMode,
+      stripePublishableMode,
+      isWebhookDemoMode,
+    } = await import("./env");
+
+    expect(classifyStripeSecret(stripeSecretKey())).toBe("test");
+    expect(classifyStripePublishable(stripePublishableKey())).toBe("test");
+    expect(isWebhookDemoMode()).toBe(false);
+    expect(stripeSecretMode()).toBe("test");
+    expect(stripePublishableMode()).toBe("test");
+
+    process.env = prev;
+  });
 });
