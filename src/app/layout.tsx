@@ -1,21 +1,18 @@
 import type { Metadata } from "next";
-import { Figtree, Syne } from "next/font/google";
+import { Fragment_Mono } from "next/font/google";
 import Script from "next/script";
 import { AppearanceProvider } from "@/components/appearance-provider";
 import { APPEARANCE_BOOT_SCRIPT } from "@/lib/appearance";
 import "./tokens.css";
 import "./globals.css";
 
-const syne = Syne({
-  variable: "--font-syne",
+/** Monotype Design Team — Fragment Mono */
+const monotype = Fragment_Mono({
+  variable: "--font-monotype",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-});
-
-const figtree = Figtree({
-  variable: "--font-figtree",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: "400",
+  style: ["normal", "italic"],
+  display: "swap",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://pymtx.com";
@@ -50,7 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en-CA"
-      className={`${syne.variable} ${figtree.variable} h-full antialiased`}
+      className={`${monotype.variable} h-full antialiased`}
       data-theme="system"
       suppressHydrationWarning
     >

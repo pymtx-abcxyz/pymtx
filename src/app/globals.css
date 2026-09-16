@@ -20,8 +20,9 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-separator: var(--separator);
-  --font-display: var(--font-syne);
-  --font-sans: var(--font-figtree);
+  --font-display: var(--font-monotype);
+  --font-sans: var(--font-monotype);
+  --font-mono: var(--font-monotype);
 }
 
 * {
@@ -35,13 +36,20 @@ html {
 body {
   background: var(--canvas);
   color: var(--text-primary);
-  font-family: var(--font-figtree), system-ui, sans-serif;
+  font-family: var(--font-monotype), ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: 1.55;
+  font-variant-ligatures: none;
+  letter-spacing: -0.01em;
 }
 
 .font-display {
-  font-family: var(--font-syne), system-ui, sans-serif;
+  font-family: var(--font-monotype), ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  letter-spacing: -0.03em;
+}
+
+.font-sans {
+  font-family: var(--font-monotype), ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
 }
 
 /* Page shells — soft canvas, no heavy brand fills */
