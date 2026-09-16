@@ -204,8 +204,10 @@ async function createConnectedMerchantAccountV2(params: {
       metadata: {
         pymtx_business_id: business.id,
         pymtx_path: "B_zero_custody",
-        province: business.province,
-        ontario_corp_number: business.ontarioCorpNumber || "",
+        province: business.province || "ON",
+        ...(business.ontarioCorpNumber
+          ? { ontario_corp_number: business.ontarioCorpNumber }
+          : {}),
         ...(provision ? { pymtx_provision: provision } : {}),
       },
       include: [
