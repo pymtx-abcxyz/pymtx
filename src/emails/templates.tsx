@@ -102,6 +102,34 @@ function formatCad(cents: number) {
   }).format(cents / 100);
 }
 
+export function InviteEmail(props: {
+  tradeName: string;
+  firstName: string;
+  invoiceRef: string;
+  amountCents: number;
+  inviteUrl: string;
+}) {
+  return (
+    <Shell
+      preview={`Settle your balance with ${props.tradeName}`}
+      eyebrow={props.tradeName}
+      title="Settle your balance"
+    >
+      <Line>Hello {props.firstName},</Line>
+      <Line>
+        <strong style={{ color: textPrimary }}>{props.tradeName}</strong> invited
+        you to settle invoice {props.invoiceRef} (
+        {formatCad(props.amountCents)} past due).
+      </Line>
+      <Line>
+        <a href={props.inviteUrl} style={{ color: textPrimary }}>
+          Open your secure plan link
+        </a>
+      </Line>
+    </Shell>
+  );
+}
+
 export function PadConfirmationEmail(props: {
   tradeName: string;
   invoiceRef: string;
@@ -125,8 +153,9 @@ export function PadConfirmationEmail(props: {
       <Line>Account •••• {props.bankLast4}</Line>
       <Line>First debit on or after {props.firstDebitDate}</Line>
       <Line>
-        Cancel with at least 10 days&apos; written notice before a scheduled debit
-        (Payments Canada Rule H1). A PDF copy of this mandate is attached.
+        Cancel with thirty (30) calendar days&apos; written notice, or inside the
+        client portal (Payments Canada Rule H1). Cancelling the PAD does not
+        extinguish the underlying debt. A PDF copy of this mandate is attached.
       </Line>
     </Shell>
   );

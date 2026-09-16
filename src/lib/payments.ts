@@ -35,6 +35,7 @@ export async function chargeInstallment(installmentId: string) {
         include: {
           customer: { include: { business: true } },
           invoice: true,
+          padMandate: true,
         },
       },
     },
@@ -65,6 +66,12 @@ export async function chargeInstallment(installmentId: string) {
   }
   if (!plan.padWrittenConfirmSentAt) {
     throw new Error("Rule H1 written confirmation has not been sent before first debit");
+  }
+  if (plan.disputeFrozenAt) {
+    throw new Error("Plan is frozen while a debtor dispute is under review");
+  }
+  if (plan.padMandate?.cancelledAt) {
+    throw new Error("PAD authorization was cancelled by the payor");
   }
 
   if (installment.status === InstallmentStatus.FAILED_NSF) {
@@ -238,6 +245,8 @@ export async function findDueInstallments(asOf = new Date()) {
         status: PaymentPlanStatus.ACTIVE,
         padWrittenConfirmSentAt: { not: null },
         stripePaymentMethodId: { not: null },
+        disputeFrozenAt: null,
+        padMandate: { is: { cancelledAt: null } },
       },
     },
     include: {

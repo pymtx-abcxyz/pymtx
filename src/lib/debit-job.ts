@@ -183,6 +183,8 @@ async function findEligibleNsfRetries(asOf: Date) {
         status: "ACTIVE",
         padWrittenConfirmSentAt: { not: null },
         stripePaymentMethodId: { not: null },
+        disputeFrozenAt: null,
+        padMandate: { is: { cancelledAt: null } },
       },
     },
     include: {

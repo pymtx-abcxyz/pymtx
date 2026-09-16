@@ -54,6 +54,8 @@ export async function GET(req: NextRequest) {
               status: true,
               termMonths: true,
               monthlyAmountCents: true,
+              disputeFrozenAt: true,
+              disputeReason: true,
               installments: {
                 orderBy: { sequence: "asc" },
                 select: {
@@ -65,7 +67,11 @@ export async function GET(req: NextRequest) {
                 },
               },
               padMandate: {
-                select: { bankLast4: true, institutionName: true },
+                select: {
+                  bankLast4: true,
+                  institutionName: true,
+                  cancelledAt: true,
+                },
               },
               skipRequests: {
                 select: { id: true, status: true, requestedAt: true },

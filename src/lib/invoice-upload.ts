@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { prisma } from "./db";
 import { agingBucket } from "./compliance";
-import { CaslMessageKind, InvoiceStatus } from "./domain";
+import { InvoiceStatus } from "./domain";
+import { sendInviteNotice } from "./notifications";
+import { assertUploadDiligence } from "./upload-diligence";
 
 export const invoiceUploadRowSchema = z.object({
   externalRef: z.string().trim().min(1),
@@ -162,7 +164,7 @@ export function parseInvoiceCsv(csvText: string): {
   return { rows, errors };
 }
 
-/** Upsert customers + invoices and log CASL INVITE messages. */
+/** Upsert customers + invoices and send CASL INVITE emails (contact-hour gated). */
 export async function uploadInvoicesForBusiness(
   businessId: string,
   invoices: InvoiceUploadRow[],
@@ -177,6 +179,11 @@ export async function uploadInvoicesForBusiness(
   for (let i = 0; i < invoices.length; i += 1) {
     const row = invoices[i];
     try {
+      assertUploadDiligence({
+        dueDate: row.dueDate,
+        amountCents: row.amountCents,
+      });
+
       let customer = await prisma.customer.findUnique({
         where: {
           businessId_email: { businessId, email: row.customer.email.toLowerCase() },
@@ -227,16 +234,19 @@ export async function uploadInvoicesForBusiness(
         },
       });
 
-      await prisma.caslMessage.create({
-        data: {
-          businessId,
-          customerId: customer.id,
-          kind: CaslMessageKind.INVITE,
-          fromName: business.tradeName,
-          toEmail: customer.email,
-          subject: `Settle your balance with ${business.tradeName}`,
-          bodyPreview: `Invoice ${row.externalRef} · ${(row.amountCents / 100).toFixed(2)} CAD past due. Open your secure link to choose a plan.`,
-        },
+      await sendInviteNotice({
+        businessId,
+        customerId: customer.id,
+        tradeName: business.tradeName,
+        legalName: business.legalName,
+        physicalAddress: business.physicalAddress,
+        supportEmail: business.supportEmail || business.email,
+        phone: business.phone,
+        toEmail: customer.email,
+        customerFirstName: customer.firstName,
+        invoiceRef: invoice.externalRef,
+        amountCents: invoice.balanceCents,
+        inviteToken: customer.inviteToken,
       });
 
       items.push({
