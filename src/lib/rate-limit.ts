@@ -10,9 +10,13 @@ const memoryBuckets = new Map<string, Bucket>();
 
 let redis: Redis | null | undefined;
 
+function redisUrl() {
+  return process.env.REDIS_URL?.trim() || process.env.KV_URL?.trim() || "";
+}
+
 function getRedis(): Redis | null {
   if (redis !== undefined) return redis;
-  const url = process.env.REDIS_URL?.trim();
+  const url = redisUrl();
   if (!url) {
     redis = null;
     return null;
@@ -109,5 +113,5 @@ export function pruneRateLimits() {
 }
 
 export function rateLimitBackend(): "redis" | "memory" {
-  return process.env.REDIS_URL?.trim() ? "redis" : "memory";
+  return redisUrl() ? "redis" : "memory";
 }
