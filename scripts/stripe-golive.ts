@@ -97,7 +97,10 @@ async function main() {
     apiVersion: undefined as unknown as Stripe.LatestApiVersion,
   });
 
-  const account = await stripe.accounts.retrieve();
+  // Ping the platform account (API shape varies across stripe SDK majors).
+  const account = await (
+    stripe.accounts.retrieve as (id?: string) => Promise<Stripe.Account>
+  )();
   console.log("Stripe account ok:", {
     id: account.id,
     country: account.country,

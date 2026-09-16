@@ -9,16 +9,52 @@
  * - Resend required for Rule H1 written confirmations
  *
  * Real-money rails (optional REQUIRE_LIVE_STRIPE=true):
- * - STRIPE_SECRET_KEY must be sk_live_…
+ * - Stripe secret must be sk_live_…
  * - Publishable key must be pk_live_…
+ *
+ * Env aliases (first non-empty, non-placeholder wins):
+ * - Secret: STRIPE_SECRET_KEY | PYMTX_STRIPE_SECRET_KEY | PYMTX_STRIPE_MCP_KEY
+ * - Publishable: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY | STRIPE_PUBLISHABLE_KEY |
+ *                NEXT_PUBLIC_PYMTX_STRIPE_PUBLISHABLE_KEY | PYMTX_STRIPE_PUBLISHABLE_KEY
+ * - Webhook: STRIPE_CONNECT_WEBHOOK_SECRET | STRIPE_WEBHOOK_SECRET | PYMTX_STRIPE_WEBHOOK_SECRET
  */
+
+function firstReal(...candidates: (string | undefined | null)[]): string {
+  for (const c of candidates) {
+    const v = c?.trim();
+    if (v && !v.includes("placeholder")) return v;
+  }
+  // Fall back to first non-empty even if placeholder (for local demo classification).
+  for (const c of candidates) {
+    const v = c?.trim();
+    if (v) return v;
+  }
+  return "";
+}
+
+export function stripeSecretKey(): string {
+  return firstReal(
+    process.env.STRIPE_SECRET_KEY,
+    process.env.PYMTX_STRIPE_SECRET_KEY,
+    process.env.PYMTX_STRIPE_MCP_KEY,
+  );
+}
+
+export function stripePublishableKey(): string {
+  return firstReal(
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY,
+    process.env.STRIPE_PUBLISHABLE_KEY,
+    process.env.NEXT_PUBLIC_PYMTX_STRIPE_PUBLISHABLE_KEY,
+    process.env.PYMTX_STRIPE_PUBLISHABLE_KEY,
+  );
+}
 
 export function isProduction() {
   return process.env.NODE_ENV === "production";
 }
 
 export function isStripeDemoMode() {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = stripeSecretKey();
   return !key || key.includes("placeholder");
 }
 
@@ -43,21 +79,21 @@ export function classifyStripePublishable(
 }
 
 export function stripeSecretMode(): StripeKeyMode {
-  return classifyStripeSecret(process.env.STRIPE_SECRET_KEY);
+  return classifyStripeSecret(stripeSecretKey());
 }
 
 export function stripePublishableMode(): StripeKeyMode {
-  return classifyStripePublishable(
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ||
-      process.env.STRIPE_PUBLISHABLE_KEY,
-  );
+  return classifyStripePublishable(stripePublishableKey());
 }
 
 /** Prefer Connect webhook secret (required for Path B Connect events). */
 export function stripeWebhookSecret() {
-  const connect = process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim();
-  if (connect && !connect.includes("placeholder")) return connect;
-  return process.env.STRIPE_WEBHOOK_SECRET?.trim() || "";
+  return firstReal(
+    process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+    process.env.STRIPE_WEBHOOK_SECRET,
+    process.env.PYMTX_STRIPE_WEBHOOK_SECRET,
+    process.env.PYMTX_STRIPE_CONNECT_WEBHOOK_SECRET,
+  );
 }
 
 export function isWebhookDemoMode() {
@@ -125,8 +161,10 @@ export function goLiveReport(): GoLiveReport {
   const stripePublishable = stripePublishableMode();
   const webhookOk = !isWebhookDemoMode();
   const connectDedicated = Boolean(
-    process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim() &&
-      !process.env.STRIPE_CONNECT_WEBHOOK_SECRET.includes("placeholder"),
+    firstReal(
+      process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+      process.env.PYMTX_STRIPE_CONNECT_WEBHOOK_SECRET,
+    ),
   );
   const email = emailRailMode();
   const redis = hasRedisConfigured();
@@ -242,7 +280,7 @@ export function goLiveReport(): GoLiveReport {
 export function assertLiveStripeOrDemoAllowed(context: string) {
   if (isStripeDemoMode() && !allowDemoMode()) {
     throw new Error(
-      `${context}: STRIPE_SECRET_KEY is placeholder but ALLOW_DEMO_MODE is not set in production`,
+      `${context}: Stripe secret is placeholder but ALLOW_DEMO_MODE is not set in production`,
     );
   }
   if (isGoLiveLocked() && requireLiveStripe()) {
@@ -258,7 +296,7 @@ export function assertLiveStripeOrDemoAllowed(context: string) {
     const pub = stripePublishableMode();
     if (pub === "missing" || pub === "placeholder") {
       throw new Error(
-        `${context}: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY is ${pub} under go-live lock`,
+        `${context}: Stripe publishable key is ${pub} under go-live lock`,
       );
     }
   }
@@ -267,7 +305,7 @@ export function assertLiveStripeOrDemoAllowed(context: string) {
 export function assertLiveWebhookOrDemoAllowed() {
   if (isWebhookDemoMode() && !allowDemoMode()) {
     throw new Error(
-      "STRIPE_CONNECT_WEBHOOK_SECRET / STRIPE_WEBHOOK_SECRET is placeholder but ALLOW_DEMO_MODE is not set in production",
+      "Stripe webhook secret is placeholder but ALLOW_DEMO_MODE is not set in production",
     );
   }
 }
