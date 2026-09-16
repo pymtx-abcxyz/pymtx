@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   PortalNav,
   PortalShell,
@@ -13,8 +13,10 @@ import {
   StatusPill,
   EmptyRow,
   FieldLabel,
+  LoadingScreen,
   formatCad,
 } from "@/components/ui";
+import { OnboardingChecklist } from "@/components/onboarding-checklist";
 
 type AuthUser = {
   id: string;
@@ -54,7 +56,17 @@ INV-9001,Hygiene balance,850.00,2026-06-01,Nora,Singh,nora.singh@example.com,+1-
 INV-9002,Crown residual,2400.50,2026-05-15,Marcus,Lee,marcus.lee@example.com,`;
 
 export default function BusinessPortalPage() {
+  return (
+    <Suspense fallback={<LoadingScreen label="Loading business…" />}>
+      <BusinessPortalInner />
+    </Suspense>
+  );
+}
+
+function BusinessPortalInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const welcome = searchParams.get("welcome") === "1";
   const fileRef = useRef<HTMLInputElement>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -113,6 +125,15 @@ export default function BusinessPortalPage() {
     user?.role === "ADMIN" ||
     user?.role === "OWNER" ||
     user?.role === "BUSINESS";
+  const inviteHref = invoices[0]?.customer.inviteToken
+    ? `/client?token=${invoices[0].customer.inviteToken}`
+    : null;
+  const showOnboarding =
+    !!selected &&
+    (!selected.stripeOnboardingComplete ||
+      invoices.length === 0 ||
+      !inviteHref ||
+      welcome);
 
   async function logout() {
     await fetch("/api/auth", { method: "DELETE" });
@@ -248,6 +269,21 @@ export default function BusinessPortalPage() {
               : "Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through Pymtx."
           }
         />
+
+        {showOnboarding && selected ? (
+          <OnboardingChecklist
+            businessId={selected.id}
+            stripeOnboardingComplete={selected.stripeOnboardingComplete}
+            invoiceCount={invoices.length}
+            inviteHref={inviteHref}
+            canConnect={canConnect}
+            busy={busy}
+            welcome={welcome}
+            onConnect={connectStripe}
+            onUploadSample={uploadSample}
+            onOpenCsvPicker={() => fileRef.current?.click()}
+          />
+        ) : null}
 
         <div className="mb-8 flex flex-wrap items-end gap-4">
           <label className="block min-w-[240px] flex-1 text-sm">

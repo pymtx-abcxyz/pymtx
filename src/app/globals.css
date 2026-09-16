@@ -384,3 +384,94 @@ table th {
 .link-accent:hover {
   color: var(--sage);
 }
+
+/* Post-register merchant setup — list, not cards */
+.onboarding-checklist {
+  border-top: 1px solid var(--line-strong);
+  padding-top: 1.5rem;
+}
+
+.onboarding-checklist-welcome {
+  border-top-color: rgba(159, 184, 154, 0.45);
+}
+
+.onboarding-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.onboarding-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid var(--line);
+  opacity: 0.72;
+  transition: opacity 0.25s ease, border-color 0.25s ease;
+}
+
+.onboarding-step:last-child {
+  border-bottom: none;
+}
+
+.onboarding-step.is-current {
+  opacity: 1;
+}
+
+.onboarding-step.is-done {
+  opacity: 0.9;
+}
+
+.onboarding-step.is-locked {
+  opacity: 0.45;
+}
+
+.onboarding-step-index {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--sage);
+  transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease;
+}
+
+.onboarding-step.is-current .onboarding-step-index {
+  border-color: var(--sage);
+  background: rgba(159, 184, 154, 0.18);
+  color: var(--mist);
+}
+
+.onboarding-step.is-done .onboarding-step-index {
+  border-color: rgba(111, 191, 147, 0.55);
+  color: var(--success);
+}
+
+@keyframes onboarding-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(159, 184, 154, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(159, 184, 154, 0.2);
+  }
+}
+
+.onboarding-checklist-welcome .onboarding-step.is-current .onboarding-step-index {
+  animation: onboarding-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-checklist-welcome .onboarding-step.is-current .onboarding-step-index {
+    animation: none;
+  }
+}
