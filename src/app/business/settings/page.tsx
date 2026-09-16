@@ -12,6 +12,7 @@ import {
   FieldLabel,
   StatusPill,
   LoadingScreen,
+  FormNotice,
 } from "@/components/ui";
 
 type Business = {
@@ -46,9 +47,12 @@ type ConnectStatus = {
 
 function Flag({ label, ok }: { label: string; ok: boolean }) {
   return (
-    <div className="flex items-center justify-between border-t border-mist/10 py-3 text-sm">
-      <span className="text-sage">{label}</span>
-      <span className={ok ? "font-semibold text-success" : "font-semibold text-warning"}>
+    <div className="flex items-center justify-between border-t border-border-subtle py-3 text-sm">
+      <span className="text-text-secondary">{label}</span>
+      <span
+        className={ok ? "font-semibold text-success" : "font-semibold text-warning"}
+        aria-label={ok ? `${label}: Yes` : `${label}: No`}
+      >
         {ok ? "Yes" : "No"}
       </span>
     </div>
@@ -256,24 +260,38 @@ function BusinessSettingsInner() {
               ["phone", "Phone"],
               ["ontarioCorpNumber", "Ontario corp number"],
             ] as const
-          ).map(([key, label]) => (
-            <label key={key} className="block text-sm">
-              <FieldLabel>{label}</FieldLabel>
-              <input
-                className="input"
-                required={
-                  key !== "phone" &&
-                  key !== "ontarioCorpNumber" &&
-                  key !== "supportEmail"
-                }
-                type={key === "email" || key === "supportEmail" ? "email" : "text"}
-                value={form[key]}
-                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-              />
-            </label>
-          ))}
-          <label className="checkbox-row">
+          ).map(([key, label]) => {
+            const id = `settings-${key}`;
+            return (
+              <div key={key}>
+                <FieldLabel htmlFor={id}>{label}</FieldLabel>
+                <input
+                  id={id}
+                  className="input"
+                  required={
+                    key !== "phone" &&
+                    key !== "ontarioCorpNumber" &&
+                    key !== "supportEmail"
+                  }
+                  type={key === "email" || key === "supportEmail" ? "email" : "text"}
+                  value={form[key]}
+                  onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  autoComplete={
+                    key === "email" || key === "supportEmail"
+                      ? "email"
+                      : key === "phone"
+                        ? "tel"
+                        : key === "legalName" || key === "tradeName"
+                          ? "organization"
+                          : undefined
+                  }
+                />
+              </div>
+            );
+          })}
+          <label className="checkbox-row" htmlFor="settings-saas">
             <input
+              id="settings-saas"
               type="checkbox"
               checked={form.saasAgreementAccepted}
               onChange={(e) =>
@@ -293,8 +311,9 @@ function BusinessSettingsInner() {
               (electronic acceptance binds my business as Licensee).
             </span>
           </label>
-          <label className="checkbox-row">
+          <label className="checkbox-row" htmlFor="settings-casl">
             <input
+              id="settings-casl"
               type="checkbox"
               checked={form.caslConsent}
               onChange={(e) => setForm({ ...form, caslConsent: e.target.checked })}
@@ -328,9 +347,10 @@ function BusinessSettingsInner() {
             subtitle="Stripe Connect Express · CA · ACSS Debit Direct Charges (zero custody)"
           />
 
-          <label className="mt-4 block text-sm">
-            <FieldLabel>Business</FieldLabel>
+          <div className="mt-4">
+            <FieldLabel htmlFor="settings-business-select">Business</FieldLabel>
             <select
+              id="settings-business-select"
               className="input"
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
@@ -341,7 +361,7 @@ function BusinessSettingsInner() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
 
           {connect ? (
             <div className="mt-6">
@@ -351,7 +371,7 @@ function BusinessSettingsInner() {
               <Flag label="Payouts enabled" ok={connect.payoutsEnabled} />
               <Flag label="Ready for ACSS Debit" ok={connect.readyForDebits} />
               {connect.stripeAccountId ? (
-                <p className="mt-3 text-xs text-sage/70">
+                <p className="mt-3 text-xs text-text-muted">
                   Connected account: {connect.stripeAccountId}
                   {connect.demo ? " (demo)" : ""}
                 </p>
@@ -390,43 +410,48 @@ function BusinessSettingsInner() {
               {staff.map((s) => (
                 <li
                   key={s.id}
-                  className="flex flex-wrap items-center justify-between gap-2 border-t border-mist/10 py-3"
+                  className="flex flex-wrap items-center justify-between gap-2 border-t border-border-subtle py-3"
                 >
                   <span>
-                    <span className="font-medium text-mist">{s.name}</span>
-                    <span className="text-sage/70"> · {s.email}</span>
+                    <span className="font-medium text-text-primary">{s.name}</span>
+                    <span className="text-text-muted"> · {s.email}</span>
                   </span>
                   <StatusPill>{s.role}</StatusPill>
                 </li>
               ))}
               {staff.length === 0 ? (
-                <li className="py-3 text-sage/70">No staff yet.</li>
+                <li className="py-3 text-text-muted">No staff yet.</li>
               ) : null}
             </ul>
 
             <form onSubmit={inviteStaff} className="mt-6 grid gap-3">
-              <label className="block text-sm">
-                <FieldLabel>Name</FieldLabel>
+              <div>
+                <FieldLabel htmlFor="staff-name">Name</FieldLabel>
                 <input
+                  id="staff-name"
                   className="input"
                   required
                   value={staffForm.name}
                   onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
+                  autoComplete="name"
                 />
-              </label>
-              <label className="block text-sm">
-                <FieldLabel>Email</FieldLabel>
+              </div>
+              <div>
+                <FieldLabel htmlFor="staff-email">Email</FieldLabel>
                 <input
+                  id="staff-email"
                   className="input"
                   type="email"
                   required
                   value={staffForm.email}
                   onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
+                  autoComplete="email"
                 />
-              </label>
-              <label className="block text-sm">
-                <FieldLabel>Temp password</FieldLabel>
+              </div>
+              <div>
+                <FieldLabel htmlFor="staff-password">Temp password</FieldLabel>
                 <input
+                  id="staff-password"
                   className="input"
                   type="password"
                   required
@@ -435,11 +460,13 @@ function BusinessSettingsInner() {
                   onChange={(e) =>
                     setStaffForm({ ...staffForm, password: e.target.value })
                   }
+                  autoComplete="new-password"
                 />
-              </label>
-              <label className="block text-sm">
-                <FieldLabel>Role</FieldLabel>
+              </div>
+              <div>
+                <FieldLabel htmlFor="staff-role">Role</FieldLabel>
                 <select
+                  id="staff-role"
                   className="input"
                   value={staffForm.role}
                   onChange={(e) => setStaffForm({ ...staffForm, role: e.target.value })}
@@ -447,7 +474,7 @@ function BusinessSettingsInner() {
                   <option value="CLERK">Clerk</option>
                   <option value="OWNER">Owner</option>
                 </select>
-              </label>
+              </div>
               <button className="btn-primary w-fit" type="submit" disabled={busy || !selectedId}>
                 {busy ? "Inviting…" : "Invite staff"}
               </button>
@@ -455,7 +482,11 @@ function BusinessSettingsInner() {
           </section>
         ) : null}
 
-        {message ? <p className="notice mt-8">{message}</p> : null}
+        {message ? (
+          <div className="mt-8">
+            <FormNotice>{message}</FormNotice>
+          </div>
+        ) : null}
       </PortalMain>
       <PortalFooter />
     </PortalShell>

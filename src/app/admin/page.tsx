@@ -135,11 +135,12 @@ export default async function AdminPage() {
           />
           <div className="mt-6 overflow-x-auto">
             <table className="data-table min-w-[520px]">
+              <caption className="sr-only">Invoice pipeline by status</caption>
               <thead>
                 <tr>
-                  <th>Status</th>
-                  <th>Count</th>
-                  <th>Open balance</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Count</th>
+                  <th scope="col">Open balance</th>
                 </tr>
               </thead>
               <tbody>
@@ -167,14 +168,15 @@ export default async function AdminPage() {
           />
           <div className="mt-6 overflow-x-auto">
             <table className="data-table min-w-[640px]">
+              <caption className="sr-only">Daily debit job runs</caption>
               <thead>
                 <tr>
-                  <th>Run date</th>
-                  <th>Status</th>
-                  <th>Scanned</th>
-                  <th>OK</th>
-                  <th>Failed</th>
-                  <th>Skipped</th>
+                  <th scope="col">Run date</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Scanned</th>
+                  <th scope="col">OK</th>
+                  <th scope="col">Failed</th>
+                  <th scope="col">Skipped</th>
                 </tr>
               </thead>
               <tbody>
@@ -215,7 +217,7 @@ export default async function AdminPage() {
 
         <section className="section-block">
           <SectionTitle title="Rule H1 & CDSSA posture" />
-          <ul className="mt-4 space-y-2 text-sm leading-relaxed text-sage">
+          <ul className="mt-4 space-y-2 text-[length:var(--text-sm)] leading-relaxed text-text-secondary">
             <li>Zero-custody Direct Charges (`stripeAccount` on connected business) — Pymtx is not a collection agency.</li>
             <li>ACSS Debit Personal PAD with written confirmation before first debit.</li>
             <li>NSF: max 1 retry within 30 days. Skip: ≥3 business days notice, 180-day cooldown.</li>
@@ -227,12 +229,13 @@ export default async function AdminPage() {
           <SectionTitle title="Recent businesses" />
           <div className="mt-6 overflow-x-auto">
             <table className="data-table min-w-[560px]">
+              <caption className="sr-only">Recent businesses</caption>
               <thead>
                 <tr>
-                  <th>Trade name</th>
-                  <th>Connect</th>
-                  <th>Customers</th>
-                  <th>Invoices</th>
+                  <th scope="col">Trade name</th>
+                  <th scope="col">Connect</th>
+                  <th scope="col">Customers</th>
+                  <th scope="col">Invoices</th>
                 </tr>
               </thead>
               <tbody>
