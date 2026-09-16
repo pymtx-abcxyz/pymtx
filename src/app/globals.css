@@ -1,27 +1,35 @@
 @import "tailwindcss";
 
 :root {
-  /* Navy / sage brand — consistent across marketing + portals */
-  --navy: #0b1c33;
-  --navy-deep: #071426;
-  --ink: #e8eee9;
-  --ink-soft: #9fb89a;
-  --sage: #9fb89a;
-  --sage-bright: #b7cdb2;
-  --pine: #9fb89a;
-  --pine-deep: #b7cdb2;
-  --mist: #e8eee9;
-  --fog: #d4ddd6;
-  --paper: #0b1c33;
-  --panel: rgba(159, 184, 154, 0.1);
-  --gold: #c4a35a;
-  --coral: #e07a6a;
-  --success: #6fbf93;
-  --warning: #d4a84b;
-  --background: var(--navy-deep);
-  --foreground: var(--mist);
-  --line: rgba(232, 238, 233, 0.12);
-  --line-strong: rgba(232, 238, 233, 0.22);
+  /* Brand palette — charcoal / signal / amber / cream / violet */
+  --charcoal: #423e3b;
+  --charcoal-deep: #2a2725;
+  --signal: #ff2e00;
+  --amber: #fea82f;
+  --cream: #fffecb;
+  --violet: #5448c8;
+
+  /* Semantic aliases (existing class names keep working) */
+  --navy: var(--charcoal);
+  --navy-deep: var(--charcoal-deep);
+  --ink: var(--cream);
+  --ink-soft: #c9c49a;
+  --sage: #c9c49a;
+  --sage-bright: var(--amber);
+  --pine: var(--violet);
+  --pine-deep: #6b60d6;
+  --mist: var(--cream);
+  --fog: #ebe7b8;
+  --paper: var(--charcoal);
+  --panel: rgba(84, 72, 200, 0.14);
+  --gold: var(--amber);
+  --coral: var(--signal);
+  --success: var(--amber);
+  --warning: var(--amber);
+  --background: var(--charcoal-deep);
+  --foreground: var(--cream);
+  --line: rgba(255, 254, 203, 0.12);
+  --line-strong: rgba(255, 254, 203, 0.22);
 }
 
 @theme inline {
@@ -43,6 +51,11 @@
   --color-coral: var(--coral);
   --color-success: var(--success);
   --color-warning: var(--warning);
+  --color-charcoal: var(--charcoal);
+  --color-signal: var(--signal);
+  --color-amber: var(--amber);
+  --color-cream: var(--cream);
+  --color-violet: var(--violet);
   --font-display: var(--font-syne);
   --font-sans: var(--font-figtree);
 }
@@ -65,13 +78,14 @@ body {
   font-family: var(--font-syne), system-ui, sans-serif;
 }
 
-/* Shared navy field (landing + portals + auth) */
+/* Shared atmosphere (landing + portals + auth) */
 .pymtx-atmosphere,
 .portal-shell {
   background:
-    radial-gradient(900px 520px at 85% 15%, rgba(159, 184, 154, 0.14), transparent 55%),
-    radial-gradient(700px 480px at 8% 80%, rgba(47, 93, 74, 0.2), transparent 50%),
-    linear-gradient(165deg, #0b1c33 0%, #0a182c 48%, #071426 100%);
+    radial-gradient(900px 520px at 88% 12%, rgba(84, 72, 200, 0.28), transparent 55%),
+    radial-gradient(720px 480px at 6% 82%, rgba(255, 46, 0, 0.16), transparent 50%),
+    radial-gradient(640px 400px at 55% 60%, rgba(254, 168, 47, 0.08), transparent 55%),
+    linear-gradient(165deg, #423e3b 0%, #352f2c 48%, #2a2725 100%);
   color: var(--mist);
 }
 
@@ -106,7 +120,7 @@ body {
   font-size: 0.72rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(159, 184, 154, 0.6);
+  color: rgba(201, 196, 154, 0.65);
 }
 
 .data-table th {
@@ -120,30 +134,30 @@ body {
 }
 
 .plan-option {
-  border: 1px solid rgba(232, 238, 233, 0.15);
+  border: 1px solid rgba(255, 254, 203, 0.15);
   padding: 1.25rem 1rem;
   text-align: left;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .plan-option:hover {
-  border-color: rgba(159, 184, 154, 0.4);
+  border-color: rgba(84, 72, 200, 0.55);
 }
 
 .plan-option-selected {
-  border-color: var(--sage);
-  background: rgba(159, 184, 154, 0.15);
+  border-color: var(--violet);
+  background: rgba(84, 72, 200, 0.18);
 }
 
 .legal-scroll {
   max-height: 18rem;
   overflow-y: auto;
-  border: 1px solid rgba(232, 238, 233, 0.15);
-  background: rgba(11, 28, 51, 0.4);
+  border: 1px solid rgba(255, 254, 203, 0.15);
+  background: rgba(42, 39, 37, 0.55);
   padding: 1rem;
   font-size: 0.75rem;
   line-height: 1.6;
-  color: rgba(159, 184, 154, 0.9);
+  color: rgba(201, 196, 154, 0.95);
 }
 
 .checkbox-row {
@@ -152,14 +166,14 @@ body {
   gap: 0.65rem;
   font-size: 0.875rem;
   line-height: 1.45;
-  color: rgba(159, 184, 154, 0.9);
+  color: rgba(201, 196, 154, 0.95);
 }
 
 .checkbox-row input[type="checkbox"] {
   margin-top: 0.2rem;
   width: 1rem;
   height: 1rem;
-  accent-color: var(--sage);
+  accent-color: var(--violet);
   flex-shrink: 0;
 }
 
@@ -237,7 +251,7 @@ body {
 
 .portal-nav {
   border-bottom: 1px solid var(--line);
-  background: rgba(7, 20, 38, 0.78);
+  background: rgba(42, 39, 37, 0.82);
   backdrop-filter: blur(12px);
 }
 
@@ -246,8 +260,8 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: var(--sage);
-  color: var(--navy-deep);
+  background: var(--signal);
+  color: var(--cream);
   padding: 0.85rem 1.4rem;
   font-weight: 700;
   letter-spacing: 0.01em;
@@ -255,7 +269,7 @@ body {
 }
 
 .btn-primary:hover {
-  background: var(--sage-bright);
+  background: #ff4a22;
   transform: translateY(-1px);
 }
 
@@ -278,8 +292,8 @@ body {
 }
 
 .btn-ghost:hover {
-  border-color: var(--sage);
-  background: rgba(159, 184, 154, 0.1);
+  border-color: var(--violet);
+  background: rgba(84, 72, 200, 0.14);
 }
 
 .btn-ghost:disabled {
@@ -293,23 +307,23 @@ body {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   font-weight: 700;
-  color: var(--sage-bright);
+  color: var(--amber);
 }
 
 .status-pill-success {
-  color: var(--success);
+  color: var(--amber);
 }
 
 .status-pill-warning {
-  color: var(--warning);
+  color: var(--amber);
 }
 
 .status-pill-danger {
-  color: var(--coral);
+  color: var(--signal);
 }
 
 .status-pill-default {
-  color: var(--sage-bright);
+  color: var(--violet);
 }
 
 .table-row {
@@ -319,39 +333,39 @@ body {
 .input {
   width: 100%;
   border: 1px solid var(--line-strong);
-  background: rgba(7, 20, 38, 0.55);
+  background: rgba(42, 39, 37, 0.65);
   padding: 0.75rem 0.9rem;
   color: var(--mist);
   outline: none;
 }
 
 .input::placeholder {
-  color: rgba(159, 184, 154, 0.45);
+  color: rgba(201, 196, 154, 0.45);
 }
 
 .input:focus {
-  border-color: var(--sage);
-  box-shadow: 0 0 0 3px rgba(159, 184, 154, 0.18);
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgba(84, 72, 200, 0.28);
 }
 
 .input option {
-  background: #0b1c33;
-  color: #e8eee9;
+  background: #423e3b;
+  color: #fffecb;
 }
 
 ::selection {
-  background: rgba(159, 184, 154, 0.35);
-  color: #e8eee9;
+  background: rgba(84, 72, 200, 0.45);
+  color: #fffecb;
 }
 
 :focus-visible {
-  outline: 2px solid var(--sage);
+  outline: 2px solid var(--violet);
   outline-offset: 2px;
 }
 
 .btn-primary:focus-visible,
 .btn-ghost:focus-visible {
-  outline: 2px solid var(--sage-bright);
+  outline: 2px solid var(--amber);
   outline-offset: 2px;
 }
 
@@ -364,7 +378,7 @@ table th {
 }
 
 .notice {
-  border-left: 2px solid var(--sage);
+  border-left: 2px solid var(--violet);
   background: var(--panel);
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
@@ -372,15 +386,106 @@ table th {
 }
 
 .notice-warning {
-  border-left-color: var(--warning);
+  border-left-color: var(--amber);
 }
 
 .link-accent {
-  color: var(--sage-bright);
+  color: var(--amber);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 
 .link-accent:hover {
+  color: var(--cream);
+}
+
+/* Post-register merchant setup — list, not cards */
+.onboarding-checklist {
+  border-top: 1px solid var(--line-strong);
+  padding-top: 1.5rem;
+}
+
+.onboarding-checklist-welcome {
+  border-top-color: rgba(84, 72, 200, 0.55);
+}
+
+.onboarding-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.onboarding-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.15rem 0;
+  border-bottom: 1px solid var(--line);
+  opacity: 0.72;
+  transition: opacity 0.25s ease, border-color 0.25s ease;
+}
+
+.onboarding-step:last-child {
+  border-bottom: none;
+}
+
+.onboarding-step.is-current {
+  opacity: 1;
+}
+
+.onboarding-step.is-done {
+  opacity: 0.9;
+}
+
+.onboarding-step.is-locked {
+  opacity: 0.45;
+}
+
+.onboarding-step-index {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   color: var(--sage);
+  transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease;
+}
+
+.onboarding-step.is-current .onboarding-step-index {
+  border-color: var(--signal);
+  background: rgba(255, 46, 0, 0.16);
+  color: var(--cream);
+}
+
+.onboarding-step.is-done .onboarding-step-index {
+  border-color: rgba(254, 168, 47, 0.65);
+  color: var(--amber);
+}
+
+@keyframes onboarding-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 46, 0, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(255, 46, 0, 0.22);
+  }
+}
+
+.onboarding-checklist-welcome .onboarding-step.is-current .onboarding-step-index {
+  animation: onboarding-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-checklist-welcome .onboarding-step.is-current .onboarding-step-index {
+    animation: none;
+  }
 }

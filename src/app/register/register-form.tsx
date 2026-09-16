@@ -58,7 +58,7 @@ export default function RegisterForm() {
       setError(data.error || "Registration failed");
       return;
     }
-    router.replace("/business");
+    router.replace("/business?welcome=1");
     router.refresh();
   }
 
