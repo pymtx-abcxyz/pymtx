@@ -32,7 +32,13 @@ export async function GET(req: NextRequest) {
 
   const customer = await prisma.customer.findUnique({
     where: { inviteToken: token },
-    include: {
+    select: {
+      id: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      inviteToken: true,
+      activatedAt: true,
       business: { select: { id: true, tradeName: true, legalName: true } },
       invoices: {
         where: { status: { in: ["PAST_DUE", "INVITED", "PLAN_ACTIVE"] } },
@@ -43,6 +49,8 @@ export async function GET(req: NextRequest) {
           balanceCents: true,
           status: true,
           paymentPlans: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
             select: {
               id: true,
               status: true,
@@ -62,11 +70,9 @@ export async function GET(req: NextRequest) {
                 select: { bankLast4: true, institutionName: true },
               },
               skipRequests: {
-                select: { id: true, status: true, createdAt: true },
+                select: { id: true, status: true, requestedAt: true },
               },
             },
-            orderBy: { createdAt: "desc" },
-            take: 1,
           },
         },
       },
