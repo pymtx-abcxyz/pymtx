@@ -11,9 +11,9 @@ import {
   Text,
 } from "@react-email/components";
 
-const navy = "#2a2725";
-const mist = "#fffecb";
-const sage = "#fea82f";
+const navy = "#2F3E46";
+const mist = "#CAD2C5";
+const sage = "#84A98C";
 
 function Shell(props: {
   preview: string;
@@ -50,7 +50,7 @@ function Shell(props: {
             {props.title}
           </Heading>
           <Section>{props.children}</Section>
-          <Hr style={{ borderColor: "rgba(84,72,200,0.35)", margin: "28px 0 12px" }} />
+          <Hr style={{ borderColor: "rgba(132,169,140,0.35)", margin: "28px 0 12px" }} />
           <Text style={{ color: sage, fontSize: 11, lineHeight: "1.5", margin: 0 }}>
             1001527397 ONTARIO INC. · MB055-70 Taunton Rd E, Whitby, ON L1R 3L5 ·
             info@pymtx.com

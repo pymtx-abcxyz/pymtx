@@ -7,7 +7,7 @@ export default function NotFound() {
     <PortalShell grain>
       <main className="flex min-h-screen flex-col items-center justify-center px-6">
         <div className="max-w-md text-center">
-          <Link href="/" className="inline-block text-2xl text-amber">
+          <Link href="/" className="inline-block text-2xl text-ash">
             <PymtxLogotype />
           </Link>
           <h1 className="mt-8 font-display text-3xl font-bold text-mist">

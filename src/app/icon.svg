@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <rect width="64" height="64" fill="#423e3b"/>
+  <rect width="64" height="64" fill="#2F3E46"/>
   <text
     x="32"
     y="44"
@@ -7,6 +7,6 @@
     font-family="system-ui, sans-serif"
     font-weight="800"
     font-size="36"
-    fill="#fea82f"
+    fill="#CAD2C5"
   >p</text>
 </svg>
