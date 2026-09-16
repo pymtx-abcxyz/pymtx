@@ -17,6 +17,7 @@
     "smoke:hardening": "tsx scripts/smoke-hardening.ts",
     "smoke:step8": "tsx scripts/smoke-step8.ts",
     "smoke:e2e": "tsx scripts/smoke-e2e-path-b.ts",
+    "ops:sanity": "tsx scripts/ops-sanity.ts",
     "stripe:golive": "tsx scripts/stripe-golive.ts"
   },
   "prisma": {

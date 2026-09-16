@@ -41,7 +41,11 @@ Until then, test keys are allowed under lock (no placeholders, no demo settlemen
 
 ```bash
 curl -s https://pymtx.com/api/health
-# → rails.locked, rails.readyForMoneyRails, rails.readyForLiveMoney, blockerCount
+# → rails.locked, rails.readyForMoneyRails, rails.readyForLiveMoney,
+#   rails.inngest, rails.connectWebhookDedicated, blockerCount
+
+npm run ops:sanity
+# → health + Inngest register + DebitJobRun / webhook / CASL coverage
 
 # Admin session cookie required:
 curl -s https://pymtx.com/api/admin/golive

@@ -63,7 +63,7 @@ async function persistAndSend(params: {
     attribution,
   ].join("\n");
 
-  await prisma.caslMessage.create({
+  const casl = await prisma.caslMessage.create({
     data: {
       businessId: params.businessId,
       customerId: params.customerId,
@@ -93,6 +93,11 @@ async function persistAndSend(params: {
 
   if (!sent.ok) {
     console.error(`[notifications] ${params.kind} send failed:`, sent.error);
+  } else if (sent.provider === "resend" && sent.id) {
+    await prisma.caslMessage.update({
+      where: { id: casl.id },
+      data: { providerId: sent.id },
+    });
   }
   return sent;
 }
