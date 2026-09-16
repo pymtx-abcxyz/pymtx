@@ -355,16 +355,19 @@ export async function completeCheckoutPad(params: {
     });
   });
 
-  // Rule H1 written confirmation — merchant From identity via Resend when configured.
+  // Rule H1 written confirmation — React Email + PDF under merchant From.
   await sendPadConfirmationNotice({
     businessId: business.id,
     customerId: plan.customerId,
     tradeName: business.tradeName,
+    legalName: business.legalName,
     toEmail: params.payorEmail,
     invoiceRef: plan.invoice.externalRef,
     firstDebitDate,
     monthlyAmountCents: plan.monthlyAmountCents,
     bankLast4: params.bankLast4,
+    ipAddress: params.ipAddress,
+    userAgent: params.userAgent,
   }).catch((err) => {
     console.error("[checkout] PAD confirmation email failed", err);
   });

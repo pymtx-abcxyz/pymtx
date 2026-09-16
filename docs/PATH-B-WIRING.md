@@ -17,9 +17,11 @@ Events: `payment_intent.processing`, `payment_intent.succeeded`, `payment_intent
 
 ## Notifications (merchant From identity)
 
-Resend when `EMAIL_PROVIDER=resend` + `RESEND_API_KEY`; always logged to `CaslMessage`:
+Resend when `EMAIL_PROVIDER=resend` + `RESEND_API_KEY`; always logged to `CaslMessage`.
 
-- PAD confirmation (Rule H1 written confirmation)
+HTML templates use **React Email** (`src/emails/templates.tsx`).
+
+- PAD confirmation (Rule H1 written confirmation) + **PDF attachment** (`src/lib/pad-mandate-pdf.ts`)
 - Monthly payment receipts
 - NSF alerts (max 1 re-presentment within 30 days)
 - Skip confirmation

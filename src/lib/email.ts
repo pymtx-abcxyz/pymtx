@@ -1,5 +1,11 @@
 import { appUrl } from "./env";
 
+export type EmailAttachment = {
+  filename: string;
+  content: string; // base64
+  contentType?: string;
+};
+
 export type SendEmailInput = {
   to: string;
   subject: string;
@@ -7,6 +13,7 @@ export type SendEmailInput = {
   text: string;
   fromName: string;
   fromEmail?: string;
+  attachments?: EmailAttachment[];
 };
 
 export type SendEmailResult =
@@ -18,8 +25,8 @@ function defaultFromEmail() {
 }
 
 /**
- * Send transactional email.
- * - EMAIL_PROVIDER=resend + RESEND_API_KEY → Resend
+ * Send transactional email under merchant From identity.
+ * - EMAIL_PROVIDER=resend + RESEND_API_KEY → Resend (supports PDF attachments)
  * - otherwise demo (no network send)
  */
 export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult> {
@@ -43,9 +50,21 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
         subject: input.subject,
         html: input.html,
         text: input.text,
+        ...(input.attachments?.length
+          ? {
+              attachments: input.attachments.map((a) => ({
+                filename: a.filename,
+                content: a.content,
+                content_type: a.contentType || "application/pdf",
+              })),
+            }
+          : {}),
       }),
     });
-    const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
+    const data = (await res.json().catch(() => ({}))) as {
+      id?: string;
+      message?: string;
+    };
     if (!res.ok) {
       return {
         ok: false,

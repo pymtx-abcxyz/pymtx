@@ -13,13 +13,11 @@ export function isStripeDemoMode() {
   return !key || key.includes("placeholder");
 }
 
-/** Prefer Connect-specific secret; fall back to platform webhook secret. */
+/** Prefer Connect webhook secret (required for Path B Connect events). */
 export function stripeWebhookSecret() {
-  return (
-    process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim() ||
-    process.env.STRIPE_WEBHOOK_SECRET?.trim() ||
-    ""
-  );
+  const connect = process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim();
+  if (connect && !connect.includes("placeholder")) return connect;
+  return process.env.STRIPE_WEBHOOK_SECRET?.trim() || "";
 }
 
 export function isWebhookDemoMode() {
