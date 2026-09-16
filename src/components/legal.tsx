@@ -14,14 +14,14 @@ export function LegalShell({
     <PortalShell>
       <header className="portal-nav sticky top-0 z-20">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-4">
-          <Link href="/" className="text-xl text-sage-bright">
+          <Link href="/" className="text-xl text-amber">
             <PymtxLogotype />
           </Link>
           <nav className="flex flex-wrap gap-4 text-sm font-medium text-sage/80">
-            <Link href="/legal/saas" className="hover:text-sage-bright">
+            <Link href="/legal/saas" className="hover:text-amber">
               SaaS Agreement
             </Link>
-            <Link href="/legal/privacy" className="hover:text-sage-bright">
+            <Link href="/legal/privacy" className="hover:text-amber">
               Privacy &amp; CASL
             </Link>
           </nav>

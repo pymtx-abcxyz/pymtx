@@ -1,6 +1,6 @@
 /**
  * Vector pymtx wordmark — embroidered patch / microprint treatment
- * matching the navy–sage brand mark (inline SVG, no raster).
+ * matching charcoal–cream–violet brand mark (inline SVG, no raster).
  */
 
 type MarkProps = {
@@ -26,18 +26,18 @@ export function PymtxWordmark({ className, title = "pymtx" }: MarkProps) {
           width="10"
           height="8"
         >
-          <rect width="10" height="8" fill="#a8c0a4" />
+          <rect width="10" height="8" fill="#fea82f" />
           <path
             d="M0 1.5h10M0 4h10M0 6.5h10"
-            stroke="#234836"
+            stroke="#423e3b"
             strokeWidth="0.55"
             opacity="0.55"
           />
           <path
             d="M1 0v8M4 0v8M7 0v8"
-            stroke="#2f5d4a"
+            stroke="#2a2725"
             strokeWidth="0.35"
-            opacity="0.35"
+            opacity="0.4"
           />
         </pattern>
         <filter
@@ -52,8 +52,8 @@ export function PymtxWordmark({ className, title = "pymtx" }: MarkProps) {
             dx="0"
             dy="5"
             stdDeviation="3.5"
-            floodColor="#04101c"
-            floodOpacity="0.5"
+            floodColor="#2a2725"
+            floodOpacity="0.55"
           />
         </filter>
       </defs>
@@ -65,12 +65,12 @@ export function PymtxWordmark({ className, title = "pymtx" }: MarkProps) {
         letterSpacing="-0.04em"
         textAnchor="middle"
       >
-        {/* Outer forest rim */}
+        {/* Outer violet rim */}
         <text
           x="460"
           y="172"
           fill="none"
-          stroke="#1e4335"
+          stroke="#5448c8"
           strokeWidth="36"
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -79,12 +79,12 @@ export function PymtxWordmark({ className, title = "pymtx" }: MarkProps) {
           pymtx
         </text>
 
-        {/* Sage patch band */}
+        {/* Cream patch band */}
         <text
           x="460"
           y="172"
-          fill="#b7cdb2"
-          stroke="#b7cdb2"
+          fill="#fffecb"
+          stroke="#fffecb"
           strokeWidth="20"
           strokeLinejoin="round"
           paintOrder="stroke fill"
@@ -97,7 +97,7 @@ export function PymtxWordmark({ className, title = "pymtx" }: MarkProps) {
           x="460"
           y="172"
           fill="url(#pymtx-microprint)"
-          stroke="#1e4335"
+          stroke="#423e3b"
           strokeWidth="3.25"
           strokeLinejoin="round"
           paintOrder="stroke fill"

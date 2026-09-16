@@ -8,11 +8,11 @@ export default function HomePage() {
       <div className="absolute inset-0 pymtx-grain" aria-hidden />
 
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-        <PymtxLogotype className="text-lg text-sage-bright" />
+        <PymtxLogotype className="text-lg text-amber" />
         <nav className="flex items-center gap-3 text-sm font-medium">
           <Link
             href="/login"
-            className="hidden text-sage/90 hover:text-sage-bright sm:inline"
+            className="hidden text-sage/90 hover:text-amber sm:inline"
           >
             Sign in
           </Link>

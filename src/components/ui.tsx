@@ -33,7 +33,7 @@ export function AuthShell({
       >
         <Link
           href="/"
-          className="animate-rise text-2xl text-sage-bright"
+          className="animate-rise text-2xl text-amber"
           aria-label="pymtx home"
         >
           <PymtxLogotype />
@@ -114,7 +114,7 @@ export function PortalNav({
     <header className="portal-nav sticky top-0 z-20">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <div className="flex min-w-0 items-baseline gap-3">
-          <Link href="/" className="shrink-0 text-xl text-sage-bright">
+          <Link href="/" className="shrink-0 text-xl text-amber">
             <PymtxLogotype />
           </Link>
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-sage">
@@ -127,7 +127,7 @@ export function PortalNav({
               <Link
                 key={l.href + l.label}
                 href={l.href}
-                className="hover:text-sage-bright"
+                className="hover:text-amber"
               >
                 {l.label}
               </Link>
