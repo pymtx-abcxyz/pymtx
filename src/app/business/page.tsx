@@ -14,6 +14,7 @@ import {
   EmptyRow,
   FieldLabel,
   LoadingScreen,
+  FormNotice,
   formatCad,
 } from "@/components/ui";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
@@ -248,7 +249,11 @@ function BusinessPortalInner() {
         ]}
         actions={
           user ? (
-            <button className="btn-ghost !px-3 !py-2 text-sm" type="button" onClick={logout}>
+            <button
+              className="btn-ghost !px-3 !py-2 text-[length:var(--text-sm)]"
+              type="button"
+              onClick={logout}
+            >
               Sign out
             </button>
           ) : null
@@ -279,14 +284,16 @@ function BusinessPortalInner() {
           />
         ) : null}
 
-        <div className="mb-8 flex flex-wrap items-end gap-4">
-          <label className="block min-w-[240px] flex-1 text-sm">
-            <FieldLabel>Business</FieldLabel>
+        <div className="mb-8 flex flex-wrap items-end gap-3 sm:gap-4">
+          <div className="block min-w-[min(100%,15rem)] flex-1">
+            <FieldLabel htmlFor="business-select">Business</FieldLabel>
             <select
+              id="business-select"
               className="input"
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
               disabled={!!isStaff}
+              aria-busy={busy}
             >
               {businesses.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -294,7 +301,7 @@ function BusinessPortalInner() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
           {canConnect ? (
             <button
               className="btn-primary"
@@ -302,7 +309,9 @@ function BusinessPortalInner() {
               onClick={connectStripe}
               type="button"
             >
-              {selected?.stripeOnboardingComplete ? "Reconnect bank" : "Connect Canadian bank"}
+              {selected?.stripeOnboardingComplete
+                ? "Reconnect bank"
+                : "Connect Canadian bank"}
             </button>
           ) : null}
           <button
@@ -316,39 +325,57 @@ function BusinessPortalInner() {
           <button className="btn-ghost" type="button" onClick={downloadTemplate}>
             CSV template
           </button>
-          <label className="btn-ghost cursor-pointer">
+          <label
+            className="btn-ghost cursor-pointer"
+            htmlFor="business-csv-upload"
+          >
             {busy ? "Uploading…" : "Upload CSV"}
-            <input
-              ref={fileRef}
-              className="hidden"
-              type="file"
-              accept=".csv,text/csv"
-              disabled={busy || !selectedId}
-              onChange={(e) => onCsvSelected(e.target.files?.[0] || null)}
-            />
           </label>
+          <input
+            id="business-csv-upload"
+            ref={fileRef}
+            className="sr-only"
+            type="file"
+            accept=".csv,text/csv"
+            disabled={busy || !selectedId}
+            onChange={(e) => onCsvSelected(e.target.files?.[0] || null)}
+          />
         </div>
 
         {selected ? (
           <div className="mb-10 grid gap-6 sm:grid-cols-3">
-            <Metric label="Merchant of Record" value={selected.legalName} size="md" />
+            <Metric
+              label="Merchant of Record"
+              value={selected.legalName}
+              size="md"
+            />
             <div className="metric-tile">
-              <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sage/70">
+              <div className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.12em] text-text-muted">
                 Stripe Connect
               </div>
               <div className="mt-2 font-medium">
                 {selected.stripeOnboardingComplete ? (
-                  <StatusPill tone="success">Ready · {selected.stripeAccountId}</StatusPill>
+                  <StatusPill tone="success">
+                    Ready · {selected.stripeAccountId}
+                  </StatusPill>
                 ) : (
                   <StatusPill tone="warning">Onboarding required</StatusPill>
                 )}
               </div>
             </div>
-            <Metric label="Settlement rail" value="ACSS Debit (PAD / EFT)" size="md" />
+            <Metric
+              label="Settlement rail"
+              value="ACSS Debit (PAD / EFT)"
+              size="md"
+            />
           </div>
         ) : null}
 
-        {message ? <p className="notice mb-8">{message}</p> : null}
+        {message ? (
+          <div className="mb-8">
+            <FormNotice>{message}</FormNotice>
+          </div>
+        ) : null}
 
         <SectionTitle
           title="Aging & settlement"
@@ -356,14 +383,17 @@ function BusinessPortalInner() {
         />
         <div className="mt-4 overflow-x-auto">
           <table className="data-table min-w-[720px]">
+            <caption className="sr-only">
+              Past-due invoices and customer invite links
+            </caption>
             <thead>
               <tr>
-                <th>Ref</th>
-                <th>Customer</th>
-                <th>Aging</th>
-                <th>Balance</th>
-                <th>Status</th>
-                <th>Invite</th>
+                <th scope="col">Ref</th>
+                <th scope="col">Customer</th>
+                <th scope="col">Aging</th>
+                <th scope="col">Balance</th>
+                <th scope="col">Status</th>
+                <th scope="col">Invite</th>
               </tr>
             </thead>
             <tbody>
@@ -383,7 +413,11 @@ function BusinessPortalInner() {
                       className="link-accent"
                       href={`/client?token=${inv.customer.inviteToken}`}
                     >
-                      Open
+                      Open invite
+                      <span className="sr-only">
+                        {" "}
+                        for {inv.customer.firstName} {inv.customer.lastName}
+                      </span>
                     </a>
                   </td>
                 </tr>
