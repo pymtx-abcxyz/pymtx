@@ -33,12 +33,14 @@ export function AuthShell({
       >
         <Link
           href="/"
-          className="animate-rise text-2xl text-amber"
+          className="animate-rise text-2xl text-ash"
           aria-label="pymtx home"
         >
           <PymtxLogotype />
         </Link>
-        <div className="animate-rise-delay-1">{children}</div>
+        <div className="animate-rise-delay-1 glass-panel mt-6 px-6 py-7 sm:px-7">
+          {children}
+        </div>
         <p className="animate-rise-delay-2 mt-10 text-xs leading-relaxed text-sage/50">
           <Link href="/legal/saas" className="link-accent">
             SaaS Agreement
@@ -62,7 +64,7 @@ export function AuthHeading({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="mt-6">
+    <div className="mt-0">
       <h1 className="font-display text-3xl font-bold tracking-tight text-mist">
         {title}
       </h1>
@@ -114,7 +116,7 @@ export function PortalNav({
     <header className="portal-nav sticky top-0 z-20">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
         <div className="flex min-w-0 items-baseline gap-3">
-          <Link href="/" className="shrink-0 text-xl text-amber">
+          <Link href="/" className="shrink-0 text-xl text-ash">
             <PymtxLogotype />
           </Link>
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-sage">
@@ -127,7 +129,7 @@ export function PortalNav({
               <Link
                 key={l.href + l.label}
                 href={l.href}
-                className="hover:text-amber"
+                className="hover:text-ash"
               >
                 {l.label}
               </Link>
