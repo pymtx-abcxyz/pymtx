@@ -85,6 +85,11 @@ export function writeStoredTheme(theme: AppTheme) {
   } catch {
     /* private mode / blocked storage */
   }
+  try {
+    document.cookie = `${APP_THEME_STORAGE_KEY}=${theme};path=/;max-age=31536000;samesite=lax`;
+  } catch {
+    /* ignore */
+  }
 }
 
 /** Apply `data-theme` + `color-scheme` on <html> (preferredColorScheme wiring). */
@@ -96,8 +101,47 @@ export function applyThemeToDocument(theme: AppTheme) {
   root.style.colorScheme = scheme ?? "light dark";
 }
 
+type Listener = () => void;
+const themeListeners = new Set<Listener>();
+
+export function subscribeThemeStore(onStoreChange: Listener) {
+  themeListeners.add(onStoreChange);
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", onStoreChange);
+  }
+  return () => {
+    themeListeners.delete(onStoreChange);
+    if (typeof window !== "undefined") {
+      window.removeEventListener("storage", onStoreChange);
+    }
+  };
+}
+
+export function getThemeStoreSnapshot(): AppTheme {
+  if (typeof document !== "undefined") {
+    const fromDom = document.documentElement.dataset.theme;
+    if (isAppTheme(fromDom)) return fromDom;
+  }
+  return readStoredTheme();
+}
+
+export function getServerThemeSnapshot(): AppTheme {
+  return AppTheme.system;
+}
+
+export function notifyThemeStore() {
+  themeListeners.forEach((l) => l());
+}
+
+export function commitTheme(theme: AppTheme) {
+  writeStoredTheme(theme);
+  applyThemeToDocument(theme);
+  notifyThemeStore();
+}
+
 /**
  * Inline boot script — runs before paint to avoid FOUC (system/light/dark).
+ * Mirrors localStorage → cookie + data-theme so SSR can match on next request.
  * Keep in sync with APP_THEME_STORAGE_KEY / AppTheme values.
  */
-export const APPEARANCE_BOOT_SCRIPT = `(function(){try{var k=${JSON.stringify(APP_THEME_STORAGE_KEY)};var t=localStorage.getItem(k);if(t!=="light"&&t!=="dark"&&t!=="system")t="system";var d=document.documentElement;d.dataset.theme=t;d.style.colorScheme=t==="system"?"light dark":t;}catch(e){document.documentElement.dataset.theme="system";document.documentElement.style.colorScheme="light dark";}})();`;
+export const APPEARANCE_BOOT_SCRIPT = `(function(){try{var k=${JSON.stringify(APP_THEME_STORAGE_KEY)};var t=localStorage.getItem(k);if(t!=="light"&&t!=="dark"&&t!=="system")t="system";var d=document.documentElement;d.dataset.theme=t;d.style.colorScheme=t==="system"?"light dark":t;document.cookie=k+"="+t+";path=/;max-age=31536000;samesite=lax";}catch(e){document.documentElement.dataset.theme="system";document.documentElement.style.colorScheme="light dark";}})();`;

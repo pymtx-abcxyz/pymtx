@@ -380,12 +380,12 @@ function BusinessPortalInner() {
 
         {notice ? (
           <div className="mb-8">
-            <FormNotice>{notice}</FormNotice>
+            <FormNotice id="business-feedback-notice">{notice}</FormNotice>
           </div>
         ) : null}
         {error ? (
           <div className="mb-8">
-            <FormError>{error}</FormError>
+            <FormError id="business-feedback-error">{error}</FormError>
           </div>
         ) : null}
 

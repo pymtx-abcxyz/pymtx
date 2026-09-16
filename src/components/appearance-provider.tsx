@@ -4,18 +4,17 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
   useSyncExternalStore,
   type ReactNode,
 } from "react";
 import {
   APP_THEMES,
   AppTheme,
-  applyThemeToDocument,
-  readStoredTheme,
-  writeStoredTheme,
+  commitTheme,
+  getServerThemeSnapshot,
+  getThemeStoreSnapshot,
+  subscribeThemeStore,
   type AppTheme as AppThemeType,
 } from "@/lib/appearance";
 
@@ -23,7 +22,7 @@ type AppearanceContextValue = {
   theme: AppThemeType;
   setTheme: (theme: AppThemeType) => void;
   themes: readonly AppThemeType[];
-  /** Resolved scheme for previews / chrome (never null after mount). */
+  /** Resolved scheme for chrome (never null). */
   resolvedScheme: "light" | "dark";
 };
 
@@ -46,30 +45,19 @@ function getServerSchemeSnapshot(): "light" | "dark" {
 }
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<AppThemeType>(AppTheme.system);
-  const [hydrated, setHydrated] = useState(false);
+  const theme = useSyncExternalStore(
+    subscribeThemeStore,
+    getThemeStoreSnapshot,
+    getServerThemeSnapshot,
+  );
   const systemScheme = useSyncExternalStore(
     subscribeSystemScheme,
     getSystemSchemeSnapshot,
     getServerSchemeSnapshot,
   );
 
-  useEffect(() => {
-    const stored = readStoredTheme();
-    setThemeState(stored);
-    applyThemeToDocument(stored);
-    setHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    applyThemeToDocument(theme);
-  }, [theme, hydrated]);
-
   const setTheme = useCallback((next: AppThemeType) => {
-    setThemeState(next);
-    writeStoredTheme(next);
-    applyThemeToDocument(next);
+    commitTheme(next);
   }, []);
 
   const resolvedScheme: "light" | "dark" =

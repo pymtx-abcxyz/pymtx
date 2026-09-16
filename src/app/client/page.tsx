@@ -368,13 +368,13 @@ function ClientCheckoutInner() {
                   subtitle="Monthly Pre-Authorized Debits (PAD) from your Canadian bank — 6, 12, or 18 months. One skip every 6 months."
                 />
 
-                <div className="mt-6 grid gap-3 sm:grid-cols-3" role="listbox" aria-label="Payment plan term">
+                <div className="mt-6 grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Payment plan term">
                   {preview.terms.map((t) => (
                     <button
                       key={t.months}
                       type="button"
-                      role="option"
-                      aria-selected={term === t.months}
+                      role="radio"
+                      aria-checked={term === t.months}
                       onClick={() => {
                         setTerm(t.months);
                         setStep("plan");
@@ -433,6 +433,8 @@ function ClientCheckoutInner() {
                       value={pad.payorName}
                       onChange={(e) => setPad({ ...pad, payorName: e.target.value })}
                       autoComplete="name"
+                      aria-invalid={Boolean(error)}
+                      aria-describedby={error ? "client-checkout-error" : undefined}
                     />
                   </div>
                   <div>
@@ -442,6 +444,8 @@ function ClientCheckoutInner() {
                       className="input"
                       value={pad.institutionName}
                       onChange={(e) => setPad({ ...pad, institutionName: e.target.value })}
+                      aria-invalid={Boolean(error)}
+                      aria-describedby={error ? "client-checkout-error" : undefined}
                     />
                   </div>
                   <div>
@@ -455,7 +459,10 @@ function ClientCheckoutInner() {
                       onChange={(e) =>
                         setPad({ ...pad, bankLast4: e.target.value.replace(/\D/g, "") })
                       }
-                      aria-describedby="pad-last4-hint"
+                      aria-invalid={Boolean(error)}
+                      aria-describedby={
+                        error ? "pad-last4-hint client-checkout-error" : "pad-last4-hint"
+                      }
                     />
                     <p id="pad-last4-hint" className="mt-1 text-[length:var(--text-xs)] text-text-muted">
                       Last four digits of the account to debit.

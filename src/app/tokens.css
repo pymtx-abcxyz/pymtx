@@ -77,10 +77,17 @@ html[data-theme="light"] {
 
   --background: var(--canvas);
   --foreground: var(--text-primary);
+
+  color-scheme: light;
+}
+
+html[data-theme="system"] {
+  color-scheme: light dark;
 }
 
 /* Forced dark — works when OS is light */
 html[data-theme="dark"] {
+  color-scheme: dark;
   --canvas: #141b1f;
   --surface-card: #1e272c;
   --surface-subtle: #29343a;

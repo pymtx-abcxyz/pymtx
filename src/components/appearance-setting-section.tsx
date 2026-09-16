@@ -111,15 +111,15 @@ export function AppearanceSettingSection({
           Choose System to follow your device, or lock Light / Dark.
         </p>
       </div>
-      <ul className="appearance-list mt-4" role="listbox" aria-label="Appearance theme">
+      <ul className="appearance-list mt-4" role="radiogroup" aria-label="Appearance theme">
         {themes.map((option) => {
           const selected = option === theme;
           return (
             <li key={option}>
               <button
                 type="button"
-                role="option"
-                aria-selected={selected}
+                role="radio"
+                aria-checked={selected}
                 className={`appearance-row ${selected ? "is-selected" : ""}`}
                 onClick={() => setTheme(option)}
               >

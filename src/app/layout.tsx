@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
 import { Fragment_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import Script from "next/script";
 import { AppearanceProvider } from "@/components/appearance-provider";
-import { APPEARANCE_BOOT_SCRIPT } from "@/lib/appearance";
+import {
+  APPEARANCE_BOOT_SCRIPT,
+  APP_THEME_STORAGE_KEY,
+  AppTheme,
+  isAppTheme,
+  type AppTheme as AppThemeType,
+} from "@/lib/appearance";
 import "./tokens.css";
 import "./globals.css";
 
-/** Monotype Design Team — Fragment Mono */
+/** Monotype Design Team — Fragment Mono (regular only; no faux-bold). */
 const monotype = Fragment_Mono({
   variable: "--font-monotype",
   subsets: ["latin"],
   weight: "400",
-  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -43,12 +49,27 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+async function readThemeCookie(): Promise<AppThemeType> {
+  try {
+    const jar = await cookies();
+    const raw = jar.get(APP_THEME_STORAGE_KEY)?.value;
+    return isAppTheme(raw) ? raw : AppTheme.system;
+  } catch {
+    return AppTheme.system;
+  }
+}
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const theme = await readThemeCookie();
+  const colorScheme =
+    theme === AppTheme.system ? "light dark" : theme;
+
   return (
     <html
       lang="en-CA"
       className={`${monotype.variable} h-full antialiased`}
-      data-theme="system"
+      data-theme={theme}
+      style={{ colorScheme }}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans text-text-primary bg-canvas">

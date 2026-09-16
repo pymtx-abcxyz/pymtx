@@ -32,7 +32,15 @@ function Shell(props: {
     <Html>
       <Head />
       <Preview>{props.preview}</Preview>
-      <Body style={{ backgroundColor: canvas, margin: 0, padding: "32px 16px" }}>
+      <Body
+        style={{
+          backgroundColor: canvas,
+          margin: 0,
+          padding: "32px 16px",
+          fontFamily:
+            "ui-monospace, Cascadia Code, SF Mono, Menlo, Consolas, monospace",
+        }}
+      >
         <Container
           style={{
             maxWidth: 480,

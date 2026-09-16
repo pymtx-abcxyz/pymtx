@@ -240,6 +240,7 @@ function BusinessSettingsInner() {
     <PortalShell>
       <PortalNav
         portal="Business"
+        showAppearance={false}
         links={[
           { href: "/business", label: "Dashboard" },
           { href: "/business/settings", label: "Settings" },
@@ -250,6 +251,13 @@ function BusinessSettingsInner() {
           title="Stripe Connect onboarding"
           subtitle="Connect a Canadian bank. You remain Merchant of Record — Pymtx never holds principal. Debits run as Direct Charges with an application fee only."
         />
+
+        {(notice || error) && (
+          <div className="mb-8 space-y-3" aria-live="polite">
+            {notice ? <FormNotice id="settings-feedback-notice">{notice}</FormNotice> : null}
+            {error ? <FormError id="settings-feedback-error">{error}</FormError> : null}
+          </div>
+        )}
 
         <form onSubmit={register} className="grid max-w-xl gap-4">
           {(
@@ -278,6 +286,8 @@ function BusinessSettingsInner() {
                   type={key === "email" || key === "supportEmail" ? "email" : "text"}
                   value={form[key]}
                   onChange={(e) => setForm({ ...form, [key]: e.target.value })}
+                  aria-invalid={Boolean(error)}
+                  aria-describedby={error ? "settings-feedback-error" : undefined}
                   autoComplete={
                     key === "email" || key === "supportEmail"
                       ? "email"
@@ -299,6 +309,8 @@ function BusinessSettingsInner() {
               onChange={(e) =>
                 setForm({ ...form, saasAgreementAccepted: e.target.checked })
               }
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "settings-feedback-error" : undefined}
             />
             <span>
               I accept the{" "}
@@ -319,6 +331,8 @@ function BusinessSettingsInner() {
               type="checkbox"
               checked={form.caslConsent}
               onChange={(e) => setForm({ ...form, caslConsent: e.target.checked })}
+              aria-invalid={Boolean(error)}
+              aria-describedby={error ? "settings-feedback-error" : undefined}
             />
             <span>
               I confirm customer outreach will be sent under our business identity (CASL
@@ -485,17 +499,6 @@ function BusinessSettingsInner() {
         ) : null}
 
         <AppearanceSettingSection />
-
-        {notice ? (
-          <div className="mt-8">
-            <FormNotice>{notice}</FormNotice>
-          </div>
-        ) : null}
-        {error ? (
-          <div className="mt-8">
-            <FormError>{error}</FormError>
-          </div>
-        ) : null}
       </PortalMain>
       <PortalFooter />
     </PortalShell>

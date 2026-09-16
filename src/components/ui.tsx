@@ -32,14 +32,19 @@ export function AuthShell({
 }) {
   return (
     <PortalShell grain>
+      <header className="portal-nav sticky top-0 z-20">
+        <div className="mx-auto flex w-full max-w-lg items-center justify-end px-6 py-2 sm:py-3">
+          <AppearanceSettingSection compact />
+        </div>
+      </header>
       <main
-        className={`mx-auto flex min-h-screen w-full flex-col justify-center px-6 py-16 ${
+        className={`mx-auto flex min-h-[calc(100vh-3.5rem)] w-full flex-col justify-center px-6 py-12 ${
           wide ? "max-w-lg" : "max-w-md"
         }`}
       >
         <Link
           href="/"
-          className="animate-rise text-[length:var(--text-2xl)] font-bold text-text-primary"
+          className="animate-rise text-[length:var(--text-2xl)] text-text-primary"
           aria-label="pymtx home"
         >
           <PymtxLogotype />
@@ -115,14 +120,14 @@ export function FormError({
 }) {
   if (!children) return null;
   return (
-    <p
+    <div
       id={id}
-      className="flex items-start gap-2 text-[length:var(--text-sm)] text-danger"
+      className="notice notice-danger flex items-start gap-2"
       role="alert"
     >
       <AlertIcon tone="danger" />
-      <span>{children}</span>
-    </p>
+      <div className="min-w-0 flex-1 text-[length:var(--text-sm)]">{children}</div>
+    </div>
   );
 }
 

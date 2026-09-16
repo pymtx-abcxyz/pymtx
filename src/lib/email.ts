@@ -102,7 +102,7 @@ function brandedShell(opts: {
   const titleColor =
     opts.titleTone === "danger" ? emailTone.danger : emailTone.textPrimary;
   return `
-    <div style="font-family:'Fragment Mono',ui-monospace,'SF Mono',Menlo,monospace;background:${emailTone.canvas};color:${emailTone.textPrimary};padding:32px">
+    <div style="font-family:ui-monospace,'Cascadia Code','SF Mono',Menlo,Consolas,monospace;background:${emailTone.canvas};color:${emailTone.textPrimary};padding:32px">
       <div style="max-width:480px;margin:0 auto;background:${emailTone.card};border:1px solid ${emailTone.borderSubtle};border-radius:12px;padding:28px 24px">
         <p style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:${emailTone.textMuted};font-weight:700;margin:0">${escapeHtml(opts.eyebrow)}</p>
         <h1 style="font-size:22px;line-height:1.3;color:${titleColor};margin:12px 0 16px">${escapeHtml(opts.title)}</h1>

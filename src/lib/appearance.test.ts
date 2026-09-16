@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  APPEARANCE_BOOT_SCRIPT,
+  APP_THEME_STORAGE_KEY,
   AppTheme,
   colorSchemeForTheme,
   iconNameForTheme,
@@ -31,5 +33,12 @@ describe("appearance ThemeManager", () => {
     expect(isAppTheme("light")).toBe(true);
     expect(isAppTheme("dark")).toBe(true);
     expect(isAppTheme("neon")).toBe(false);
+  });
+
+  it("boot script stays aligned with storage key and cookie write", () => {
+    expect(APPEARANCE_BOOT_SCRIPT).toContain(APP_THEME_STORAGE_KEY);
+    expect(APPEARANCE_BOOT_SCRIPT).toContain("dataset.theme");
+    expect(APPEARANCE_BOOT_SCRIPT).toContain("document.cookie");
+    expect(APPEARANCE_BOOT_SCRIPT).toContain("colorScheme");
   });
 });
