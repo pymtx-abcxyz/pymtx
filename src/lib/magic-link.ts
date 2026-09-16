@@ -4,6 +4,7 @@ import { prisma } from "./db";
 import { CaslMessageKind } from "./domain";
 import { appUrl } from "./env";
 import { createCustomerSession } from "./auth";
+import { magicLinkEmail, sendEmail } from "./email";
 
 const MAGIC_LINK_TTL_MINUTES = 20;
 
@@ -13,6 +14,15 @@ export type MagicLinkRequestResult = {
   demoUrl?: string;
   message: string;
 };
+
+function isEmailDemoMode() {
+  const provider = (process.env.EMAIL_PROVIDER || "demo").toLowerCase();
+  return (
+    provider === "demo" ||
+    !process.env.EMAIL_PROVIDER ||
+    (provider === "resend" && !process.env.RESEND_API_KEY)
+  );
+}
 
 /**
  * Issue a one-time magic link for a customer email.
@@ -52,6 +62,11 @@ export async function requestCustomerMagicLink(
   });
 
   const url = `${appUrl()}/api/auth/magic-link/verify?token=${encodeURIComponent(token)}`;
+  const mail = magicLinkEmail({
+    tradeName: customer.business.tradeName,
+    url,
+    minutes: MAGIC_LINK_TTL_MINUTES,
+  });
 
   await prisma.caslMessage.create({
     data: {
@@ -60,16 +75,24 @@ export async function requestCustomerMagicLink(
       kind: CaslMessageKind.MAGIC_LINK,
       fromName: customer.business.tradeName,
       toEmail: normalized,
-      subject: `Sign in to settle with ${customer.business.tradeName}`,
-      bodyPreview: `Your secure Pymtx sign-in link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.`,
+      subject: mail.subject,
+      bodyPreview: `Your secure pymtx sign-in link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.`,
     },
   });
 
-  const demo =
-    !process.env.EMAIL_PROVIDER ||
-    process.env.EMAIL_PROVIDER === "demo" ||
-    process.env.ALLOW_DEMO_MODE === "true" ||
-    process.env.NODE_ENV !== "production";
+  const sent = await sendEmail({
+    to: normalized,
+    subject: mail.subject,
+    html: mail.html,
+    text: mail.text,
+    fromName: customer.business.tradeName,
+  });
+
+  if (!sent.ok) {
+    throw new Error(`Could not send sign-in email: ${sent.error}`);
+  }
+
+  const demo = isEmailDemoMode() || sent.provider === "demo";
 
   return {
     ok: true,
