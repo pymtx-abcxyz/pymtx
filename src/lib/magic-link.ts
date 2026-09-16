@@ -68,7 +68,7 @@ export async function requestCustomerMagicLink(
     minutes: MAGIC_LINK_TTL_MINUTES,
   });
 
-  await prisma.caslMessage.create({
+  const casl = await prisma.caslMessage.create({
     data: {
       businessId: customer.businessId,
       customerId: customer.id,
@@ -91,6 +91,11 @@ export async function requestCustomerMagicLink(
   // Never reveal send failures to the client (email enumeration).
   if (!sent.ok) {
     console.error("[magic-link] send failed", sent.error);
+  } else if (sent.provider === "resend" && sent.id) {
+    await prisma.caslMessage.update({
+      where: { id: casl.id },
+      data: { providerId: sent.id },
+    });
   }
 
   const demo =

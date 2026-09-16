@@ -51,8 +51,10 @@ export async function GET() {
     stripeSecret: report.stripeSecret,
     stripePublishable: report.stripePublishable,
     webhook: report.webhook,
+    connectWebhookDedicated: report.connectWebhookDedicated,
     email: report.email,
     redis: report.redis,
+    inngest: report.inngest,
     blockerCount: report.blockers.length,
   };
 
