@@ -3,6 +3,7 @@ import {
   processDailyInstallments,
   runDailyDebitJob,
 } from "@/lib/debit-job";
+import { flushDeferredNotices } from "@/lib/deferred-notices";
 
 /**
  * Daily ACSS Debit presenter — midnight America/Toronto.
@@ -40,4 +41,24 @@ export const manualDebitJob = inngest.createFunction(
   },
 );
 
-export const inngestFunctions = [dailyDebitJob, manualDebitJob];
+/**
+ * Flush CDSSA-deferred debtor notices during Ontario contact hours.
+ * Hourly cron; no-ops outside the window.
+ */
+export const deferredNoticeFlush = inngest.createFunction(
+  {
+    id: "pymtx-deferred-notices",
+    name: "flushDeferredNotices",
+    retries: 1,
+    triggers: [{ cron: "TZ=America/Toronto 15 * * * *" }],
+  },
+  async ({ step }) => {
+    return step.run("flushDeferredNotices", () => flushDeferredNotices(new Date()));
+  },
+);
+
+export const inngestFunctions = [
+  dailyDebitJob,
+  manualDebitJob,
+  deferredNoticeFlush,
+];

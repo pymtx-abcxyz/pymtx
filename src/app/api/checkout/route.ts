@@ -118,6 +118,8 @@ export async function POST(req: NextRequest) {
                   termMonths: true,
                   monthlyAmountCents: true,
                   startDate: true,
+                  disputeFrozenAt: true,
+                  disputeReason: true,
                   installments: {
                     orderBy: { sequence: "asc" },
                     select: {
@@ -129,7 +131,11 @@ export async function POST(req: NextRequest) {
                     },
                   },
                   padMandate: {
-                    select: { bankLast4: true, institutionName: true },
+                    select: {
+                      bankLast4: true,
+                      institutionName: true,
+                      cancelledAt: true,
+                    },
                   },
                 },
               },

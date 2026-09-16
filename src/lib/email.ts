@@ -206,6 +206,38 @@ function formatCad(cents: number) {
   }).format(cents / 100);
 }
 
+/** CASL white-labeled customer invite — merchant sender identity. */
+export function inviteEmail(opts: {
+  tradeName: string;
+  firstName: string;
+  invoiceRef: string;
+  amountCents: number;
+  inviteUrl: string;
+}) {
+  const subject = `Settle your balance with ${opts.tradeName}`;
+  const text = [
+    `Hello ${opts.firstName},`,
+    "",
+    `${opts.tradeName} invited you to settle invoice ${opts.invoiceRef} (${formatCad(opts.amountCents)} past due).`,
+    "",
+    `Open your secure link to choose a payment plan: ${opts.inviteUrl}`,
+    "",
+    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
+  ].join("\n");
+
+  const html = brandedShell({
+    eyebrow: opts.tradeName,
+    title: "Settle your balance",
+    bodyHtml: emailBody(`
+      <p style="color:{{textSecondary}};line-height:1.55">Hello ${escapeHtml(opts.firstName)},</p>
+      <p style="color:{{textSecondary}};line-height:1.55"><strong style="color:{{textPrimary}}">${escapeHtml(opts.tradeName)}</strong> invited you to settle invoice <strong>${escapeHtml(opts.invoiceRef)}</strong> (${escapeHtml(formatCad(opts.amountCents))} past due).</p>
+      <p style="margin:24px 0"><a href="${escapeHtml(opts.inviteUrl)}" style="display:inline-block;background:{{textPrimary}};color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px">Open secure plan link</a></p>
+    `),
+  });
+
+  return { subject, text, html };
+}
+
 /** Rule H1 written PAD confirmation — merchant sender identity. */
 export function padConfirmationEmail(opts: {
   tradeName: string;
@@ -223,7 +255,7 @@ export function padConfirmationEmail(opts: {
     `Account ending: •••• ${opts.bankLast4}`,
     `First debit on or after: ${opts.firstDebitDate}`,
     "",
-    "You may cancel with at least 10 days' written notice before a scheduled debit (Payments Canada Rule H1).",
+    "You may cancel this PAD authorization upon thirty (30) calendar days' written notice to the Payee, or by cancelling inside the client portal (Payments Canada Rule H1). Revoking this authorization does not extinguish the underlying debt.",
     "",
     `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
   ].join("\n");
@@ -239,7 +271,7 @@ export function padConfirmationEmail(opts: {
         <li>Account •••• ${escapeHtml(opts.bankLast4)}</li>
         <li>First debit on or after ${escapeHtml(opts.firstDebitDate)}</li>
       </ul>
-      <p style="color:{{textSecondary}};line-height:1.55">Cancel with at least 10 days' written notice before a scheduled debit (Rule H1).</p>
+      <p style="color:{{textSecondary}};line-height:1.55">Cancel with thirty (30) calendar days' written notice, or inside the client portal (Rule H1). Cancelling the PAD does not extinguish the underlying debt.</p>
     `),
   });
 

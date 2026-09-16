@@ -72,6 +72,7 @@ model Business {
   invoices                 Invoice[]
   transactionMetrics       TransactionMetric[]
   caslMessages             CaslMessage[]
+  deferredNotices          DeferredNotice[]
   users                    User[]
 
   @@index([status])
@@ -170,6 +171,10 @@ model PaymentPlan {
   /// Rule H1: written confirmation must be sent before first debit.
   padWrittenConfirmSentAt DateTime?
 
+  /// Settlement-terms dispute freeze — halt automated presentment until cleared.
+  disputeFrozenAt         DateTime?
+  disputeReason           String?
+
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
@@ -181,6 +186,7 @@ model PaymentPlan {
   @@index([customerId])
   @@index([invoiceId])
   @@index([stripeCustomerId])
+  @@index([disputeFrozenAt])
 }
 
 /// Payments Canada Rule H1 Personal PAD electronic mandate + audit trail.
@@ -209,6 +215,9 @@ model PadMandate {
   /// Full rendered PAD agreement text frozen at acceptance.
   agreementText      String?   @db.Text
   settlementTermsText String?  @db.Text
+  /// Payor cancelled PAD authorization in portal (does not extinguish debt).
+  cancelledAt        DateTime?
+  cancelReason       String?
   createdAt          DateTime    @default(now())
 }
 
@@ -386,7 +395,7 @@ model CaslMessage {
   business     Business  @relation(fields: [businessId], references: [id])
   customerId   String?
   customer     Customer? @relation(fields: [customerId], references: [id])
-  /// INVITE | PAD_CONFIRMATION | RECEIPT | SKIP_CONFIRMATION | MAGIC_LINK
+  /// INVITE | PAD_CONFIRMATION | RECEIPT | SKIP_CONFIRMATION | MAGIC_LINK | NSF_ALERT
   kind         String
   fromName     String
   toEmail      String
@@ -395,8 +404,34 @@ model CaslMessage {
   sentAt       DateTime  @default(now())
   providerId   String?
 
+  deferredNotice DeferredNotice?
+
   @@index([businessId, sentAt])
   @@index([customerId])
+}
+
+/// Queued debtor notices waiting for Ontario CDSSA contact hours.
+model DeferredNotice {
+  id            String   @id @default(cuid())
+  caslMessageId String   @unique
+  caslMessage   CaslMessage @relation(fields: [caslMessageId], references: [id], onDelete: Cascade)
+  businessId    String
+  business      Business @relation(fields: [businessId], references: [id])
+  fromName      String
+  toEmail       String
+  subject       String
+  html          String   @db.Text
+  text          String   @db.Text
+  /// Optional PDF attachments as JSON [{filename,content,contentType}]
+  attachmentsJson String? @db.Text
+  sendAfter     DateTime
+  sentAt        DateTime?
+  attempts      Int      @default(0)
+  lastError     String?
+  createdAt     DateTime @default(now())
+
+  @@index([sendAfter, sentAt])
+  @@index([businessId])
 }
 
 /// Platform take-rate metrics (application fees only — never principal custody).

@@ -55,6 +55,8 @@ export function toClientPlanDto(plan: {
   termMonths: number;
   monthlyAmountCents: number;
   startDate: Date | null;
+  disputeFrozenAt?: Date | null;
+  disputeReason?: string | null;
   installments: {
     id: string;
     sequence: number;
@@ -65,6 +67,7 @@ export function toClientPlanDto(plan: {
   padMandate?: {
     bankLast4: string | null;
     institutionName: string | null;
+    cancelledAt?: Date | null;
   } | null;
 }) {
   return {
@@ -73,6 +76,8 @@ export function toClientPlanDto(plan: {
     termMonths: plan.termMonths,
     monthlyAmountCents: plan.monthlyAmountCents,
     startDate: plan.startDate,
+    disputeFrozenAt: plan.disputeFrozenAt ?? null,
+    disputeReason: plan.disputeReason ?? null,
     installments: plan.installments.map((i) => ({
       id: i.id,
       sequence: i.sequence,
@@ -84,6 +89,7 @@ export function toClientPlanDto(plan: {
       ? {
           bankLast4: plan.padMandate.bankLast4,
           institutionName: plan.padMandate.institutionName,
+          cancelledAt: plan.padMandate.cancelledAt ?? null,
         }
       : null,
   };
@@ -98,7 +104,7 @@ export async function getCheckoutByInvite(token: string): Promise<CheckoutPrevie
         where: { status: { in: ["PAST_DUE", "INVITED", "PLAN_ACTIVE"] } },
         include: {
           paymentPlans: {
-            where: { status: { in: ["PENDING_MANDATE", "ACTIVE"] } },
+            where: { status: { in: ["PENDING_MANDATE", "ACTIVE", "CANCELLED"] } },
             orderBy: { createdAt: "desc" },
             take: 1,
           },
@@ -486,11 +492,14 @@ export async function completeCheckoutPad(params: {
     termMonths: updated.termMonths,
     monthlyAmountCents: updated.monthlyAmountCents,
     startDate: updated.startDate,
+    disputeFrozenAt: updated.disputeFrozenAt,
+    disputeReason: updated.disputeReason,
     installments: updated.installments,
     padMandate: updated.padMandate
       ? {
           bankLast4: updated.padMandate.bankLast4,
           institutionName: updated.padMandate.institutionName,
+          cancelledAt: updated.padMandate.cancelledAt,
         }
       : null,
   });

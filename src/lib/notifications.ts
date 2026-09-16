@@ -6,6 +6,7 @@
 import { render } from "@react-email/render";
 import { createElement } from "react";
 import {
+  InviteEmail,
   NsfAlertEmail,
   PadConfirmationEmail,
   ReceiptEmail,
@@ -15,6 +16,7 @@ import { gateOntarioDebtorNotice } from "./compliance/ontarioHours";
 import { prisma } from "./db";
 import { CaslMessageKind } from "./domain";
 import {
+  inviteEmail,
   nsfAlertEmail,
   padConfirmationEmail,
   receiptEmail,
@@ -23,6 +25,7 @@ import {
   type EmailAttachment,
   type SendEmailResult,
 } from "./email";
+import { appUrl } from "./env";
 import { caslAttributionBlock, PROVIDER } from "./legal";
 import { buildPadMandatePdf, pdfToBase64 } from "./pad-mandate-pdf";
 
@@ -78,6 +81,25 @@ async function persistAndSend(params: {
   if (!CONTACT_WINDOW_EXEMPT.has(params.kind)) {
     const gate = gateOntarioDebtorNotice(`notice:${params.kind}`);
     if (!gate.ok) {
+      await prisma.deferredNotice.create({
+        data: {
+          caslMessageId: casl.id,
+          businessId: params.businessId,
+          fromName: params.fromName,
+          toEmail: params.toEmail,
+          subject: params.subject,
+          html: params.html,
+          text,
+          attachmentsJson: params.attachments?.length
+            ? JSON.stringify(params.attachments)
+            : null,
+          sendAfter: gate.nextAllowedAt,
+        },
+      });
+      await prisma.caslMessage.update({
+        where: { id: casl.id },
+        data: { providerId: "deferred" },
+      });
       return { ok: true, provider: "deferred" };
     }
   }
@@ -100,6 +122,54 @@ async function persistAndSend(params: {
     });
   }
   return sent;
+}
+
+export async function sendInviteNotice(params: {
+  businessId: string;
+  customerId: string;
+  tradeName: string;
+  legalName?: string;
+  physicalAddress?: string | null;
+  supportEmail?: string | null;
+  phone?: string | null;
+  toEmail: string;
+  customerFirstName: string;
+  invoiceRef: string;
+  amountCents: number;
+  inviteToken: string;
+}) {
+  const inviteUrl = `${appUrl()}/client?token=${encodeURIComponent(params.inviteToken)}`;
+  const tpl = inviteEmail({
+    tradeName: params.tradeName,
+    firstName: params.customerFirstName,
+    invoiceRef: params.invoiceRef,
+    amountCents: params.amountCents,
+    inviteUrl,
+  });
+  const html = await render(
+    createElement(InviteEmail, {
+      tradeName: params.tradeName,
+      firstName: params.customerFirstName,
+      invoiceRef: params.invoiceRef,
+      amountCents: params.amountCents,
+      inviteUrl,
+    }),
+  );
+  return persistAndSend({
+    businessId: params.businessId,
+    customerId: params.customerId,
+    kind: CaslMessageKind.INVITE,
+    fromName: params.tradeName,
+    toEmail: params.toEmail,
+    subject: tpl.subject,
+    bodyPreview: tpl.text.slice(0, 280),
+    html,
+    text: tpl.text,
+    merchantLegalName: params.legalName || params.tradeName,
+    merchantAddress: params.physicalAddress,
+    merchantSupportEmail: params.supportEmail,
+    merchantPhone: params.phone,
+  });
 }
 
 export async function sendPadConfirmationNotice(params: {

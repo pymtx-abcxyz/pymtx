@@ -60,6 +60,8 @@ type PlanDetail = {
   termMonths: number;
   monthlyAmountCents: number;
   startDate: string | null;
+  disputeFrozenAt?: string | null;
+  disputeReason?: string | null;
   installments: {
     id: string;
     sequence: number;
@@ -67,7 +69,11 @@ type PlanDetail = {
     amountCents: number;
     status: string;
   }[];
-  padMandate?: { bankLast4: string | null; institutionName: string | null } | null;
+  padMandate?: {
+    bankLast4: string | null;
+    institutionName: string | null;
+    cancelledAt?: string | null;
+  } | null;
 };
 
 type Step = "review" | "plan" | "pad" | "active";
@@ -163,8 +169,9 @@ function ClientCheckoutInner() {
     const existing = data.invoices?.[0]?.paymentPlans?.[0] as PlanDetail | undefined;
     if (!existing) return;
     setPlan(existing);
-    if (existing.status === "ACTIVE") setStep("active");
-    else if (existing.status === "PENDING_MANDATE") setStep("pad");
+    if (existing.status === "ACTIVE" || existing.status === "CANCELLED") {
+      setStep("active");
+    } else if (existing.status === "PENDING_MANDATE") setStep("pad");
     else setStep("plan");
   }
 
@@ -271,6 +278,32 @@ function ClientCheckoutInner() {
     setNotice(
       `Payment skipped (seq ${data.skippedSequence}). Replacement scheduled as seq ${data.appendedSequence} on ${new Date(data.appendedDue).toLocaleDateString("en-CA")}. Next skip locked until ${new Date(data.nextSkipAvailableAt).toLocaleDateString("en-CA")}.`,
     );
+    if (token) await loadPlanStatus(token);
+  }
+
+  async function requestPadLifecycle(action: "dispute" | "cancel_pad") {
+    if (!plan) return;
+    const confirmMsg =
+      action === "dispute"
+        ? "Register a dispute? Automated debits will pause until the merchant reviews."
+        : "Cancel your PAD authorization? This does not erase the debt — contact the merchant for another way to pay.";
+    if (!window.confirm(confirmMsg)) return;
+
+    setBusy(true);
+    setError("");
+    setNotice("");
+    const res = await fetch("/api/client/pad-lifecycle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paymentPlanId: plan.id, token, action }),
+    });
+    const data = await res.json();
+    setBusy(false);
+    if (!res.ok) {
+      setError(data.error || "Request failed");
+      return;
+    }
+    setNotice(data.message || "Updated.");
     if (token) await loadPlanStatus(token);
   }
 
@@ -615,21 +648,65 @@ function ClientCheckoutInner() {
                         : ""
                     }`}
                   />
-                  <button
-                    className="btn-ghost"
-                    type="button"
-                    disabled={busy || !skipInfo?.ok}
-                    onClick={requestSkip}
-                    title={skipInfo && !skipInfo.ok ? skipInfo.reason : "Skip next payment"}
-                  >
-                    Skip next payment
-                  </button>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      className="btn-ghost"
+                      type="button"
+                      disabled={
+                        busy ||
+                        !skipInfo?.ok ||
+                        Boolean(plan.disputeFrozenAt) ||
+                        plan.status === "CANCELLED"
+                      }
+                      onClick={requestSkip}
+                      title={skipInfo && !skipInfo.ok ? skipInfo.reason : "Skip next payment"}
+                    >
+                      Skip next payment
+                    </button>
+                    <button
+                      className="btn-ghost"
+                      type="button"
+                      disabled={busy || Boolean(plan.disputeFrozenAt) || plan.status === "CANCELLED"}
+                      onClick={() => void requestPadLifecycle("dispute")}
+                    >
+                      Dispute &amp; freeze
+                    </button>
+                    <button
+                      className="btn-ghost"
+                      type="button"
+                      disabled={
+                        busy ||
+                        plan.status === "CANCELLED" ||
+                        Boolean(plan.padMandate?.cancelledAt)
+                      }
+                      onClick={() => void requestPadLifecycle("cancel_pad")}
+                    >
+                      Cancel PAD
+                    </button>
+                  </div>
                 </div>
-                {skipInfo && !skipInfo.ok ? (
+                {plan.disputeFrozenAt ? (
+                  <div className="mt-3">
+                    <FormNotice tone="warning">
+                      Debits are frozen while your dispute is under review
+                      {plan.disputeReason ? ` — ${plan.disputeReason}` : ""}.
+                    </FormNotice>
+                  </div>
+                ) : null}
+                {plan.status === "CANCELLED" || plan.padMandate?.cancelledAt ? (
+                  <div className="mt-3">
+                    <FormNotice tone="warning">
+                      PAD authorization cancelled. The underlying balance remains
+                      owed to {preview?.businessLegalName || "the merchant"} —
+                      contact them for another payment arrangement.
+                    </FormNotice>
+                  </div>
+                ) : null}
+                {skipInfo && !skipInfo.ok && !plan.disputeFrozenAt ? (
                   <div className="mt-3">
                     <FormNotice tone="warning">{skipInfo.reason}</FormNotice>
                   </div>
-                ) : (
+                ) : !plan.disputeFrozenAt && plan.status === "ACTIVE" ? (
                   <p className="mt-3 text-[length:var(--text-sm)] text-text-muted">
                     Skips need ≥{skipInfo?.noticeRequired ?? 3} business days&apos;
                     notice
@@ -637,9 +714,10 @@ function ClientCheckoutInner() {
                       ? ` (next eligible: seq ${skipInfo.sequence})`
                       : ""}
                     . Skipped month moves to the end; next skip locks for{" "}
-                    {skipInfo?.cooldownDays ?? 180} days.
+                    {skipInfo?.cooldownDays ?? 180} days. Cancel PAD with thirty
+                    (30) calendar days&apos; notice or here in the portal.
                   </p>
-                )}
+                ) : null}
 
                 <div className="mt-6 overflow-x-auto">
                   <table className="data-table min-w-[520px]">
