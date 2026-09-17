@@ -730,3 +730,74 @@ summary {
     transition: none;
   }
 }
+
+/* —— Address autocomplete (Geoapify) —— */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.address-autocomplete-status {
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.address-autocomplete-list {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  right: 0;
+  top: calc(100% + 0.25rem);
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  max-height: 16rem;
+  overflow-y: auto;
+  background: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-elevated);
+}
+
+.address-autocomplete-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: calc(var(--radius-control) - 0.125rem);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.address-autocomplete-option.is-active,
+.address-autocomplete-option:hover {
+  background: var(--surface-subtle);
+}
+
+.address-autocomplete-line1 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.address-autocomplete-line2 {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .address-autocomplete-list {
+    transition: none;
+  }
+}

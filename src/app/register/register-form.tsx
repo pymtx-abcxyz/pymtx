@@ -11,6 +11,7 @@ import {
   FormError,
   FormSectionLabel,
 } from "@/components/ui";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 
 const ERROR_ID = "register-form-error";
 
@@ -200,13 +201,12 @@ export default function RegisterForm() {
         </div>
         <div>
           <FieldLabel htmlFor="register-address">Physical address</FieldLabel>
-          <input
+          <AddressAutocomplete
             id="register-address"
-            className="input"
             name="physicalAddress"
             value={physicalAddress}
-            onChange={(e) => setPhysicalAddress(e.target.value)}
-            placeholder="Optional"
+            onChange={setPhysicalAddress}
+            placeholder="Ontario street address (optional)"
           />
         </div>
 
