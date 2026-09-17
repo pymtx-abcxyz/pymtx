@@ -12,6 +12,7 @@ import {
   type PlanTermMonths,
 } from "./domain";
 import { assertMoneyRailsReady, isStripeDemoMode } from "./env";
+import { assertConnectedAccountDirectCharge } from "./path-b";
 
 export async function createPaymentPlan(params: {
   invoiceId: string;
@@ -24,8 +25,20 @@ export async function createPaymentPlan(params: {
 
   const invoice = await prisma.invoice.findUniqueOrThrow({
     where: { id: params.invoiceId },
+    include: { customer: { include: { business: true } } },
   });
   if (invoice.balanceCents <= 0) throw new Error("Invoice has no balance");
+
+  const business = invoice.customer.business;
+  assertConnectedAccountDirectCharge(
+    business.stripeAccountId,
+    "plans createPaymentPlan",
+  );
+  if (!business.stripeOnboardingComplete || !business.stripeChargesEnabled) {
+    throw new Error(
+      "Creditor Connect account is not ready — use Path B checkout after onboarding",
+    );
+  }
 
   const schedule = buildInstallmentSchedule({
     totalCents: invoice.balanceCents,
@@ -82,6 +95,15 @@ export async function acceptPadMandate(params: {
   assertMoneyRailsReady("plans accept_pad");
   const now = new Date();
   const demo = isStripeDemoMode();
+
+  const existing = await prisma.paymentPlan.findUniqueOrThrow({
+    where: { id: params.paymentPlanId },
+    include: { customer: { include: { business: true } } },
+  });
+  assertConnectedAccountDirectCharge(
+    existing.customer.business.stripeAccountId,
+    "plans accept_pad",
+  );
 
   if (!demo) {
     if (

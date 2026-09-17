@@ -11,7 +11,7 @@ export const LEGAL_DOC_VERSIONS = {
   saas: "2026-09-16-saas-v1",
   pad: "2026-09-16-pad-h1-v1",
   settlement: "2026-09-16-settlement-cpa-v1",
-  privacy: "2026-09-16-privacy-casl-v1",
+  privacy: "2026-09-17-privacy-casl-v2",
 } as const;
 
 export function caslAttributionBlock(merchant?: {

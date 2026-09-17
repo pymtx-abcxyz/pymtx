@@ -86,6 +86,7 @@ export async function requestCustomerMagicLink(
     html: mail.html,
     text: mail.text,
     fromName: customer.business.tradeName,
+    replyTo: customer.business.supportEmail || customer.business.email,
   });
 
   // Never reveal send failures to the client (email enumeration).

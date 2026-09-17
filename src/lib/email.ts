@@ -14,6 +14,8 @@ export type SendEmailInput = {
   text: string;
   fromName: string;
   fromEmail?: string;
+  /** Merchant support inbox — CASL / white-label Reply-To. */
+  replyTo?: string;
   attachments?: EmailAttachment[];
 };
 
@@ -51,6 +53,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
         subject: input.subject,
         html: input.html,
         text: input.text,
+        ...(input.replyTo ? { reply_to: input.replyTo } : {}),
         ...(input.attachments?.length
           ? {
               attachments: input.attachments.map((a) => ({

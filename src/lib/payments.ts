@@ -1,6 +1,6 @@
 import { addDays } from "date-fns";
 import { prisma } from "./db";
-import { applicationFeeCents, stripe } from "./stripe";
+import { resolveApplicationFeeCents, stripe } from "./stripe";
 import {
   DebitAttemptKind,
   DebitAttemptStatus,
@@ -95,7 +95,9 @@ export async function chargeInstallment(installmentId: string) {
     }
   }
 
-  const fee = applicationFeeCents(installment.amountCents);
+  const { feeCents: fee } = await resolveApplicationFeeCents(
+    installment.amountCents,
+  );
   const attemptKind =
     installment.status === InstallmentStatus.FAILED_NSF
       ? DebitAttemptKind.NSF_RETRY

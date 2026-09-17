@@ -18,6 +18,41 @@ import {
 import { InstallmentStatus } from "@/lib/domain";
 
 /**
+ * Reject Connect webhook settlement when event.account does not match the
+ * installment's merchant Connect account (Path B zero-custody bind).
+ */
+async function assertWebhookAccountBind(
+  installmentId: string,
+  eventAccount: string | null | undefined,
+): Promise<string | null> {
+  if (!eventAccount) {
+    // Platform-account events without Connect account are not Path B Direct Charges.
+    return `rejected: payment_intent ${installmentId} missing event.account (Path B requires Connect)`;
+  }
+  const installment = await prisma.installment.findUnique({
+    where: { id: installmentId },
+    select: {
+      paymentPlan: {
+        select: {
+          customer: {
+            select: { business: { select: { stripeAccountId: true } } },
+          },
+        },
+      },
+    },
+  });
+  const expected =
+    installment?.paymentPlan.customer.business.stripeAccountId || null;
+  if (!expected) {
+    return `rejected: installment ${installmentId} has no connected account`;
+  }
+  if (expected !== eventAccount) {
+    return `rejected: event.account ${eventAccount} != business ${expected}`;
+  }
+  return null;
+}
+
+/**
  * Stripe webhook — Connect + ACSS Debit Direct Charges.
  * Enable connected-account events for Path B.
  *
@@ -96,67 +131,87 @@ export async function POST(req: NextRequest) {
       } else {
         summary = "account.updated unmatched";
       }
-    } else if (event.type === "payment_intent.processing") {
-      const pi = event.data.object as Stripe.PaymentIntent;
-      const installmentId = pi.metadata?.pymtx_installment_id;
-      if (!installmentId) {
-        summary = "payment_intent.processing without pymtx_installment_id";
-      } else {
-        await prisma.installment.updateMany({
-          where: {
-            id: installmentId,
-            status: {
-              in: [
-                InstallmentStatus.QUEUED,
-                InstallmentStatus.SCHEDULED,
-                InstallmentStatus.PROCESSING,
-                InstallmentStatus.FAILED_NSF,
-              ],
-            },
-          },
-          data: {
-            status: InstallmentStatus.PROCESSING,
-            stripePaymentIntentId: pi.id,
-            lastAttemptAt: new Date(),
-          },
-        });
-        if (pi.metadata?.pymtx_attempt_id) {
-          await prisma.debitAttempt.updateMany({
-            where: { id: pi.metadata.pymtx_attempt_id },
-            data: { stripePaymentIntentId: pi.id },
-          });
-        }
-        summary = `processing ${installmentId}`;
-      }
     } else if (
       event.type === "payment_intent.succeeded" ||
-      event.type === "payment_intent.payment_failed"
+      event.type === "payment_intent.payment_failed" ||
+      event.type === "payment_intent.processing"
     ) {
-      const pi = event.data.object as Stripe.PaymentIntent;
-      const installmentId = pi.metadata?.pymtx_installment_id;
-      if (!installmentId) {
-        summary = "payment_intent without pymtx_installment_id";
-      } else {
-        const attemptId = pi.metadata?.pymtx_attempt_id || null;
-        if (event.type === "payment_intent.succeeded") {
-          const result = await applyInstallmentSuccess({
-            installmentId,
-            paymentIntentId: pi.id,
-            applicationFeeCents: pi.application_fee_amount || 0,
-            attemptId,
-          });
-          summary = `success ${installmentId} settled=${!result.alreadySettled}`;
+      // Path B: Connect events carry event.account — bind to merchant before settle.
+      if (event.type === "payment_intent.processing") {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        const installmentId = pi.metadata?.pymtx_installment_id;
+        if (!installmentId) {
+          summary = "payment_intent.processing without pymtx_installment_id";
         } else {
-          const result = await applyInstallmentFailure({
+          const bindErr = await assertWebhookAccountBind(
             installmentId,
-            paymentIntentId: pi.id,
-            attemptId,
-            failureCode: pi.last_payment_error?.code || null,
-            failureMessage: pi.last_payment_error?.message || null,
-          });
-          summary = result.ignored
-            ? `failure ignored ${installmentId}`
-            : `failure ${installmentId} nsf=${result.nsf}`;
+            event.account,
+          );
+          if (bindErr) {
+            summary = bindErr;
+          } else {
+            await prisma.installment.updateMany({
+              where: {
+                id: installmentId,
+                status: {
+                  in: [
+                    InstallmentStatus.QUEUED,
+                    InstallmentStatus.SCHEDULED,
+                    InstallmentStatus.PROCESSING,
+                    InstallmentStatus.FAILED_NSF,
+                  ],
+                },
+              },
+              data: {
+                status: InstallmentStatus.PROCESSING,
+                stripePaymentIntentId: pi.id,
+                lastAttemptAt: new Date(),
+              },
+            });
+            if (pi.metadata?.pymtx_attempt_id) {
+              await prisma.debitAttempt.updateMany({
+                where: { id: pi.metadata.pymtx_attempt_id },
+                data: { stripePaymentIntentId: pi.id },
+              });
+            }
+            summary = `processing ${installmentId}`;
+          }
+        }
+      } else {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        const installmentId = pi.metadata?.pymtx_installment_id;
+        if (!installmentId) {
+          summary = "payment_intent without pymtx_installment_id";
+        } else {
+          const bindErr = await assertWebhookAccountBind(
+            installmentId,
+            event.account,
+          );
+          if (bindErr) {
+            summary = bindErr;
+          } else {
+            const attemptId = pi.metadata?.pymtx_attempt_id || null;
+            if (event.type === "payment_intent.succeeded") {
+              const result = await applyInstallmentSuccess({
+                installmentId,
+                paymentIntentId: pi.id,
+                applicationFeeCents: pi.application_fee_amount || 0,
+                attemptId,
+              });
+              summary = `success ${installmentId} settled=${!result.alreadySettled}`;
+            } else {
+              const result = await applyInstallmentFailure({
+                installmentId,
+                paymentIntentId: pi.id,
+                attemptId,
+                failureCode: pi.last_payment_error?.code || null,
+                failureMessage: pi.last_payment_error?.message || null,
+              });
+              summary = result.ignored
+                ? `failure ignored ${installmentId}`
+                : `failure ${installmentId} nsf=${result.nsf}`;
+            }
+          }
         }
       }
     } else {

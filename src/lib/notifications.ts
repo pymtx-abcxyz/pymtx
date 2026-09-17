@@ -1,7 +1,11 @@
 /**
  * Path B / Rule H1 customer notifications.
  * From: merchant trade name.
+ * Reply-To: merchant support inbox.
  * Statutory attribution: 1001527397 ONTARIO INC. only (no operating brand).
+ *
+ * CDSSA: Ontario contact hours + max 3 counting contacts / 7 days.
+ * Communication pause (dispute / counsel) suppresses non-exempt notices.
  */
 import { render } from "@react-email/render";
 import { createElement } from "react";
@@ -13,6 +17,11 @@ import {
   SkipConfirmationEmail,
 } from "@/emails/templates";
 import { gateOntarioDebtorNotice } from "./compliance/ontarioHours";
+import {
+  evaluateContactCadence,
+  isCadenceCountingKind,
+  isCommunicationPauseExempt,
+} from "./compliance/cadence";
 import { prisma } from "./db";
 import { CaslMessageKind } from "./domain";
 import {
@@ -35,6 +44,23 @@ const CONTACT_WINDOW_EXEMPT = new Set<string>([
   CaslMessageKind.PAD_CONFIRMATION,
 ]);
 
+function appendCaslHtmlFooter(html: string, attributionHtml: string): string {
+  if (html.includes("data-casl-attribution")) return html;
+  const block = `<div data-casl-attribution="1" style="margin-top:20px;padding-top:12px;border-top:1px solid #cad2c5;font-size:11px;color:#4e6260;line-height:1.5;white-space:pre-line">${attributionHtml}</div>`;
+  if (html.includes("</body>")) {
+    return html.replace("</body>", `${block}</body>`);
+  }
+  return `${html}${block}`;
+}
+
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 async function persistAndSend(params: {
   businessId: string;
   customerId: string;
@@ -50,7 +76,10 @@ async function persistAndSend(params: {
   merchantAddress?: string | null;
   merchantSupportEmail?: string | null;
   merchantPhone?: string | null;
-}): Promise<SendEmailResult | { ok: true; provider: "deferred" }> {
+}): Promise<
+  | SendEmailResult
+  | { ok: true; provider: "deferred" | "suppressed" | "cadence_deferred" }
+> {
   const attribution = caslAttributionBlock({
     legalName: params.merchantLegalName,
     address: params.merchantAddress,
@@ -66,6 +95,10 @@ async function persistAndSend(params: {
     attribution,
   ].join("\n");
 
+  const attributionHtml = escapeHtml(attribution).replace(/\n/g, "<br/>");
+  const html = appendCaslHtmlFooter(params.html, attributionHtml);
+  const replyTo = params.merchantSupportEmail?.trim() || undefined;
+
   const casl = await prisma.caslMessage.create({
     data: {
       businessId: params.businessId,
@@ -78,6 +111,66 @@ async function persistAndSend(params: {
     },
   });
 
+  // Counsel / dispute communication kill-switch (magic-link exempt).
+  if (!isCommunicationPauseExempt(params.kind)) {
+    const customer = await prisma.customer.findUnique({
+      where: { id: params.customerId },
+      select: { communicationPausedAt: true },
+    });
+    if (customer?.communicationPausedAt) {
+      await prisma.caslMessage.update({
+        where: { id: casl.id },
+        data: { providerId: "suppressed" },
+      });
+      return { ok: true, provider: "suppressed" };
+    }
+  }
+
+  // CDSSA cadence: max 3 counting contacts / rolling 7 days.
+  if (isCadenceCountingKind(params.kind)) {
+    const windowStart = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const counting = await prisma.caslMessage.findMany({
+      where: {
+        customerId: params.customerId,
+        id: { not: casl.id },
+        kind: { in: [...CADENCE_KINDS] },
+        sentAt: { gte: windowStart },
+        NOT: {
+          providerId: {
+            in: ["suppressed", "deferred", "cadence_deferred"],
+          },
+        },
+      },
+      select: { sentAt: true },
+      orderBy: { sentAt: "asc" },
+    });
+    const cadence = evaluateContactCadence({
+      recentSentAts: counting.map((c) => c.sentAt),
+    });
+    if (!cadence.ok) {
+      await prisma.deferredNotice.create({
+        data: {
+          caslMessageId: casl.id,
+          businessId: params.businessId,
+          fromName: params.fromName,
+          toEmail: params.toEmail,
+          subject: params.subject,
+          html,
+          text,
+          attachmentsJson: params.attachments?.length
+            ? JSON.stringify(params.attachments)
+            : null,
+          sendAfter: cadence.nextAllowedAt,
+        },
+      });
+      await prisma.caslMessage.update({
+        where: { id: casl.id },
+        data: { providerId: "cadence_deferred" },
+      });
+      return { ok: true, provider: "cadence_deferred" };
+    }
+  }
+
   if (!CONTACT_WINDOW_EXEMPT.has(params.kind)) {
     const gate = gateOntarioDebtorNotice(`notice:${params.kind}`);
     if (!gate.ok) {
@@ -88,7 +181,7 @@ async function persistAndSend(params: {
           fromName: params.fromName,
           toEmail: params.toEmail,
           subject: params.subject,
-          html: params.html,
+          html,
           text,
           attachmentsJson: params.attachments?.length
             ? JSON.stringify(params.attachments)
@@ -107,9 +200,10 @@ async function persistAndSend(params: {
   const sent = await sendEmail({
     to: params.toEmail,
     subject: params.subject,
-    html: params.html,
+    html,
     text,
     fromName: params.fromName,
+    replyTo,
     attachments: params.attachments,
   });
 
@@ -120,9 +214,21 @@ async function persistAndSend(params: {
       where: { id: casl.id },
       data: { providerId: sent.id },
     });
+  } else if (sent.ok) {
+    await prisma.caslMessage.update({
+      where: { id: casl.id },
+      data: { providerId: sent.provider },
+    });
   }
   return sent;
 }
+
+const CADENCE_KINDS = [
+  CaslMessageKind.INVITE,
+  CaslMessageKind.RECEIPT,
+  CaslMessageKind.NSF_ALERT,
+  CaslMessageKind.SKIP_CONFIRMATION,
+] as const;
 
 export async function sendInviteNotice(params: {
   businessId: string;
@@ -262,6 +368,9 @@ export async function sendReceiptNotice(params: {
   customerId: string;
   tradeName: string;
   legalName?: string;
+  physicalAddress?: string | null;
+  supportEmail?: string | null;
+  phone?: string | null;
   toEmail: string;
   invoiceRef: string;
   amountCents: number;
@@ -296,6 +405,9 @@ export async function sendReceiptNotice(params: {
     html,
     text: tpl.text,
     merchantLegalName: params.legalName || params.tradeName,
+    merchantAddress: params.physicalAddress,
+    merchantSupportEmail: params.supportEmail,
+    merchantPhone: params.phone,
   });
 }
 
@@ -304,6 +416,9 @@ export async function sendNsfAlertNotice(params: {
   customerId: string;
   tradeName: string;
   legalName?: string;
+  physicalAddress?: string | null;
+  supportEmail?: string | null;
+  phone?: string | null;
   toEmail: string;
   invoiceRef: string;
   amountCents: number;
@@ -323,6 +438,9 @@ export async function sendNsfAlertNotice(params: {
     html,
     text: tpl.text,
     merchantLegalName: params.legalName || params.tradeName,
+    merchantAddress: params.physicalAddress,
+    merchantSupportEmail: params.supportEmail,
+    merchantPhone: params.phone,
   });
 }
 
@@ -331,6 +449,9 @@ export async function sendSkipConfirmationNotice(params: {
   customerId: string;
   tradeName: string;
   legalName?: string;
+  physicalAddress?: string | null;
+  supportEmail?: string | null;
+  phone?: string | null;
   toEmail: string;
   amountCents: number;
   skippedDue: string;
@@ -351,5 +472,8 @@ export async function sendSkipConfirmationNotice(params: {
     html,
     text: tpl.text,
     merchantLegalName: params.legalName || params.tradeName,
+    merchantAddress: params.physicalAddress,
+    merchantSupportEmail: params.supportEmail,
+    merchantPhone: params.phone,
   });
 }

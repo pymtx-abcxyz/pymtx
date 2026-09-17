@@ -138,7 +138,7 @@ async function main() {
     {
       customerId: customers[0].id,
       externalRef: "INV-88421",
-      description: "Orthodontic treatment balance",
+      description: "Past-due account balance",
       originalAmountCents: 240_000,
       balanceCents: 240_000,
       dueDate: subDays(new Date(), 45),
@@ -147,7 +147,7 @@ async function main() {
     {
       customerId: customers[1].id,
       externalRef: "INV-88455",
-      description: "Crown & bridge services",
+      description: "Past-due account balance",
       originalAmountCents: 180_000,
       balanceCents: 180_000,
       dueDate: subDays(new Date(), 72),
@@ -156,7 +156,7 @@ async function main() {
     {
       customerId: customers[2].id,
       externalRef: "INV-88502",
-      description: "Emergency dental visit",
+      description: "Past-due account balance",
       originalAmountCents: 96_000,
       balanceCents: 96_000,
       dueDate: subDays(new Date(), 18),

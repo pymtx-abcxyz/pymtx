@@ -19,7 +19,7 @@ export function privacyPolicyMarkdown() {
 ${PROVIDER.legalName} processes personal data strictly as an automated technical processor on behalf of participating merchants.
 
 ### Categories of Data Collected
-Debtor name, address, email address, telephone number, invoice reference numbers, payment dates, tokenized Canadian bank details, IP address, and browser user-agent strings.
+Debtor name, address, email address, telephone number (for merchant records / identity verification), invoice reference numbers, payment dates, tokenized Canadian bank details, IP address, and browser user-agent strings.
 
 ### Purpose of Collection
 Data is processed exclusively to verify electronic identities, clear bank debits via Canadian financial institutions, and maintain statutory audit logs under Payments Canada Rule H1.
@@ -33,13 +33,16 @@ Pursuant to Payments Canada Rule H1, electronic mandate audit logs (timestamp, I
 ## 2. CASL Electronic Notice Standard
 
 ### Existing Business Relationship (EBR)
-All email and SMS communications dispatched through the platform represent transactional debt management notifications sent under the statutory Existing Business Relationship exemption of Canada's Anti-Spam Legislation (CASL).
+Automated **email** communications dispatched through the platform represent transactional debt-management notifications sent under the statutory Existing Business Relationship exemption of Canada's Anti-Spam Legislation (CASL). The platform does **not** send SMS or other text-message collection contacts. Telephone numbers may be stored for merchant identity and support purposes only.
 
 ### Mandatory Sender Information
 Every automated electronic communication clearly sets forth:
 - The legal operating name and Ontario postal address of the original Merchant;
-- Direct customer support channels for the Merchant;
+- Direct customer support channels for the Merchant (Reply-To);
 - Technological attribution: ${PROVIDER.legalName}, ${PROVIDER.addressLine} (${PROVIDER.email}).
+
+### Ontario contact windows & cadence
+Debtor collection emails are gated to Ontario CDSSA contact hours, capped at three (3) counting contacts per seven (7) days, and suppressed while a dispute freeze or counsel/court communication pause is active. Magic-link authentication emails remain available so the debtor can access the portal.
 `;
 }
 

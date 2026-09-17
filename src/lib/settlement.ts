@@ -1,5 +1,5 @@
 import { prisma } from "./db";
-import { platformFeeBps } from "./stripe";
+import { resolvePlatformFeeBps } from "./stripe";
 import {
   DebitAttemptKind,
   DebitAttemptStatus,
@@ -91,13 +91,14 @@ export async function applyInstallmentSuccess(input: SettlementSuccessInput) {
       where: { installmentId: installment.id },
     });
     if (!existingMetric) {
+      const feeBps = await resolvePlatformFeeBps();
       await tx.transactionMetric.create({
         data: {
           businessId,
           installmentId: installment.id,
           principalCents: installment.amountCents,
           applicationFeeCents: input.applicationFeeCents,
-          feeBps: platformFeeBps(),
+          feeBps,
         },
       });
       await tx.invoice.update({
@@ -269,6 +270,10 @@ async function notifyReceipt(installmentId: string) {
     businessId: customer.businessId,
     customerId: customer.id,
     tradeName: customer.business.tradeName,
+    legalName: customer.business.legalName,
+    physicalAddress: customer.business.physicalAddress,
+    supportEmail: customer.business.supportEmail || customer.business.email,
+    phone: customer.business.phone,
     toEmail: customer.email,
     invoiceRef: invoice.externalRef,
     amountCents: installment.amountCents,
@@ -295,6 +300,10 @@ async function notifyNsfAlert(installmentId: string, retryAvailable: boolean) {
     businessId: customer.businessId,
     customerId: customer.id,
     tradeName: customer.business.tradeName,
+    legalName: customer.business.legalName,
+    physicalAddress: customer.business.physicalAddress,
+    supportEmail: customer.business.supportEmail || customer.business.email,
+    phone: customer.business.phone,
     toEmail: customer.email,
     invoiceRef: invoice.externalRef,
     amountCents: installment.amountCents,
