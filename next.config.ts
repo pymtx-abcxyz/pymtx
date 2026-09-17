@@ -31,6 +31,20 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Deployment Storage: drop unused Prisma query engines / schema from traces.
+  // Vercel runtime only needs rhel-openssl-3.0.x (see prisma binaryTargets).
+  outputFileTracingExcludes: {
+    "/*": [
+      "./node_modules/.prisma/client/libquery_engine-debian*",
+      "./node_modules/.prisma/client/libquery_engine-darwin*",
+      "./node_modules/.prisma/client/libquery_engine-windows*",
+      "./node_modules/@prisma/engines/**",
+      "./node_modules/prisma/libquery_engine*",
+      "./node_modules/prisma/schema-engine*",
+      "./prisma/migrations/**",
+    ],
+  },
+  serverExternalPackages: ["@prisma/client", "prisma"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

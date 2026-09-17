@@ -1,7 +1,8 @@
 generator client {
   provider      = "prisma-client-js"
-  // GitHub Actions (debian) prebuilds for Vercel (rhel) — ship both engines.
-  binaryTargets = ["native", "debian-openssl-3.0.x", "rhel-openssl-3.0.x"]
+  // Vercel Functions are rhel — keep that engine only (plus native for local).
+  // Extra debian/rhel dual-target engines were inflating each λ to ~40MB.
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
