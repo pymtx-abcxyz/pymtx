@@ -43,7 +43,6 @@ export async function GET(req: NextRequest) {
         select: {
           id: true,
           externalRef: true,
-          description: true,
           balanceCents: true,
           status: true,
           paymentPlans: {
@@ -101,6 +100,10 @@ export async function GET(req: NextRequest) {
     lastName: customer.lastName,
     inviteToken: customer.inviteToken,
     business: customer.business,
-    invoices: customer.invoices,
+    // PHIPA: never return clinical invoice description on unauth invite lookup.
+    invoices: customer.invoices.map((inv) => ({
+      ...inv,
+      description: "Past-due account balance",
+    })),
   });
 }

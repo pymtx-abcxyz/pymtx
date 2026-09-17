@@ -60,8 +60,8 @@ type Invoice = {
 };
 
 const CSV_TEMPLATE = `external_ref,description,amount,due_date,first_name,last_name,email,phone
-INV-9001,Hygiene balance,850.00,2026-06-01,Nora,Singh,nora.singh@example.com,+1-416-555-0199
-INV-9002,Crown residual,2400.50,2026-05-15,Marcus,Lee,marcus.lee@example.com,`;
+INV-9001,Past-due account balance,850.00,2026-06-01,Nora,Singh,nora.singh@example.com,+1-416-555-0199
+INV-9002,Past-due account balance,2400.50,2026-05-15,Marcus,Lee,marcus.lee@example.com,`;
 
 export default function BusinessPortalPage() {
   return (

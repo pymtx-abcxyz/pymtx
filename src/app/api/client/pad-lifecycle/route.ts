@@ -4,6 +4,8 @@ import { clientIp } from "@/lib/http";
 import {
   cancelPadAuthorization,
   freezePlanForDispute,
+  pauseCommunicationsForCounsel,
+  resumeCommunications,
 } from "@/lib/pad-lifecycle";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -26,8 +28,10 @@ async function guard(req: NextRequest) {
 }
 
 /**
- * Debtor PAD cancel / dispute freeze — invite-token bound.
- * POST { paymentPlanId, token, action: "cancel_pad" | "dispute", reason? }
+ * Debtor PAD cancel / dispute freeze / counsel communication pause —
+ * invite-token bound.
+ * POST { paymentPlanId, token, action, reason? }
+ * action: "cancel_pad" | "dispute" | "pause_comms" | "resume_comms"
  */
 export async function POST(req: NextRequest) {
   const blocked = await guard(req);
@@ -64,8 +68,33 @@ export async function POST(req: NextRequest) {
         action: "dispute",
         ...result,
         message: result.alreadyFrozen
-          ? "Dispute freeze already active — automated debits remain halted."
-          : "Dispute registered. Automated recurring debits are halted pending merchant review.",
+          ? "Dispute freeze already active — automated debits and notices remain halted."
+          : "Dispute registered. Automated recurring debits and collection notices are halted pending merchant review.",
+      });
+    }
+    if (action === "pause_comms") {
+      const result = await pauseCommunicationsForCounsel({
+        paymentPlanId,
+        reason,
+      });
+      return NextResponse.json({
+        ok: true,
+        action: "pause_comms",
+        ...result,
+        message: result.alreadyPaused
+          ? "Communications are already paused."
+          : "Automated collection notices paused (counsel / court). Debits are unchanged unless you also dispute or cancel PAD.",
+      });
+    }
+    if (action === "resume_comms") {
+      const result = await resumeCommunications({ paymentPlanId });
+      return NextResponse.json({
+        ok: true,
+        action: "resume_comms",
+        ...result,
+        message: result.alreadyResumed
+          ? "Communications were not paused."
+          : "Communication pause cleared. Notices may resume under Ontario contact hours and the 3/7 cadence.",
       });
     }
     if (action === "cancel_pad") {
@@ -80,7 +109,10 @@ export async function POST(req: NextRequest) {
       });
     }
     return NextResponse.json(
-      { error: 'action must be "dispute" or "cancel_pad"' },
+      {
+        error:
+          'action must be "dispute", "cancel_pad", "pause_comms", or "resume_comms"',
+      },
       { status: 400 },
     );
   } catch (e) {

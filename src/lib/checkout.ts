@@ -10,6 +10,7 @@ import {
   PAD_RECOURSE_TERMS,
   buildInstallmentSchedule,
 } from "./compliance";
+import { publicInvoiceLabel } from "./compliance/cadence";
 import {
   InstallmentStatus,
   InvoiceStatus,
@@ -19,6 +20,10 @@ import {
 } from "./domain";
 import { assertMoneyRailsReady, assertLiveStripeOrDemoAllowed, isStripeDemoMode } from "./env";
 import { sendPadConfirmationNotice } from "./notifications";
+import {
+  assertConnectedAccountDirectCharge,
+  assertNoDestinationChargePayload,
+} from "./path-b";
 import { stripe } from "./stripe";
 
 export type CheckoutPreview = {
@@ -152,7 +157,8 @@ export async function getCheckoutByInvite(token: string): Promise<CheckoutPrevie
     connectReady,
     balanceCents: total,
     invoiceRef: invoice.externalRef,
-    description: invoice.description,
+    // PHIPA optics: never surface clinical free-text to the debtor portal.
+    description: publicInvoiceLabel(invoice.description),
     existingPlan: existing
       ? {
           id: existing.id,
@@ -204,8 +210,11 @@ export async function createCheckoutPlan(params: {
   }
 
   const business = invoice.customer.business;
+  assertConnectedAccountDirectCharge(
+    business.stripeAccountId,
+    "checkout create_plan",
+  );
   if (
-    !business.stripeAccountId ||
     !business.stripeOnboardingComplete ||
     !business.stripeChargesEnabled
   ) {
@@ -225,17 +234,18 @@ export async function createCheckoutPlan(params: {
   if (isStripeDemoMode()) {
     stripeCustomerId = `cus_demo_${invoice.customerId.slice(-8)}`;
   } else {
-    const cus = await stripe.customers.create(
-      {
-        email: invoice.customer.email,
-        name: `${invoice.customer.firstName} ${invoice.customer.lastName}`,
-        metadata: {
-          pymtx_customer_id: invoice.customerId,
-          pymtx_invoice_id: invoice.id,
-        },
+    const cusPayload = {
+      email: invoice.customer.email,
+      name: `${invoice.customer.firstName} ${invoice.customer.lastName}`,
+      metadata: {
+        pymtx_customer_id: invoice.customerId,
+        pymtx_invoice_id: invoice.id,
       },
-      { stripeAccount: business.stripeAccountId },
-    );
+    };
+    assertNoDestinationChargePayload(cusPayload as Record<string, unknown>, "checkout customers.create");
+    const cus = await stripe.customers.create(cusPayload, {
+      stripeAccount: business.stripeAccountId,
+    });
     stripeCustomerId = cus.id;
   }
 
@@ -306,9 +316,10 @@ export async function completeCheckoutPad(params: {
   if (plan.padMandate) throw new Error("PAD mandate already accepted");
 
   const business = plan.customer.business;
-  if (!business.stripeAccountId) {
-    throw new Error("Creditor Connect account missing");
-  }
+  assertConnectedAccountDirectCharge(
+    business.stripeAccountId,
+    "checkout accept_pad",
+  );
 
   const now = new Date();
   let stripePaymentMethodId: string;
@@ -342,39 +353,43 @@ export async function completeCheckoutPad(params: {
       { stripeAccount: business.stripeAccountId },
     );
 
-    const setupIntent = await stripe.setupIntents.create(
-      {
-        customer: plan.stripeCustomerId!,
-        payment_method: pm.id,
-        payment_method_types: ["acss_debit"],
-        confirm: true,
-        mandate_data: {
-          customer_acceptance: {
-            type: "online",
-            online: {
-              ip_address: params.ipAddress || "0.0.0.0",
-              user_agent: params.userAgent || "Pymtx/1.0",
-            },
+    const setupPayload = {
+      customer: plan.stripeCustomerId!,
+      payment_method: pm.id,
+      payment_method_types: ["acss_debit"],
+      confirm: true,
+      mandate_data: {
+        customer_acceptance: {
+          type: "online",
+          online: {
+            ip_address: params.ipAddress || "0.0.0.0",
+            user_agent: params.userAgent || "Pymtx/1.0",
           },
-        },
-        payment_method_options: {
-          acss_debit: {
-            currency: "cad",
-            mandate_options: {
-              payment_schedule: "interval",
-              interval_description: `Monthly installment (${plan.termMonths}-month plan)`,
-              transaction_type: "personal",
-            },
-            verification_method: "automatic",
-          },
-        },
-        metadata: {
-          pymtx_plan_id: plan.id,
-          pymtx_path: "B_zero_custody",
         },
       },
-      { stripeAccount: business.stripeAccountId },
+      payment_method_options: {
+        acss_debit: {
+          currency: "cad",
+          mandate_options: {
+            payment_schedule: "interval",
+            interval_description: `Monthly installment (${plan.termMonths}-month plan)`,
+            transaction_type: "personal",
+          },
+          verification_method: "automatic",
+        },
+      },
+      metadata: {
+        pymtx_plan_id: plan.id,
+        pymtx_path: "B_zero_custody",
+      },
+    };
+    assertNoDestinationChargePayload(
+      setupPayload as Record<string, unknown>,
+      "checkout setupIntents.create",
     );
+    const setupIntent = await stripe.setupIntents.create(setupPayload, {
+      stripeAccount: business.stripeAccountId,
+    });
 
     stripePaymentMethodId = pm.id;
     stripeMandateId =

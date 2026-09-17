@@ -94,6 +94,9 @@ model Customer {
   inviteToken     String    @unique @default(cuid())
   invitedAt       DateTime?
   activatedAt     DateTime?
+  /// CDSSA / counsel kill-switch — halt automated debtor notices (not magic-link auth).
+  communicationPausedAt     DateTime?
+  communicationPauseReason  String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -107,6 +110,7 @@ model Customer {
   @@index([inviteToken])
   @@index([businessId])
   @@index([email])
+  @@index([communicationPausedAt])
 }
 
 /// Past-due receivable uploaded by the business (principal owed to Business).
@@ -408,6 +412,7 @@ model CaslMessage {
 
   @@index([businessId, sentAt])
   @@index([customerId])
+  @@index([customerId, sentAt])
 }
 
 /// Queued debtor notices waiting for Ontario CDSSA contact hours.
@@ -426,6 +431,9 @@ model DeferredNotice {
   attachmentsJson String? @db.Text
   sendAfter     DateTime
   sentAt        DateTime?
+  /// Suppressed while communication pause / cadence permanently cancels the send.
+  suppressedAt  DateTime?
+  suppressReason String?
   attempts      Int      @default(0)
   lastError     String?
   createdAt     DateTime @default(now())

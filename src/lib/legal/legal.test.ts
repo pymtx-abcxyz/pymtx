@@ -54,9 +54,12 @@ describe("Ontario legal documents", () => {
     expect(terms).toContain("Limitations Act, 2002");
   });
 
-  it("includes CASL / PIPEDA attribution for the provider", () => {
-    expect(privacyPolicyPlainText()).toContain("CASL");
-    expect(privacyPolicyPlainText()).toContain("PIPEDA");
-    expect(privacyPolicyPlainText()).toContain("info@pymtx.com");
+  it("includes CASL / PIPEDA attribution and email-only notice channels", () => {
+    const privacy = privacyPolicyPlainText();
+    expect(privacy).toContain("CASL");
+    expect(privacy).toContain("PIPEDA");
+    expect(privacy).toContain("info@pymtx.com");
+    expect(privacy).toContain("does not send SMS");
+    expect(privacy).toContain("three (3) counting contacts");
   });
 });

@@ -281,12 +281,18 @@ function ClientCheckoutInner() {
     if (token) await loadPlanStatus(token);
   }
 
-  async function requestPadLifecycle(action: "dispute" | "cancel_pad") {
+  async function requestPadLifecycle(
+    action: "dispute" | "cancel_pad" | "pause_comms" | "resume_comms",
+  ) {
     if (!plan) return;
     const confirmMsg =
       action === "dispute"
-        ? "Register a dispute? Automated debits will pause until the merchant reviews."
-        : "Cancel your PAD authorization? This does not erase the debt — contact the merchant for another way to pay.";
+        ? "Register a dispute? Automated debits and collection notices will pause until the merchant reviews."
+        : action === "pause_comms"
+          ? "Pause automated collection notices (e.g. counsel or court)? Debits continue unless you also dispute or cancel PAD."
+          : action === "resume_comms"
+            ? "Resume automated collection notices?"
+            : "Cancel your PAD authorization? This does not erase the debt — contact the merchant for another way to pay.";
     if (!window.confirm(confirmMsg)) return;
 
     setBusy(true);
@@ -314,7 +320,7 @@ function ClientCheckoutInner() {
         links={[
           { href: "/client", label: "Checkout" },
           { href: "/login/customer", label: "Sign in" },
-          { href: "/", label: "About pymtx" },
+          { href: "/legal/privacy", label: "Privacy" },
         ]}
       />
       <PortalMain narrow>
@@ -674,6 +680,14 @@ function ClientCheckoutInner() {
                     <button
                       className="btn-ghost"
                       type="button"
+                      disabled={busy || plan.status === "CANCELLED"}
+                      onClick={() => void requestPadLifecycle("pause_comms")}
+                    >
+                      Pause notices
+                    </button>
+                    <button
+                      className="btn-ghost"
+                      type="button"
                       disabled={
                         busy ||
                         plan.status === "CANCELLED" ||
@@ -688,7 +702,8 @@ function ClientCheckoutInner() {
                 {plan.disputeFrozenAt ? (
                   <div className="mt-3">
                     <FormNotice tone="warning">
-                      Debits are frozen while your dispute is under review
+                      Debits and automated collection notices are frozen while your
+                      dispute is under review
                       {plan.disputeReason ? ` — ${plan.disputeReason}` : ""}.
                     </FormNotice>
                   </div>
