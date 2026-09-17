@@ -16,6 +16,7 @@ import {
   FormNotice,
 } from "@/components/ui";
 import { AppearanceSettingSection } from "@/components/appearance-setting-section";
+import { AddressAutocomplete } from "@/components/address-autocomplete";
 
 type Business = {
   id: string;
@@ -272,6 +273,27 @@ function BusinessSettingsInner() {
             ] as const
           ).map(([key, label]) => {
             const id = `settings-${key}`;
+            if (key === "physicalAddress") {
+              return (
+                <div key={key}>
+                  <FieldLabel htmlFor={id}>{label}</FieldLabel>
+                  <AddressAutocomplete
+                    id={id}
+                    name="physicalAddress"
+                    value={form.physicalAddress}
+                    onChange={(physicalAddress) =>
+                      setForm({ ...form, physicalAddress })
+                    }
+                    required
+                    placeholder="Start typing an Ontario address…"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={
+                      error ? "settings-feedback-error" : undefined
+                    }
+                  />
+                </div>
+              );
+            }
             return (
               <div key={key}>
                 <FieldLabel htmlFor={id}>{label}</FieldLabel>
