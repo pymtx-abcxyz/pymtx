@@ -89,3 +89,9 @@ Manual checklist:
 4. Confirm PAD PDF email arrives (Resend)  
 5. Wait for Toronto midnight Inngest job (or admin `POST /api/jobs/daily-debit`)  
 6. Webhook settles installment → receipt email → `TransactionMetric` fee only
+
+## Hygiene
+
+- **Geoapify** — `GEOAPIFY_API_KEY` is a Vercel Secret (Production/Preview). If the key was ever pasted into chat or a ticket, regenerate it at [myprojects.geoapify.com](https://myprojects.geoapify.com/), update Vercel, and redeploy. Autocomplete stays Canada-filtered / Ontario-biased via `/api/address/autocomplete`.
+- **Next.js proxy** — session gating lives in `src/proxy.ts` (formerly `middleware.ts`). Do not recreate `src/middleware.ts` alongside it.
+- **Secrets** — never commit `.env*`; prefer Vercel Secrets over `NEXT_PUBLIC_*` for third-party API keys.

@@ -92,8 +92,28 @@ describe("permissions", () => {
 
 describe("env guards", () => {
   it("treats placeholder Stripe keys as demo", () => {
+    const prev = {
+      STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+      PYMTX_STRIPE_SECRET_KEY: process.env.PYMTX_STRIPE_SECRET_KEY,
+      PYMTX_STRIPE_MCP_KEY: process.env.PYMTX_STRIPE_MCP_KEY,
+      STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+      STRIPE_CONNECT_WEBHOOK_SECRET: process.env.STRIPE_CONNECT_WEBHOOK_SECRET,
+      PYMTX_STRIPE_WEBHOOK_SECRET: process.env.PYMTX_STRIPE_WEBHOOK_SECRET,
+    };
+    process.env.STRIPE_SECRET_KEY = "sk_test_placeholder";
+    delete process.env.PYMTX_STRIPE_SECRET_KEY;
+    delete process.env.PYMTX_STRIPE_MCP_KEY;
+    process.env.STRIPE_WEBHOOK_SECRET = "whsec_placeholder";
+    delete process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+    delete process.env.PYMTX_STRIPE_WEBHOOK_SECRET;
+
     expect(isStripeDemoMode()).toBe(true);
     expect(isWebhookDemoMode()).toBe(true);
+
+    for (const [k, v] of Object.entries(prev)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
   });
 
   it("allows demo outside production", () => {
