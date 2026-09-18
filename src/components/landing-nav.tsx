@@ -100,7 +100,7 @@ export function LandingNav() {
             </span>
             <button
               type="button"
-              className="inline-flex h-11 w-11 items-center justify-center text-text-secondary hover:text-text-primary"
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center border-0 bg-transparent p-0 text-text-secondary shadow-none hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--focus-ring)]"
               aria-label="Close menu"
               onClick={() => setOpen(false)}
             >
