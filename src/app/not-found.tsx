@@ -14,7 +14,7 @@ export default function NotFound() {
           >
             <PymtxLogotype />
           </Link>
-          <h1 className="mt-8 font-display text-[length:var(--text-3xl)] font-bold text-text-primary">
+          <h1 className="mt-8 font-sans text-[length:var(--text-3xl)] font-bold text-text-primary">
             Page not found
           </h1>
           <p className="mt-3 text-[length:var(--text-base)] text-text-secondary">
