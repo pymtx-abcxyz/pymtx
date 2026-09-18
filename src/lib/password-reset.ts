@@ -100,25 +100,30 @@ export async function resetPasswordWithToken(params: {
     throw new Error(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
   }
 
-  const record = await prisma.passwordResetToken.findUnique({
-    where: { token },
-    include: { user: true },
+  const passwordHash = await hashPassword(password);
+
+  const claimed = await prisma.passwordResetToken.updateMany({
+    where: {
+      token,
+      usedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    data: { usedAt: new Date() },
   });
 
-  if (!record || record.usedAt || record.expiresAt < new Date()) {
+  if (claimed.count !== 1) {
     throw new Error("This reset link is invalid or has expired");
   }
 
-  const passwordHash = await hashPassword(password);
+  const record = await prisma.passwordResetToken.findUniqueOrThrow({
+    where: { token },
+    include: { user: true },
+  });
 
   await prisma.$transaction(async (tx) => {
     await tx.user.update({
       where: { id: record.userId },
       data: { passwordHash },
-    });
-    await tx.passwordResetToken.update({
-      where: { id: record.id },
-      data: { usedAt: new Date() },
     });
     // Rotate all sessions for this user.
     await tx.session.deleteMany({ where: { userId: record.userId } });

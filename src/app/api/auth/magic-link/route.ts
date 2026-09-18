@@ -3,12 +3,15 @@ import { clientIp } from "@/lib/http";
 import { rateLimit } from "@/lib/rate-limit";
 import { requestCustomerMagicLink } from "@/lib/magic-link";
 
-/** POST { email } — request a customer magic-link email. */
+/** POST { email, businessId? } — request a customer magic-link email. */
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const email = String(body.email || "")
     .trim()
     .toLowerCase();
+  const businessId = body.businessId
+    ? String(body.businessId).trim()
+    : undefined;
   const ip = clientIp(req);
 
   if (!email) {
@@ -32,7 +35,7 @@ export async function POST(req: NextRequest) {
 
   // Always return the same generic body to avoid email enumeration.
   try {
-    const result = await requestCustomerMagicLink(email);
+    const result = await requestCustomerMagicLink(email, { businessId });
     return NextResponse.json(result);
   } catch (e) {
     console.error("[magic-link]", e instanceof Error ? e.message : e);

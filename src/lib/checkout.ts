@@ -25,6 +25,13 @@ import {
   assertNoDestinationChargePayload,
 } from "./path-b";
 import { stripe } from "./stripe";
+import { clampCheckoutStartDate } from "./checkout-start";
+
+export { clampCheckoutStartDate } from "./checkout-start";
+export {
+  CHECKOUT_START_MIN_OFFSET_DAYS,
+  CHECKOUT_START_MAX_OFFSET_DAYS,
+} from "./checkout-start";
 
 export type CheckoutPreview = {
   customerId: string;
@@ -223,7 +230,7 @@ export async function createCheckoutPlan(params: {
     );
   }
 
-  const startDate = params.startDate ?? new Date(Date.now() + 10 * 86400000);
+  const startDate = clampCheckoutStartDate(params.startDate);
   const schedule = buildInstallmentSchedule({
     totalCents: invoice.balanceCents,
     termMonths: params.termMonths as 6 | 12 | 18,

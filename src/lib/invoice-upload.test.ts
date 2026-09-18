@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseAmountToCents, parseInvoiceCsv } from "./invoice-upload";
+import {
+  MAX_UPLOAD_BYTES,
+  parseAmountToCents,
+  parseInvoiceCsv,
+} from "./invoice-upload";
 
 describe("parseAmountToCents", () => {
   it("parses dollar amounts with decimals", () => {
@@ -30,5 +34,12 @@ INV-2,Crown,240050,2026-05-15,Marcus,Lee,marcus@example.com,`;
     const { rows, errors } = parseInvoiceCsv("a,b\n1,2");
     expect(rows).toHaveLength(0);
     expect(errors[0]?.message).toMatch(/Missing required columns/i);
+  });
+
+  it("rejects oversized CSV payloads", () => {
+    const huge = "x".repeat(MAX_UPLOAD_BYTES + 1);
+    const { rows, errors } = parseInvoiceCsv(huge);
+    expect(rows).toHaveLength(0);
+    expect(errors[0]?.message).toMatch(/maximum size/i);
   });
 });
