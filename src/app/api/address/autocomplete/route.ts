@@ -48,7 +48,8 @@ export async function GET(req: NextRequest) {
     const suggestions = await fetchAddressSuggestions(q, { limit: 5 });
     return NextResponse.json({ configured: true, suggestions });
   } catch (e) {
-    console.error("[address-autocomplete]", e);
+    const raw = e instanceof Error ? e.message : "Address lookup unavailable";
+    console.error("[address-autocomplete]", raw);
     return NextResponse.json(
       { error: "Address lookup unavailable" },
       { status: 502 },
