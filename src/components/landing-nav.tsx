@@ -100,10 +100,11 @@ export function LandingNav() {
       <div
         className={`fixed inset-0 z-40 sm:hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
         aria-hidden={!open}
+        hidden={!open}
       >
         <button
           type="button"
-          className={`absolute inset-0 bg-black/40 transition-opacity duration-200 ${
+          className={`absolute inset-0 z-0 bg-black/40 transition-opacity duration-200 ${
             open ? "opacity-100" : "opacity-0"
           }`}
           aria-label="Dismiss menu"
@@ -116,7 +117,7 @@ export function LandingNav() {
           role="dialog"
           aria-modal="true"
           aria-label="Menu"
-          className={`absolute right-0 top-0 flex h-full w-[min(20rem,88vw)] flex-col border-l border-border-subtle bg-surface-card shadow-lg transition-transform duration-200 ease-out ${
+          className={`absolute right-0 top-0 z-10 flex h-full w-[min(20rem,88vw)] flex-col border-l border-border-subtle bg-surface-card shadow-lg transition-transform duration-200 ease-out ${
             open ? "translate-x-0" : "translate-x-full"
           }`}
         >
