@@ -13,6 +13,7 @@ import {
 } from "./domain";
 import { assertMoneyRailsReady, isStripeDemoMode } from "./env";
 import { assertConnectedAccountDirectCharge } from "./path-b";
+import { clampCheckoutStartDate } from "./checkout-start";
 
 export async function createPaymentPlan(params: {
   invoiceId: string;
@@ -40,10 +41,11 @@ export async function createPaymentPlan(params: {
     );
   }
 
+  const startDate = clampCheckoutStartDate(params.startDate);
   const schedule = buildInstallmentSchedule({
     totalCents: invoice.balanceCents,
     termMonths: params.termMonths as 6 | 12 | 18,
-    startDate: params.startDate,
+    startDate,
   });
 
   return prisma.$transaction(async (tx) => {
@@ -56,7 +58,7 @@ export async function createPaymentPlan(params: {
         monthlyAmountCents: schedule[0].amountCents,
         totalAmountCents: invoice.balanceCents,
         status: PaymentPlanStatus.PENDING_MANDATE,
-        startDate: params.startDate,
+        startDate,
         installments: {
           create: schedule.map((s) => ({
             sequence: s.sequence,

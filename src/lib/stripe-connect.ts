@@ -87,6 +87,17 @@ export async function syncConnectAccountFromStripe(
   const acct =
     account || (await stripe.accounts.retrieve(business.stripeAccountId!));
 
+  // Refuse overwriting a live Connect binding with a different account id.
+  if (
+    business.stripeAccountId &&
+    !isPlaceholderConnectAccount(business.stripeAccountId) &&
+    business.stripeAccountId !== acct.id
+  ) {
+    throw new Error(
+      `Connect rebind refused: business already bound to ${business.stripeAccountId}`,
+    );
+  }
+
   const chargesEnabled = !!acct.charges_enabled;
   const payoutsEnabled = !!acct.payouts_enabled;
   const detailsSubmitted = !!acct.details_submitted;

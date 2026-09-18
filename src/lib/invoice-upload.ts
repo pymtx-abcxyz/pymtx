@@ -5,6 +5,11 @@ import { InvoiceStatus } from "./domain";
 import { sendInviteNotice } from "./notifications";
 import { assertUploadDiligence } from "./upload-diligence";
 
+/** Max CSV/JSON invoice rows per upload request. */
+export const MAX_UPLOAD_ROWS = 500;
+/** Max multipart / CSV body size (1 MiB). */
+export const MAX_UPLOAD_BYTES = 1_048_576;
+
 export const invoiceUploadRowSchema = z.object({
   externalRef: z.string().trim().min(1),
   description: z.string().trim().min(1),
@@ -85,6 +90,18 @@ export function parseInvoiceCsv(csvText: string): {
   rows: InvoiceUploadRow[];
   errors: { line: number; message: string }[];
 } {
+  if (Buffer.byteLength(csvText, "utf8") > MAX_UPLOAD_BYTES) {
+    return {
+      rows: [],
+      errors: [
+        {
+          line: 1,
+          message: `CSV exceeds maximum size of ${MAX_UPLOAD_BYTES} bytes`,
+        },
+      ],
+    };
+  }
+
   const lines = csvText
     .replace(/^\uFEFF/, "")
     .split(/\r?\n/)
@@ -169,6 +186,12 @@ export async function uploadInvoicesForBusiness(
   businessId: string,
   invoices: InvoiceUploadRow[],
 ): Promise<InvoiceUploadResult> {
+  if (invoices.length > MAX_UPLOAD_ROWS) {
+    throw new Error(
+      `Upload limited to ${MAX_UPLOAD_ROWS} invoices per request (got ${invoices.length})`,
+    );
+  }
+
   const business = await prisma.business.findUniqueOrThrow({
     where: { id: businessId },
   });
@@ -206,6 +229,27 @@ export async function uploadInvoicesForBusiness(
           where: { id: customer.id },
           data: { invitedAt: new Date() },
         });
+      }
+
+      const existing = await prisma.invoice.findUnique({
+        where: {
+          businessId_externalRef: {
+            businessId,
+            externalRef: row.externalRef,
+          },
+        },
+        select: { id: true, status: true },
+      });
+
+      if (
+        existing &&
+        (existing.status === InvoiceStatus.PLAN_ACTIVE ||
+          existing.status === InvoiceStatus.SETTLED ||
+          existing.status === InvoiceStatus.WRITTEN_OFF)
+      ) {
+        throw new Error(
+          `Cannot overwrite invoice ${row.externalRef} in status ${existing.status}`,
+        );
       }
 
       const invoice = await prisma.invoice.upsert({

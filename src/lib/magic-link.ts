@@ -27,27 +27,46 @@ function isEmailDemoMode() {
 /**
  * Issue a one-time magic link for a customer email.
  * Generic response avoids email enumeration.
+ *
+ * When the same email exists under multiple businesses, require businessId
+ * (or silently no-op with the generic message) so we never log into the wrong tenant.
  */
 export async function requestCustomerMagicLink(
   email: string,
+  opts?: { businessId?: string },
 ): Promise<MagicLinkRequestResult> {
   const normalized = email.trim().toLowerCase();
+  const generic: MagicLinkRequestResult = {
+    ok: true,
+    message: "If that email is on file, a sign-in link is on its way.",
+  };
+
   if (!normalized.includes("@")) {
     throw new Error("Valid email required");
   }
 
-  const customer = await prisma.customer.findFirst({
-    where: { email: normalized },
+  const matches = await prisma.customer.findMany({
+    where: {
+      email: normalized,
+      ...(opts?.businessId ? { businessId: opts.businessId } : {}),
+    },
     include: { business: true },
     orderBy: [{ invitedAt: "desc" }, { createdAt: "desc" }],
   });
 
-  if (!customer) {
-    return {
-      ok: true,
-      message: "If that email is on file, a sign-in link is on its way.",
-    };
+  if (!matches.length) {
+    return generic;
   }
+
+  if (matches.length > 1 && !opts?.businessId) {
+    // Multi-tenant ambiguity — do not guess. Keep anti-enumeration response.
+    console.warn(
+      `[magic-link] email ${normalized} matches ${matches.length} customers; businessId required`,
+    );
+    return generic;
+  }
+
+  const customer = matches[0]!;
 
   const token = nanoid(48);
   const expiresAt = addMinutes(new Date(), MAGIC_LINK_TTL_MINUTES);
@@ -105,24 +124,30 @@ export async function requestCustomerMagicLink(
     (isEmailDemoMode() || sent.provider === "demo");
 
   return {
-    ok: true,
-    message: "If that email is on file, a sign-in link is on its way.",
+    ...generic,
     demoUrl: demo ? url : undefined,
   };
 }
 
+/** Atomically consume a one-time magic link (race-safe). */
 export async function consumeMagicLink(token: string) {
-  const link = await prisma.magicLink.findUnique({
-    where: { token },
-    include: { customer: true },
+  const now = new Date();
+  const claimed = await prisma.magicLink.updateMany({
+    where: {
+      token,
+      usedAt: null,
+      expiresAt: { gt: now },
+    },
+    data: { usedAt: now },
   });
-  if (!link || link.usedAt || link.expiresAt < new Date()) {
+
+  if (claimed.count !== 1) {
     throw new Error("This sign-in link is invalid or expired");
   }
 
-  await prisma.magicLink.update({
-    where: { id: link.id },
-    data: { usedAt: new Date() },
+  const link = await prisma.magicLink.findUniqueOrThrow({
+    where: { token },
+    include: { customer: true },
   });
 
   if (!link.customer.activatedAt) {

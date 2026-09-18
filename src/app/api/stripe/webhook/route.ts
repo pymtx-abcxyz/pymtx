@@ -9,6 +9,7 @@ import {
 } from "@/lib/env";
 import {
   findBusinessByStripeAccount,
+  isPlaceholderConnectAccount,
   syncConnectAccountFromStripe,
 } from "@/lib/stripe-connect";
 import {
@@ -16,41 +17,7 @@ import {
   applyInstallmentSuccess,
 } from "@/lib/settlement";
 import { InstallmentStatus } from "@/lib/domain";
-
-/**
- * Reject Connect webhook settlement when event.account does not match the
- * installment's merchant Connect account (Path B zero-custody bind).
- */
-async function assertWebhookAccountBind(
-  installmentId: string,
-  eventAccount: string | null | undefined,
-): Promise<string | null> {
-  if (!eventAccount) {
-    // Platform-account events without Connect account are not Path B Direct Charges.
-    return `rejected: payment_intent ${installmentId} missing event.account (Path B requires Connect)`;
-  }
-  const installment = await prisma.installment.findUnique({
-    where: { id: installmentId },
-    select: {
-      paymentPlan: {
-        select: {
-          customer: {
-            select: { business: { select: { stripeAccountId: true } } },
-          },
-        },
-      },
-    },
-  });
-  const expected =
-    installment?.paymentPlan.customer.business.stripeAccountId || null;
-  if (!expected) {
-    return `rejected: installment ${installmentId} has no connected account`;
-  }
-  if (expected !== eventAccount) {
-    return `rejected: event.account ${eventAccount} != business ${expected}`;
-  }
-  return null;
-}
+import { assertWebhookSettlementBind } from "@/lib/webhook-bind";
 
 /**
  * Stripe webhook — Connect + ACSS Debit Direct Charges.
@@ -118,18 +85,35 @@ export async function POST(req: NextRequest) {
   try {
     if (event.type === "account.updated") {
       const account = event.data.object as Stripe.Account;
-      const business =
-        (await findBusinessByStripeAccount(account.id)) ||
-        (account.metadata?.pymtx_business_id
-          ? await prisma.business.findUnique({
-              where: { id: account.metadata.pymtx_business_id },
-            })
-          : null);
-      if (business) {
-        await syncConnectAccountFromStripe(business.id, account);
-        summary = `synced business ${business.id}`;
+      const byAccount = await findBusinessByStripeAccount(account.id);
+      const metaBusinessId = account.metadata?.pymtx_business_id || null;
+      const byMeta = metaBusinessId
+        ? await prisma.business.findUnique({ where: { id: metaBusinessId } })
+        : null;
+
+      // Refuse Connect rebind: metadata must not move a live acct_ onto another business.
+      if (
+        byMeta &&
+        byAccount &&
+        byMeta.id !== byAccount.id
+      ) {
+        summary = `rejected: Connect rebind acct ${account.id} owned by ${byAccount.id} != metadata ${byMeta.id}`;
+      } else if (
+        byMeta &&
+        !byAccount &&
+        byMeta.stripeAccountId &&
+        !isPlaceholderConnectAccount(byMeta.stripeAccountId) &&
+        byMeta.stripeAccountId !== account.id
+      ) {
+        summary = `rejected: Connect rebind business ${byMeta.id} already bound to ${byMeta.stripeAccountId}`;
       } else {
-        summary = "account.updated unmatched";
+        const business = byAccount || byMeta;
+        if (business) {
+          await syncConnectAccountFromStripe(business.id, account);
+          summary = `synced business ${business.id}`;
+        } else {
+          summary = "account.updated unmatched";
+        }
       }
     } else if (
       event.type === "payment_intent.succeeded" ||
@@ -143,10 +127,11 @@ export async function POST(req: NextRequest) {
         if (!installmentId) {
           summary = "payment_intent.processing without pymtx_installment_id";
         } else {
-          const bindErr = await assertWebhookAccountBind(
+          const bindErr = await assertWebhookSettlementBind({
             installmentId,
-            event.account,
-          );
+            eventAccount: event.account,
+            paymentIntent: pi,
+          });
           if (bindErr) {
             summary = bindErr;
           } else {
@@ -183,10 +168,11 @@ export async function POST(req: NextRequest) {
         if (!installmentId) {
           summary = "payment_intent without pymtx_installment_id";
         } else {
-          const bindErr = await assertWebhookAccountBind(
+          const bindErr = await assertWebhookSettlementBind({
             installmentId,
-            event.account,
-          );
+            eventAccount: event.account,
+            paymentIntent: pi,
+          });
           if (bindErr) {
             summary = bindErr;
           } else {

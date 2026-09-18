@@ -3,7 +3,12 @@
 | Invariant | Enforcement |
 |-----------|-------------|
 | Zero custody Direct Charges | `assertConnectedAccountDirectCharge` + `assertNoDestinationChargePayload` in checkout, chargeInstallment, and plans API; all PI/SetupIntent use `{ stripeAccount }` |
-| Webhook Connect bind | Stripe PI events require `event.account` match `Business.stripeAccountId` |
+| Webhook Connect bind | Stripe PI events require `event.account` match `Business.stripeAccountId`; PI amount, `application_fee_amount`, and bound PI id must match the installment (`assertWebhookSettlementBind`) |
+| Connect rebind guard | `account.updated` + `syncConnectAccountFromStripe` refuse moving a live `acct_` onto another business via metadata |
+| Upload upsert guard | Re-upload cannot reset `PLAN_ACTIVE` / `SETTLED` / `WRITTEN_OFF` invoices; row/size/rate limits on upload API |
+| Checkout startDate clamp | Client `startDate` clamped to today…+60d (`clampCheckoutStartDate`) |
+| Atomic auth tokens | Magic-link and password-reset consume via `updateMany` where `usedAt` is null |
+| Magic-link multi-tenant | Same email across businesses requires `businessId`; otherwise no link is issued (generic response) |
 | No debtor fee surcharge | `buildInstallmentSchedule` sums exactly to principal; checkout preview no longer uses `Math.ceil` |
 | Fee source | `resolvePlatformFeeBps()` → `PlatformSettings.applicationFeeBps` then `PLATFORM_FEE_BPS` |
 | NSF ≤1 / 30 days | `nsfRetryUsed` + platform window in `payments.ts` / debit job |
