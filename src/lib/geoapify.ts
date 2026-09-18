@@ -18,6 +18,11 @@ export type AddressSuggestion = {
 /** Soft bias toward Ontario (WGS84). */
 const ONTARIO_BIAS_RECT = "-95.16,41.68,-74.34,56.86";
 
+/** Strip apiKey=… from URLs / messages before logging. */
+export function redactGeoapifySecrets(text: string): string {
+  return text.replace(/([?&]apiKey=)[^&\s"']+/gi, "$1REDACTED");
+}
+
 export function geoapifyApiKey(): string {
   return (
     process.env.GEOAPIFY_API_KEY?.trim() ||
@@ -69,16 +74,23 @@ export async function fetchAddressSuggestions(
   url.searchParams.set("bias", `rect:${ONTARIO_BIAS_RECT}`);
   url.searchParams.set("apiKey", key);
 
-  const res = await fetch(url.toString(), {
-    method: "GET",
-    headers: { Accept: "application/json" },
-    signal: opts?.signal,
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(url.toString(), {
+      method: "GET",
+      headers: { Accept: "application/json" },
+      signal: opts?.signal,
+      cache: "no-store",
+    });
+  } catch (e) {
+    const raw = e instanceof Error ? e.message : String(e);
+    throw new Error(redactGeoapifySecrets(raw) || "Geoapify request failed");
+  }
 
   const data = (await res.json().catch(() => ({}))) as GeoapifyResponse;
   if (!res.ok) {
-    throw new Error(data.error || data.message || `Geoapify HTTP ${res.status}`);
+    const detail = data.error || data.message || `Geoapify HTTP ${res.status}`;
+    throw new Error(redactGeoapifySecrets(detail));
   }
 
   return (data.results || []).map((r, i) => ({

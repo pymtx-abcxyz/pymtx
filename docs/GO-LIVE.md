@@ -92,6 +92,18 @@ Manual checklist:
 
 ## Hygiene
 
-- **Geoapify** — `GEOAPIFY_API_KEY` is a Vercel Secret (Production/Preview). If the key was ever pasted into chat or a ticket, regenerate it at [myprojects.geoapify.com](https://myprojects.geoapify.com/), update Vercel, and redeploy. Autocomplete stays Canada-filtered / Ontario-biased via `/api/address/autocomplete`.
-- **Next.js proxy** — session gating lives in `src/proxy.ts` (formerly `middleware.ts`). Do not recreate `src/middleware.ts` alongside it.
-- **Secrets** — never commit `.env*`; prefer Vercel Secrets over `NEXT_PUBLIC_*` for third-party API keys.
+Run locally / in CI:
+
+```bash
+npm run hygiene
+```
+
+Checks: `src/proxy.ts` present, no `src/middleware.ts`, `.env*` gitignored, no committed Stripe/Resend/Geoapify secret patterns, no `NEXT_PUBLIC_GEOAPIFY_*`.
+
+| Item | Rule |
+|------|------|
+| **Geoapify** | `GEOAPIFY_API_KEY` is a **Vercel Secret** (Production + Preview). Never `NEXT_PUBLIC_*`. If the key was ever pasted into chat or a ticket, regenerate at [myprojects.geoapify.com](https://myprojects.geoapify.com/), `vercel env rm/add GEOAPIFY_API_KEY`, redeploy. Autocomplete stays Canada-filtered / Ontario-biased via `/api/address/autocomplete`. Logs redact `apiKey=`. |
+| **Next.js proxy** | Session gating lives in `src/proxy.ts` (App Router proxy). Do **not** recreate `src/middleware.ts` alongside it. |
+| **Secrets** | Never commit `.env*`. Prefer Vercel Secrets over `NEXT_PUBLIC_*` for third-party API keys. Publishable Stripe keys may be non-secret; secret/webhook/Redis/Resend/Inngest/Geoapify must stay Hidden. |
+| **Demo lock** | Production `ALLOW_DEMO_MODE=false`. Do not re-enable without an explicit staged-demo decision. |
+| **Agent workspace** | Keep local `.env` Geoapify empty; pull secrets only when needed and scrub after. |

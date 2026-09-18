@@ -89,4 +89,8 @@ npm test
 
 Step write-ups live under `docs/STEP-*.md` (Connect → Checkout → Inngest → Skip → Auth → Hardening → Roles/Magic-link).
 
-Go-live lock & live Stripe cutover: [`docs/GO-LIVE.md`](docs/GO-LIVE.md).
+Go-live lock, live Stripe cutover, and secrets hygiene: [`docs/GO-LIVE.md`](docs/GO-LIVE.md).
+
+```bash
+npm run hygiene   # proxy / no middleware.ts / no committed secret patterns
+```
