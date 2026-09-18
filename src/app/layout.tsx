@@ -56,6 +56,13 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+/** Enable iOS safe-area insets for footer / sheet padding. */
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 async function readThemeCookie(): Promise<AppThemeType> {
   try {
     const jar = await cookies();
