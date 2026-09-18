@@ -104,7 +104,7 @@ export function AppearanceSettingSection({
   return (
     <section className="section-block max-w-xl" aria-label="Appearance">
       <div>
-        <h2 className="font-display text-[length:var(--text-2xl)] font-bold text-text-primary">
+        <h2 className="font-sans text-[length:var(--text-2xl)] font-bold text-text-primary">
           Appearance
         </h2>
         <p className="mt-1 text-[length:var(--text-sm)] text-text-muted">

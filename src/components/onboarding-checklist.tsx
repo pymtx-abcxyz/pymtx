@@ -160,7 +160,7 @@ export function OnboardingChecklist({
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-baseline gap-2">
-                  <p className="font-display text-[length:var(--text-lg)] font-bold text-text-primary">
+                  <p className="font-sans text-[length:var(--text-lg)] font-bold text-text-primary">
                     {step.title}
                     {step.done ? (
                       <span className="sr-only"> (completed)</span>

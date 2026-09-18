@@ -21,7 +21,7 @@
   --color-warning: var(--warning);
   --color-separator: var(--separator);
   --font-display: var(--font-monotype);
-  --font-sans: var(--font-monotype);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-monotype);
 }
 
@@ -36,30 +36,25 @@ html {
 body {
   background: var(--canvas);
   color: var(--text-primary);
-  font-family: var(--font-monotype), ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   font-size: var(--text-base);
   line-height: 1.55;
-  font-variant-ligatures: none;
-  font-synthesis: none; /* Fragment Mono is regular-only — no faux bold */
-  letter-spacing: -0.01em;
+  font-synthesis: none;
+  letter-spacing: -0.011em;
 }
 
-.font-display {
+/* Logo mark + monospace accents only */
+.font-display,
+.font-mono {
   font-family: var(--font-monotype), ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
   letter-spacing: -0.04em;
   font-weight: 400;
+  font-variant-ligatures: none;
 }
 
 .font-sans {
-  font-family: var(--font-monotype), ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
-}
-
-/* Map Tailwind weight utilities → regular (real bold cut unavailable) */
-.font-medium,
-.font-semibold,
-.font-bold,
-.font-extrabold {
-  font-weight: 400;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.011em;
 }
 
 /* Page shells — soft canvas, no heavy brand fills */
@@ -298,7 +293,7 @@ body {
   color: var(--text-on-primary);
   padding: var(--space-3) var(--space-5);
   font-size: var(--text-base);
-  font-weight: 400;
+  font-weight: 600;
   letter-spacing: 0.01em;
   transition: background var(--motion-duration) var(--motion-ease);
 }
@@ -324,7 +319,7 @@ body {
   color: var(--text-primary);
   padding: var(--space-3) var(--space-5);
   font-size: var(--text-base);
-  font-weight: 400;
+  font-weight: 600;
   background: var(--surface-card);
   transition:
     border-color var(--motion-duration) var(--motion-ease),
@@ -345,13 +340,14 @@ body {
 .btn-toolbar {
   padding-inline: var(--space-3);
   font-size: var(--text-sm);
-  font-weight: 400;
+  font-weight: 500;
 }
 
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  font-family: var(--font-monotype), ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
   font-size: var(--text-xs);
   letter-spacing: 0.04em;
   text-transform: uppercase;

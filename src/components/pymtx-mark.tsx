@@ -1,4 +1,4 @@
-/** Compact nav / chrome mark — Fragment Mono regular (no faux-bold). */
+/** Compact nav / chrome mark — Fragment Mono (logo accent only). */
 export function PymtxLogotype({ className }: { className?: string }) {
   return (
     <span

@@ -76,7 +76,7 @@ export function AuthHeading({
 }) {
   return (
     <div className="mt-0">
-      <h1 className="font-display text-[length:var(--text-3xl)] font-bold tracking-tight text-text-primary">
+      <h1 className="font-sans text-[length:var(--text-3xl)] font-bold tracking-tight text-text-primary">
         {title}
       </h1>
       {children ? (
@@ -274,7 +274,7 @@ export function SectionHeading({
   return (
     <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="font-display text-[length:var(--text-3xl)] font-bold tracking-tight text-text-primary">
+        <h1 className="font-sans text-[length:var(--text-3xl)] font-bold tracking-tight text-text-primary">
           {title}
         </h1>
         {subtitle ? (
@@ -301,7 +301,7 @@ export function SectionTitle({
 }) {
   return (
     <div className={className}>
-      <h2 className="font-display text-[length:var(--text-2xl)] font-bold text-text-primary">
+      <h2 className="font-sans text-[length:var(--text-2xl)] font-bold text-text-primary">
         {title}
       </h2>
       {subtitle ? (
@@ -350,7 +350,7 @@ export function Metric({
         {label}
       </div>
       <div
-        className={`mt-2 font-display font-bold text-text-primary ${
+        className={`mt-2 font-sans font-bold text-text-primary ${
           size === "md"
             ? "text-[length:var(--text-xl)] leading-snug"
             : "text-[length:var(--text-3xl)]"

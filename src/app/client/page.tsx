@@ -363,7 +363,7 @@ function ClientCheckoutInner() {
               <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.12em] text-text-muted">
                 Creditor (Merchant of Record)
               </p>
-              <p className="mt-1 font-display text-[length:var(--text-2xl)] font-bold text-text-primary">
+              <p className="mt-1 font-sans text-[length:var(--text-2xl)] font-bold text-text-primary">
                 {preview.businessTradeName}
               </p>
               <p className="text-[length:var(--text-sm)] text-text-secondary">
@@ -426,7 +426,7 @@ function ClientCheckoutInner() {
                         term === t.months ? "plan-option-selected" : ""
                       }`}
                     >
-                      <div className="font-display text-[length:var(--text-2xl)] font-bold text-text-primary">
+                      <div className="font-sans text-[length:var(--text-2xl)] font-bold text-text-primary">
                         {t.months} mo
                       </div>
                       <div className="mt-2 text-[length:var(--text-sm)] text-text-secondary">

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Fragment_Mono } from "next/font/google";
+import { Fragment_Mono, Geist } from "next/font/google";
 import { cookies } from "next/headers";
 import Script from "next/script";
 import { AppearanceProvider } from "@/components/appearance-provider";
@@ -13,7 +13,14 @@ import {
 import "./tokens.css";
 import "./globals.css";
 
-/** Monotype Design Team — Fragment Mono (regular only; no faux-bold). */
+/** Body / UI sans — modern weights for hierarchy. */
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+/** Logo mark + code accents — Fragment Mono regular only. */
 const monotype = Fragment_Mono({
   variable: "--font-monotype",
   subsets: ["latin"],
@@ -67,7 +74,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en-CA"
-      className={`${monotype.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${monotype.variable} h-full antialiased`}
       data-theme={theme}
       style={{ colorScheme }}
       suppressHydrationWarning

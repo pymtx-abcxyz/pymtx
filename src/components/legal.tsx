@@ -35,7 +35,7 @@ export function LegalShell({
         <p className="text-[length:var(--text-xs)] uppercase tracking-[0.14em] text-text-muted">
           {PROVIDER.legalName}
         </p>
-        <h1 className="mt-2 font-display text-[length:var(--text-3xl)] tracking-tight text-text-primary">
+        <h1 className="mt-2 font-sans text-[length:var(--text-3xl)] font-bold tracking-tight text-text-primary">
           {title}
         </h1>
         <div className="mt-8">{children}</div>
