@@ -4,12 +4,7 @@ import { PROVIDER } from "@/lib/legal";
 
 export default function HomePage() {
   return (
-    <main
-      className="relative min-h-screen overflow-x-hidden pymtx-atmosphere"
-      style={{
-        paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
-      }}
-    >
+    <main className="relative min-h-screen overflow-x-hidden pymtx-atmosphere pb-[max(2rem,env(safe-area-inset-bottom))]">
       <div className="absolute inset-0 pymtx-grain" aria-hidden />
 
       <LandingNav />
@@ -43,7 +38,7 @@ export default function HomePage() {
         </p>
       </section>
 
-      <footer className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-2 pt-2 sm:px-6">
+      <footer className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
         <div className="border-t border-border-subtle pt-6">
           <p className="max-w-xl font-sans text-[length:var(--text-xs)] font-normal leading-relaxed text-text-muted">
             Technology by {PROVIDER.legalName} ·{" "}
