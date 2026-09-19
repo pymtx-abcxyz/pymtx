@@ -21,7 +21,7 @@ Document version: ${SETTLEMENT_TERMS_VERSION}
 
 Creditor (Merchant of Record): ${vars.merchantLegalName}
 Debtor (Customer): ${vars.customerFullName}
-Technological Intermediary: ${PROVIDER.legalName}
+Technological Intermediary: ${PROVIDER.brand}
 
 1. MANDATORY STATEMENT OF CREDIT (TABULAR DISCLOSURE)
 
@@ -40,7 +40,7 @@ Statutory Debt Acknowledgment (Limitations Act, 2002): The Debtor understands an
 
 Non-Novation: Entering into this payment arrangement provides an agreed forbearance schedule so long as installments remain in good standing, but does not extinguish or novate the underlying commercial claim until paid in full.
 
-Zero Liability for Platform Provider: The Debtor acknowledges that ${PROVIDER.legalName} is an independent software licensor that owns no beneficial interest in the debt, owes no fiduciary duty, and has no liability to the Debtor regarding the quality, delivery, or legality of the underlying goods or services provided by ${vars.merchantLegalName}.
+Zero Liability for Platform Provider: The Debtor acknowledges that ${PROVIDER.brand} is an independent software licensor that owns no beneficial interest in the debt, owes no fiduciary duty, and has no liability to the Debtor regarding the quality, delivery, or legality of the underlying goods or services provided by ${vars.merchantLegalName}.
 
 Dispute Freezes: The Debtor maintains the right to register a formal dispute within the portal. Disputing an account immediately halts automated recurring debits pending direct review and document verification by ${vars.merchantLegalName}.
 `;

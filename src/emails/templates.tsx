@@ -77,8 +77,7 @@ function Shell(props: {
           <Hr style={{ borderColor: borderSubtle, margin: "28px 0 12px" }} />
           <Text style={{ color: textMuted, fontSize: 11, lineHeight: "1.5", margin: 0 }}>
             Sent on behalf of the Merchant of Record named above. Reply to the
-            merchant support address when provided. Technology: 1001527397
-            ONTARIO INC. · MB055-70 Taunton Rd E, Whitby, ON L1R 3L5 ·
+            merchant support address when provided. Technology: pymtx ·
             info@pymtx.com. CASL transactional notice under an Existing Business
             Relationship.
           </Text>

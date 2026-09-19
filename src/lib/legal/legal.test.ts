@@ -10,7 +10,7 @@ import {
 describe("Ontario legal documents", () => {
   it("embeds Path B / CDSSA insulation language in SaaS agreement", () => {
     const text = saasAgreementPlainText();
-    expect(text).toContain("1001527397 ONTARIO INC.");
+    expect(text).toContain("pymtx");
     expect(text).toContain("Zero Legal Custody");
     expect(text).toContain("application_fee_amount");
     expect(text).toContain(SAAS_AGREEMENT_VERSION);

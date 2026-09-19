@@ -17,7 +17,7 @@ describe("Rule H1 notification glue", () => {
     );
     expect(html).toContain("Personal PAD confirmation");
     expect(html).toContain("Maple Ridge Dental");
-    expect(html).toContain("1001527397 ONTARIO INC.");
+    expect(html).toContain("pymtx");
     expect(html).toContain("CASL transactional notice");
   });
 

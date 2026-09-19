@@ -22,6 +22,6 @@
 | PHIPA optics | Debtor-facing checkout / invite never echo clinical `Invoice.description`; public label = “Past-due account balance” |
 | CASL white-label | From = merchant trade name; Reply-To = merchant support; HTML + text statutory attribution |
 | Upload diligence | Past-due only; ≤2 years (Limitations Act); amount ceiling; CASL invite email sent (hour-gated) |
-| Statutory naming | Emails/footers attribute **1001527397 ONTARIO INC.** + Whitby address; operating brand omitted from statutory disclosure text |
+| Technology attribution | Emails/footers attribute **pymtx** + `info@pymtx.com` (no statutory corp name/address block) |
 
-Provider: 1001527397 ONTARIO INC. · MB055-70 Taunton Rd E, Whitby, ON L1R 3L5 · info@pymtx.com
+Provider: pymtx · info@pymtx.com

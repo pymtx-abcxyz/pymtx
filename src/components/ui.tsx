@@ -60,7 +60,7 @@ export function AuthShell({
           <Link href="/legal/privacy" className="link-accent">
             Privacy &amp; CASL
           </Link>
-          <span className="mt-1 block text-text-muted">{PROVIDER.legalName}</span>
+          <span className="mt-1 block text-text-muted">{PROVIDER.brand}</span>
         </p>
       </main>
     </PortalShell>
@@ -251,10 +251,10 @@ export function PortalFooter({
         <div className="flex flex-col gap-2 border-t border-border-subtle pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8">
           <span>
             Debits settle to the merchant as Merchant of Record.{" "}
-            {PROVIDER.legalName} never holds principal (Path B / zero-custody).
+            {PROVIDER.brand} never holds principal (Path B / zero-custody).
           </span>
           <span className="shrink-0 text-text-muted">
-            {PROVIDER.legalName} · {PROVIDER.addressLine} · {PROVIDER.email}
+            {PROVIDER.brand} · {PROVIDER.email}
           </span>
         </div>
       )}

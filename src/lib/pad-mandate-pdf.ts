@@ -125,7 +125,7 @@ export async function buildPadMandatePdf(params: {
 
     drawLine(title, 14, true);
     drawLine(
-      `Audit: ${params.acceptedAt.toISOString()} · IP ${params.ipAddress || "—"} · ${PROVIDER.legalName}`,
+      `Audit: ${params.acceptedAt.toISOString()} · IP ${params.ipAddress || "—"} · ${PROVIDER.brand}`,
       8,
     );
     y -= 6;
