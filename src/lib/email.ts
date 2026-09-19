@@ -1,5 +1,5 @@
 import { appUrl } from "./env";
-import { PROVIDER } from "./legal/provider";
+import { PROVIDER, providerFooterLine } from "./legal/provider";
 
 export type EmailAttachment = {
   filename: string;
@@ -111,7 +111,7 @@ function brandedShell(opts: {
         <h1 style="font-size:22px;line-height:1.3;color:${titleColor};margin:12px 0 16px">${escapeHtml(opts.title)}</h1>
         ${opts.bodyHtml}
         <p style="margin-top:28px;font-size:11px;color:${emailTone.textMuted};line-height:1.5">
-          ${opts.footerNote || ""}${escapeHtml(PROVIDER.legalName)} · ${escapeHtml(PROVIDER.addressLine)} · ${escapeHtml(PROVIDER.email)}
+          ${opts.footerNote || ""}${escapeHtml(providerFooterLine())}
         </p>
       </div>
     </div>
@@ -151,11 +151,11 @@ export function magicLinkEmail(opts: {
     `This link expires in ${opts.minutes} minutes.`,
     "",
     `If you did not request this, you can ignore this email.`,
-    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
+    `${providerFooterLine()}`,
   ].join("\n");
 
   const html = brandedShell({
-    eyebrow: PROVIDER.legalName,
+    eyebrow: PROVIDER.brand,
     title: `Sign in to settle with ${opts.tradeName}`,
     bodyHtml: emailBody(`
       <p style="color:{{textSecondary}};line-height:1.5">Use this one-time link. It expires in ${opts.minutes} minutes.</p>
@@ -185,7 +185,7 @@ export function passwordResetEmail(opts: {
     "",
     "If you did not request this, you can ignore this email — your password will not change.",
     "",
-    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
+    `${providerFooterLine()}`,
   ].join("\n");
 
   const html = brandedShell({
@@ -225,7 +225,7 @@ export function inviteEmail(opts: {
     "",
     `Open your secure link to choose a payment plan: ${opts.inviteUrl}`,
     "",
-    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
+    `${providerFooterLine()}`,
   ].join("\n");
 
   const html = brandedShell({
@@ -260,7 +260,7 @@ export function padConfirmationEmail(opts: {
     "",
     "You may cancel this PAD authorization upon thirty (30) calendar days' written notice to the Payee, or by cancelling inside the client portal (Payments Canada Rule H1). Revoking this authorization does not extinguish the underlying debt.",
     "",
-    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
+    `${providerFooterLine()}`,
   ].join("\n");
 
   const html = brandedShell({
@@ -298,7 +298,7 @@ export function receiptEmail(opts: {
     `Installment #${opts.sequence}: ${formatCad(opts.amountCents)}`,
     `Date: ${paid}`,
     "",
-    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
+    `${providerFooterLine()}`,
   ].join("\n");
 
   const html = brandedShell({
@@ -337,7 +337,7 @@ export function nsfAlertEmail(opts: {
     "",
     retryLine,
     "",
-    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
+    `${providerFooterLine()}`,
   ].join("\n");
 
   const html = brandedShell({
@@ -371,7 +371,7 @@ export function skipConfirmationEmail(opts: {
     `A replacement payment (seq ${opts.appendedSequence}) is scheduled for ${opts.appendedDue}.`,
     `Next skip available ${opts.nextSkipAvailable}.`,
     "",
-    `${PROVIDER.legalName} · ${PROVIDER.addressLine} · ${PROVIDER.email}`,
+    `${providerFooterLine()}`,
   ].join("\n");
 
   const html = brandedShell({

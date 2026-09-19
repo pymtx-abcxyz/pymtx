@@ -33,7 +33,7 @@ export function LegalShell({
       </header>
       <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
         <p className="text-[length:var(--text-xs)] uppercase tracking-[0.14em] text-text-muted">
-          {PROVIDER.legalName}
+          {PROVIDER.brand}
         </p>
         <h1 className="mt-2 font-sans text-[length:var(--text-3xl)] font-bold tracking-tight text-text-primary">
           {title}
@@ -42,7 +42,7 @@ export function LegalShell({
       </main>
       <PortalFooter narrow>
         <div className="border-t border-border-subtle pt-6 text-text-muted">
-          {PROVIDER.legalName} · {PROVIDER.addressLine} · {PROVIDER.email}
+          {PROVIDER.brand} · {PROVIDER.email}
         </div>
       </PortalFooter>
     </PortalShell>

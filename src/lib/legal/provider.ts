@@ -1,18 +1,22 @@
-/** 1001527397 ONTARIO INC. — Path B technology licensor identity. */
+/** Platform brand identity for Path B technology attribution (no statutory corp block). */
 export const PROVIDER = {
-  legalName: "1001527397 ONTARIO INC.",
+  /** Operating brand — used in footers / CASL technology lines. */
   brand: "pymtx",
-  addressLine: "MB055-70 Taunton Rd E, Whitby, ON L1R 3L5, Canada",
   email: "info@pymtx.com",
   jurisdiction: "Province of Ontario / Canada",
 } as const;
 
 export const LEGAL_DOC_VERSIONS = {
-  saas: "2026-09-16-saas-v1",
-  pad: "2026-09-16-pad-h1-v1",
-  settlement: "2026-09-16-settlement-cpa-v1",
-  privacy: "2026-09-17-privacy-casl-v2",
+  saas: "2026-09-19-saas-v2",
+  pad: "2026-09-19-pad-h1-v2",
+  settlement: "2026-09-19-settlement-cpa-v2",
+  privacy: "2026-09-19-privacy-casl-v3",
 } as const;
+
+/** Compact brand · email line for email/UI footers. */
+export function providerFooterLine() {
+  return `${PROVIDER.brand} · ${PROVIDER.email}`;
+}
 
 export function caslAttributionBlock(merchant?: {
   legalName: string;
@@ -32,8 +36,7 @@ export function caslAttributionBlock(merchant?: {
           .filter(Boolean)
           .join("\n")
       : null,
-    `Technology: ${PROVIDER.legalName}`,
-    PROVIDER.addressLine,
+    `Technology: ${PROVIDER.brand}`,
     PROVIDER.email,
   ].filter(Boolean);
   return lines.join("\n");

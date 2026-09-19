@@ -326,7 +326,7 @@ function ClientCheckoutInner() {
       <PortalMain narrow>
         <SectionHeading
           title="Settle your balance"
-          subtitle="Choose a plan and authorize a Personal PAD. Communications come from your creditor — 1001527397 ONTARIO INC. never holds your payment."
+          subtitle="Choose a plan and authorize a Personal PAD. Communications come from your creditor — pymtx never holds your payment."
         />
 
         {!preview ? (
@@ -464,7 +464,7 @@ function ClientCheckoutInner() {
               <section>
                 <SectionTitle
                   title="Personal PAD agreement"
-                  subtitle={`Payments Canada Rule H1 Personal PAD. Debits are drawn by ${preview.businessLegalName} as Merchant of Record. ${PROVIDER.legalName} is an automated technological conduit only.`}
+                  subtitle={`Payments Canada Rule H1 Personal PAD. Debits are drawn by ${preview.businessLegalName} as Merchant of Record. ${PROVIDER.brand} is an automated technological conduit only.`}
                 />
 
                 <div className="mt-6 grid gap-3">
@@ -622,7 +622,7 @@ function ClientCheckoutInner() {
                   />
                   <span>
                     I acknowledge the Settlement Terms &amp; Cost of Credit Disclosure
-                    (0% APR / $0 platform fees to me) and that {PROVIDER.legalName} owns no
+                    (0% APR / $0 platform fees to me) and that {PROVIDER.brand} owns no
                     interest in this debt.
                   </span>
                 </label>

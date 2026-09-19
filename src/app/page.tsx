@@ -41,7 +41,7 @@ export default function HomePage() {
       <footer className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
         <div className="border-t border-border-subtle pt-6">
           <p className="max-w-xl font-sans text-[length:var(--text-xs)] font-normal leading-relaxed text-text-muted">
-            Technology by {PROVIDER.legalName} ·{" "}
+            Technology by {PROVIDER.brand} ·{" "}
             <Link href="/legal/saas" className="link-accent">
               SaaS Agreement
             </Link>{" "}

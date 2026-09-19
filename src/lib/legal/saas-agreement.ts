@@ -13,7 +13,7 @@ export function saasAgreementMarkdown() {
 
 **Effective Date:** Upon electronic acceptance during registration
 
-**Technology Licensor:** ${PROVIDER.legalName}, having its registered office at ${PROVIDER.addressLine} (${PROVIDER.email}) ("Provider")
+**Technology Licensor:** ${PROVIDER.brand} (${PROVIDER.email}) ("Provider")
 
 **Licensee:** The commercial business entity executing this electronic registration ("Merchant")
 
@@ -49,7 +49,7 @@ In accordance with the CDSSA, Merchant covenants that the balance uploaded shall
 ## 3. Complete Defense and Full-Indemnity Hold Harmless
 
 ### 3.1 Unconditional Indemnification
-Merchant shall defend, indemnify, and hold completely harmless ${PROVIDER.legalName}, its directors, officers, shareholders, employees, agents, and successors from and against any and all claims, actions, suits, demands, losses, damages, liabilities, regulatory inquiries, fines, administrative penalties, and legal costs (calculated on a full-indemnity solicitor-and-own-client basis) arising out of or related to:
+Merchant shall defend, indemnify, and hold completely harmless ${PROVIDER.brand}, its directors, officers, shareholders, employees, agents, and successors from and against any and all claims, actions, suits, demands, losses, damages, liabilities, regulatory inquiries, fines, administrative penalties, and legal costs (calculated on a full-indemnity solicitor-and-own-client basis) arising out of or related to:
 - Any disputed, incorrect, fraudulent, or non-existent invoice balance uploaded by Merchant;
 - Any claim alleging that Merchant's use of the Platform constitutes unlicensed collection agency activity under the CDSSA;
 - Any violation by Merchant of the Ontario Consumer Protection Act, Canada's Anti-Spam Legislation (CASL), or the Personal Information Protection and Electronic Documents Act (PIPEDA);
@@ -65,7 +65,7 @@ Provider reserves the right, at Merchant's sole expense, to assume the exclusive
 To the maximum extent permitted by Ontario law, Provider shall have zero liability to Merchant or any third party for any indirect, incidental, consequential, special, punitive, or exemplary damages, or for loss of profits, revenue, data, goodwill, or commercial reputation.
 
 ### 4.2 Aggregate Liability Cap
-The aggregate, cumulative liability of ${PROVIDER.legalName} for all claims of any kind arising out of or related to this Agreement or the Platform, regardless of the form of action (whether in contract, tort, gross negligence, or statutory duty), shall be strictly capped at the lesser of: (a) $100.00 CAD, or (b) the total platform application fees actually received by Provider from Merchant in the three (3) months preceding the incident giving rise to liability.
+The aggregate, cumulative liability of ${PROVIDER.brand} for all claims of any kind arising out of or related to this Agreement or the Platform, regardless of the form of action (whether in contract, tort, gross negligence, or statutory duty), shall be strictly capped at the lesser of: (a) $100.00 CAD, or (b) the total platform application fees actually received by Provider from Merchant in the three (3) months preceding the incident giving rise to liability.
 
 ## 5. Governing Law and Exclusive Forum
 This Agreement and any dispute arising out of or in connection with it shall be governed exclusively by the laws of the Province of Ontario and the federal laws of Canada applicable therein. The parties irrevocably attorn to the exclusive personal jurisdiction of the courts of the Province of Ontario sitting in the Judicial District of Durham or the City of Toronto.

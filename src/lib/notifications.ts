@@ -2,7 +2,7 @@
  * Path B / Rule H1 customer notifications.
  * From: merchant trade name.
  * Reply-To: merchant support inbox.
- * Statutory attribution: 1001527397 ONTARIO INC. only (no operating brand).
+ * Technology attribution uses the pymtx brand (no statutory corp block).
  *
  * CDSSA: Ontario contact hours + max 3 counting contacts / 7 days.
  * Communication pause (dispute / counsel) suppresses non-exempt notices.
@@ -91,7 +91,7 @@ async function persistAndSend(params: {
     "",
     "—",
     `Sent on behalf of ${params.merchantLegalName}.`,
-    `Serviced technically by ${PROVIDER.legalName}, ${PROVIDER.addressLine} (${PROVIDER.email}).`,
+    `Serviced technically by ${PROVIDER.brand} (${PROVIDER.email}).`,
     attribution,
   ].join("\n");
 

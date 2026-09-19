@@ -7,7 +7,7 @@
 | 3. Settlement Terms & Cost of Credit | Client checkout + PDF | `src/lib/legal/settlement-terms.ts` |
 | 4. Privacy & CASL | `/legal/privacy` | `src/lib/legal/privacy.ts` |
 
-Provider identity: **1001527397 ONTARIO INC.**, MB055-70 Taunton Rd E, Whitby, ON L1R 3L5 (`info@pymtx.com`).
+Provider identity: **pymtx** (`info@pymtx.com`).
 
 Acceptance audits:
 - Merchant: `Business.saasAgreementAcceptedAt` + `saasAgreementVersion`

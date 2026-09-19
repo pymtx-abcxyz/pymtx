@@ -59,8 +59,7 @@ ${v.merchantPhysicalAddress}
 Support Contact: ${v.merchantSupportEmail} | ${v.merchantPhone}
 
 Electronic Processing Agent:
-${PROVIDER.legalName}
-${PROVIDER.addressLine} (${PROVIDER.email})
+${PROVIDER.brand} (${PROVIDER.email})
 (Acting strictly as an automated technological and transmission conduit on behalf of the Payee)
 
 2. AUTHORITY TO DEBIT

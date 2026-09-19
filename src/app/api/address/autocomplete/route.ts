@@ -10,7 +10,7 @@ import { rateLimit } from "@/lib/rate-limit";
  * Proxied Geoapify address autocomplete (Canada / Ontario-biased).
  * Keeps GEOAPIFY_API_KEY server-side.
  *
- * GET /api/address/autocomplete?q=70+Taunton
+ * GET /api/address/autocomplete?q=100+Main
  */
 export async function GET(req: NextRequest) {
   const ip = clientIp(req);
