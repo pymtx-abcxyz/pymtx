@@ -120,7 +120,7 @@ export function OnboardingChecklist({
           subtitle={
             snap.complete
               ? "Bank connected, receivables uploaded, and a PAD invite ready to share."
-              : "Three steps. Principal stays with you — Pymtx only takes an application fee."
+              : "Three steps. Principal stays with you — pymtx only takes an application fee."
           }
         />
         <div className="flex flex-wrap items-center gap-3">

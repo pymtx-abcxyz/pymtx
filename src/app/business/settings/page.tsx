@@ -250,7 +250,7 @@ function BusinessSettingsInner() {
       <PortalMain>
         <SectionHeading
           title="Stripe Connect onboarding"
-          subtitle="Connect a Canadian bank. You remain Merchant of Record — Pymtx never holds principal. Debits run as Direct Charges with an application fee only."
+          subtitle="Connect a Canadian bank. You remain Merchant of Record — pymtx never holds principal. Debits run as Direct Charges with an application fee only."
         />
 
         {(notice || error) && (

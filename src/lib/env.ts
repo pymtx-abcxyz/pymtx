@@ -1,5 +1,5 @@
 /**
- * Runtime environment guards for Pymtx.
+ * Runtime environment guards for pymtx.
  * Demo mode (placeholder Stripe keys) is allowed locally;
  * production must set real secrets unless ALLOW_DEMO_MODE=true.
  *

@@ -37,7 +37,7 @@ const STEP_COPY: Record<
   connect: {
     title: "Connect your Canadian bank",
     description:
-      "Stripe Connect Express — you stay Merchant of Record. Pymtx never holds principal.",
+      "Stripe Connect Express — you stay Merchant of Record. pymtx never holds principal.",
     clerkDescription:
       "An owner must finish Stripe Connect before debits can settle.",
   },

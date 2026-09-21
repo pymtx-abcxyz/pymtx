@@ -204,7 +204,7 @@ function BusinessPortalInner() {
     setNotice(
       `Uploaded ${data.uploaded} invoice(s)` +
         (first
-          ? ` — e.g. ${first.externalRef} invited from ${first.caslFrom} (token ${first.inviteToken})`
+          ? ` — e.g. ${first.externalRef} invited from ${first.caslFrom}. Open the invite link from the table below.`
           : "") +
         (data.errors?.length ? ` · ${data.errors.length} row error(s)` : ""),
     );
@@ -287,7 +287,7 @@ function BusinessPortalInner() {
           subtitle={
             user?.role === "CLERK"
               ? "Upload past-due accounts and track aging. Connect and staff settings are owner-only."
-              : "Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through Pymtx."
+              : "Connect a Canadian bank with Stripe, upload past-due accounts by CSV, and track aging — principal never routes through pymtx."
           }
         />
 

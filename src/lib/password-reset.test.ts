@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { passwordResetEmail } from "./email";
+import { inviteEmail, passwordResetEmail } from "./email";
 import { assertPasswordStrength } from "./password-reset";
 import { MIN_PASSWORD_LENGTH } from "./auth";
 
@@ -23,5 +23,22 @@ describe("password reset helpers", () => {
     expect(mail.subject.toLowerCase()).toContain("password");
     expect(mail.text).toContain("https://pymtx.com/reset-password?token=abc");
     expect(mail.html).toContain("Choose a new password");
+    expect(mail.html).toContain("#3b5b53");
+    expect(mail.text).toContain("pymtx · info@pymtx.com");
+  });
+});
+
+describe("invite email CTA", () => {
+  it("uses action-primary for the plan link button", () => {
+    const mail = inviteEmail({
+      tradeName: "Maple Ridge Dental",
+      firstName: "Aisha",
+      invoiceRef: "INV-2",
+      amountCents: 180000,
+      inviteUrl: "https://pymtx.com/client?token=abc",
+    });
+    expect(mail.html).toContain("#3b5b53");
+    expect(mail.html).toContain("Open secure plan link");
+    expect(mail.html).not.toMatch(/background:#202b31/);
   });
 });

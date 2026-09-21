@@ -258,7 +258,7 @@ async function createConnectedMerchantAccountV2(params: {
  *
  * Path B:
  * - Business = Merchant of Record / legal creditor
- * - Pymtx never holds principal (application_fee_amount only)
+ * - pymtx never holds principal (application_fee_amount only)
  * - Rail: Canadian ACSS Debit via `acss_debit_payments`
  */
 export async function startConnectOnboarding(businessId: string) {

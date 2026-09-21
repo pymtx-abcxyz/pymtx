@@ -1,6 +1,7 @@
 import * as React from "react";
 import {
   Body,
+  Button,
   Container,
   Head,
   Heading,
@@ -10,6 +11,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { providerFooterLine } from "@/lib/legal/provider";
 
 /** HIG email tokens — light canvas, WCAG AA+ on card (matches tokens.css light). */
 const canvas = "#f5f7f5";
@@ -18,6 +20,8 @@ const textPrimary = "#202b31";
 const textSecondary = "#30484a";
 const textMuted = "#4e6260";
 const borderSubtle = "#cad2c5";
+const actionPrimary = "#3b5b53";
+const textOnPrimary = "#ffffff";
 const danger = "#b3261e";
 
 function Shell(props: {
@@ -77,9 +81,9 @@ function Shell(props: {
           <Hr style={{ borderColor: borderSubtle, margin: "28px 0 12px" }} />
           <Text style={{ color: textMuted, fontSize: 11, lineHeight: "1.5", margin: 0 }}>
             Sent on behalf of the Merchant of Record named above. Reply to the
-            merchant support address when provided. Technology: pymtx ·
-            info@pymtx.com. CASL transactional notice under an Existing Business
-            Relationship.
+            merchant support address when provided. Technology:{" "}
+            {providerFooterLine()}. CASL transactional notice under an Existing
+            Business Relationship.
           </Text>
         </Container>
       </Body>
@@ -123,11 +127,22 @@ export function InviteEmail(props: {
         you to settle invoice {props.invoiceRef} (
         {formatCad(props.amountCents)} past due).
       </Line>
-      <Line>
-        <a href={props.inviteUrl} style={{ color: textPrimary }}>
-          Open your secure plan link
-        </a>
-      </Line>
+      <Section style={{ margin: "24px 0" }}>
+        <Button
+          href={props.inviteUrl}
+          style={{
+            backgroundColor: actionPrimary,
+            color: textOnPrimary,
+            fontWeight: 700,
+            fontSize: 14,
+            padding: "12px 18px",
+            borderRadius: 8,
+            textDecoration: "none",
+          }}
+        >
+          Open secure plan link
+        </Button>
+      </Section>
     </Shell>
   );
 }

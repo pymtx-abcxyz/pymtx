@@ -73,7 +73,7 @@ export default async function AdminPage() {
       <PortalMain>
         <SectionHeading
           title="Platform control"
-          subtitle="Path B compliance posture: Pymtx collects only application fees. Principal settles on connected accounts via Direct Charges."
+          subtitle="Path B compliance posture: pymtx collects only application fees. Principal settles on connected accounts via Direct Charges."
         />
 
         <section className="mb-12">
@@ -259,7 +259,7 @@ export default async function AdminPage() {
         <section className="section-block">
           <SectionTitle title="Rule H1 & CDSSA posture" />
           <ul className="mt-4 space-y-2 text-[length:var(--text-sm)] leading-relaxed text-text-secondary">
-            <li>Zero-custody Direct Charges (`stripeAccount` on connected business) — Pymtx is not a collection agency.</li>
+            <li>Zero-custody Direct Charges (`stripeAccount` on connected business) — pymtx is not a collection agency.</li>
             <li>ACSS Debit Personal PAD with written confirmation before first debit.</li>
             <li>NSF: max 1 retry within 30 days. Skip: ≥3 business days notice, 180-day cooldown.</li>
             <li>CASL: customer invites white-labeled from the business trade name.</li>
