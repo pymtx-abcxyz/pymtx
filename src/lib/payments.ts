@@ -19,7 +19,7 @@ import { assertMoneyRailsReady, isStripeDemoMode } from "./env";
 
 /**
  * Zero-custody Direct Charge on the connected business account.
- * Principal → business; Pymtx only takes application_fee_amount.
+ * Principal → business; pymtx only takes application_fee_amount.
  * Rail: Canadian ACSS Debit (PAD / EFT).
  *
  * Sync success/failure uses the same settlement helpers as Stripe webhooks

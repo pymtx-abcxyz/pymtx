@@ -75,7 +75,7 @@ export default function RegisterForm() {
       </AuthHeading>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-4" noValidate>
-        <FormSectionLabel>Your details</FormSectionLabel>
+        <FormSectionLabel first>Your details</FormSectionLabel>
         <div>
           <FieldLabel htmlFor="register-name">Your name</FieldLabel>
           <input

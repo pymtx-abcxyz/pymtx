@@ -125,7 +125,7 @@ export async function POST(req: NextRequest) {
       url: webhookUrl,
       enabled_events: EVENTS,
       connect: true,
-      description: "Pymtx Path B Connect + ACSS Debit",
+      description: "pymtx Path B Connect + ACSS Debit",
     });
     webhookSecret = endpoint.secret || null;
     created = true;

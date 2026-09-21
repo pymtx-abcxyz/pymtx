@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render } from "@react-email/render";
 import { createElement } from "react";
-import { PadConfirmationEmail } from "@/emails/templates";
+import { PadConfirmationEmail, InviteEmail } from "@/emails/templates";
 import { buildPadMandatePdf, pdfToBase64 } from "./pad-mandate-pdf";
 
 describe("Rule H1 notification glue", () => {
@@ -17,8 +17,24 @@ describe("Rule H1 notification glue", () => {
     );
     expect(html).toContain("Personal PAD confirmation");
     expect(html).toContain("Maple Ridge Dental");
-    expect(html).toContain("pymtx");
+    expect(html).toContain("pymtx · info@pymtx.com");
     expect(html).toContain("CASL transactional notice");
+  });
+
+  it("renders invite CTA with action-primary fill", async () => {
+    const html = await render(
+      createElement(InviteEmail, {
+        tradeName: "Maple Ridge Dental",
+        firstName: "Aisha",
+        invoiceRef: "INV-2",
+        amountCents: 180000,
+        inviteUrl: "https://pymtx.com/client?token=abc",
+      }),
+    );
+    expect(html).toContain("Open secure plan link");
+    expect(html).toContain("#3b5b53");
+    expect(html).toContain("https://pymtx.com/client?token=abc");
+    expect(html).toContain("pymtx · info@pymtx.com");
   });
 
   it("builds a Rule H1 PAD confirmation PDF", async () => {

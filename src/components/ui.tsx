@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PymtxLogotype } from "@/components/pymtx-mark";
 import { AppearanceSettingSection } from "@/components/appearance-setting-section";
-import { PROVIDER } from "@/lib/legal";
+import { PROVIDER, providerFooterLine } from "@/lib/legal";
 
 export function PortalShell({
   children,
@@ -60,7 +60,9 @@ export function AuthShell({
           <Link href="/legal/privacy" className="link-accent">
             Privacy &amp; CASL
           </Link>
-          <span className="mt-1 block text-text-muted">{PROVIDER.brand}</span>
+          <span className="mt-1 block text-text-muted">
+            {providerFooterLine()}
+          </span>
         </p>
       </main>
     </PortalShell>
@@ -159,9 +161,16 @@ export function AuthAltLink({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function FormSectionLabel({ children }: { children: React.ReactNode }) {
+export function FormSectionLabel({
+  children,
+  first = false,
+}: {
+  children: React.ReactNode;
+  /** Skip the top rule — use on the first section in a form. */
+  first?: boolean;
+}) {
   return (
-    <div className="border-t border-border-subtle pt-5">
+    <div className={first ? "pt-0" : "border-t border-border-subtle pt-5"}>
       <p className="text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.14em] text-text-muted">
         {children}
       </p>

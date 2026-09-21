@@ -234,7 +234,7 @@ export function inviteEmail(opts: {
     bodyHtml: emailBody(`
       <p style="color:{{textSecondary}};line-height:1.55">Hello ${escapeHtml(opts.firstName)},</p>
       <p style="color:{{textSecondary}};line-height:1.55"><strong style="color:{{textPrimary}}">${escapeHtml(opts.tradeName)}</strong> invited you to settle invoice <strong>${escapeHtml(opts.invoiceRef)}</strong> (${escapeHtml(formatCad(opts.amountCents))} past due).</p>
-      <p style="margin:24px 0"><a href="${escapeHtml(opts.inviteUrl)}" style="display:inline-block;background:{{textPrimary}};color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;font-size:14px">Open secure plan link</a></p>
+      ${ctaButton(opts.inviteUrl, "Open secure plan link")}
     `),
   });
 
