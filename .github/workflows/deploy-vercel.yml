@@ -6,9 +6,15 @@ on:
       - cursor/golive-domain-brand-a4ea
   workflow_dispatch:
 
+# Production ships via the Vercel GitHub integration (no personal VERCEL_TOKEN).
+# This job gates go-live: hygiene + wait for that production deployment.
 jobs:
   deploy-production:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      statuses: read
+      deployments: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,23 +31,47 @@ jobs:
       - name: Hygiene
         run: npm run hygiene
 
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Pull Vercel env
-        run: vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+      - name: Wait for Vercel production deployment
         env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          GH_TOKEN: ${{ github.token }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          echo "Waiting for Vercel commit status on ${COMMIT_SHA}"
+          deadline=$((SECONDS + 900))
+          while (( SECONDS < deadline )); do
+            payload="$(gh api "repos/${{ github.repository }}/commits/${COMMIT_SHA}/status")"
+            state="$(jq -r '.state' <<<"$payload")"
+            vercel_state="$(jq -r '
+              [.statuses[] | select(.context == "Vercel")]
+              | first
+              | .state // "missing"
+            ' <<<"$payload")"
+            target="$(jq -r '
+              [.statuses[] | select(.context == "Vercel")]
+              | first
+              | .target_url // ""
+            ' <<<"$payload")"
+            echo "aggregate=${state} vercel=${vercel_state} ${target}"
+            if [[ "$vercel_state" == "success" ]]; then
+              echo "Vercel production deployment succeeded."
+              exit 0
+            fi
+            if [[ "$vercel_state" == "failure" || "$vercel_state" == "error" ]]; then
+              echo "::error::Vercel deployment failed for ${COMMIT_SHA}"
+              exit 1
+            fi
+            sleep 15
+          done
+          echo "::error::Timed out waiting for Vercel status on ${COMMIT_SHA}"
+          exit 1
 
-      - name: Build
-        run: vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Deploy
-        run: vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Probe production health
+        run: |
+          set -euo pipefail
+          code="$(curl -sS -o /tmp/health.json -w '%{http_code}' https://pymtx.com/api/health)"
+          echo "HTTP ${code}"
+          cat /tmp/health.json
+          echo
+          test "$code" = "200"
+          jq -e '.ok == true' /tmp/health.json >/dev/null
