@@ -23,8 +23,11 @@ const securityHeaders = [
       "font-src 'self' data:",
       "connect-src 'self' https://api.stripe.com https://*.stripe.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
+      "object-src 'none'",
+      "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
+      "upgrade-insecure-requests",
     ].join("; "),
   },
 ];

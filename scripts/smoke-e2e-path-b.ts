@@ -89,10 +89,18 @@ async function main() {
   const owner = new Api();
   const admin = new Api();
 
-  // 1. Rails
+  // 1. Rails — public health is lean; detail via ADMIN golive
   const health = await owner.req("GET", "/api/health");
-  ok("health", health.status === 200 && health.json.ok === true, health.json.rails);
-  const rails = health.json.rails as Json;
+  ok("health", health.status === 200 && health.json.ok === true, health.json);
+
+  const adminLoginEarly = await admin.req("POST", "/api/auth", {
+    email: ADMIN_EMAIL,
+    password: ADMIN_PASSWORD,
+  });
+  ok("admin login", adminLoginEarly.status === 200);
+  const golive = await admin.req("GET", "/api/admin/golive");
+  ok("golive", golive.status === 200);
+  const rails = golive.json as Json;
   ok("money rails ready", rails.readyForMoneyRails === true, rails);
 
   // 2. Owner login + business
@@ -109,11 +117,6 @@ async function main() {
   const businessId = String(biz.id);
 
   // 3. Admin stripe-setup (Connect platform probe when deployed)
-  const adminLogin = await admin.req("POST", "/api/auth", {
-    email: ADMIN_EMAIL,
-    password: ADMIN_PASSWORD,
-  });
-  ok("admin login", adminLogin.status === 200);
   const stripeSetup = await admin.req("GET", "/api/admin/stripe-setup");
   ok("stripe-setup", stripeSetup.status === 200, {
     mode: stripeSetup.json.mode,

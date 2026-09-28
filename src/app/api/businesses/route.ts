@@ -6,11 +6,13 @@ import {
 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { UserRole, isBusinessStaffRole } from "@/lib/domain";
+import { clientIp, publicError } from "@/lib/http";
 import {
   invoiceUploadRowSchema,
   uploadInvoicesForBusiness,
 } from "@/lib/invoice-upload";
 import { businessStaffRoles, canUploadInvoices } from "@/lib/permissions";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(req: NextRequest) {
   const user = await requireUser(req, {
@@ -94,6 +96,21 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden for this business" }, { status: 403 });
   }
 
+  const limited = await rateLimit({
+    key: `upload:${businessId}:${clientIp(req)}`,
+    limit: 20,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limited.retryAfterSec) },
+      },
+    );
+  }
+
   const invoices = Array.isArray(body.invoices) ? body.invoices : [];
 
   try {
@@ -116,9 +133,7 @@ export async function PUT(req: NextRequest) {
       errors: result.errors,
     });
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Upload failed" },
-      { status: 400 },
-    );
+    const { error } = publicError(e, "Upload failed");
+    return NextResponse.json({ error }, { status: 400 });
   }
 }

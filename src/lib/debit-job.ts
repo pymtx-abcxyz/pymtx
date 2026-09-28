@@ -118,7 +118,8 @@ export async function runDailyDebitJob(asOf = new Date()): Promise<DebitJobResul
       });
       if (
         current?.status === InstallmentStatus.QUEUED ||
-        current?.status === InstallmentStatus.PROCESSING
+        (current?.status === InstallmentStatus.PROCESSING &&
+          !current.stripePaymentIntentId)
       ) {
         await prisma.installment.update({
           where: { id: inst.id },

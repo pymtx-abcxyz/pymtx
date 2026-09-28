@@ -11,13 +11,14 @@ import {
   FormError,
   LoadingScreen,
 } from "@/components/ui";
+import { safeNextPath } from "@/lib/http";
 
 const ERROR_ID = "login-form-error";
 
 function LoginForm({ allowDemo }: { allowDemo: boolean }) {
   const router = useRouter();
   const search = useSearchParams();
-  const next = search.get("next") || "";
+  const nextRaw = search.get("next") || "";
   const [email, setEmail] = useState(
     allowDemo ? "billing@mapleridgedental.example" : "",
   );
@@ -43,7 +44,8 @@ function LoginForm({ allowDemo }: { allowDemo: boolean }) {
       return;
     }
     const role = data.user?.role as string;
-    const dest = next || (role === "ADMIN" ? "/admin" : "/business");
+    const fallback = role === "ADMIN" ? "/admin" : "/business";
+    const dest = safeNextPath(nextRaw, fallback);
     router.replace(dest);
     router.refresh();
   }

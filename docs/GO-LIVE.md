@@ -41,14 +41,11 @@ Until then, test keys are allowed under lock (no placeholders, no demo settlemen
 
 ```bash
 curl -s https://pymtx.com/api/health
-# → rails.locked, rails.readyForMoneyRails, rails.readyForLiveMoney,
-#   rails.inngest, rails.connectWebhookDedicated, blockerCount
+# → { ok, app } only in production
 
-npm run ops:sanity
-# → health + Inngest register + DebitJobRun / webhook / CASL coverage
-
-# Admin session cookie required:
+# Admin session cookie required for rails detail:
 curl -s https://pymtx.com/api/admin/golive
+# → locked, readyForMoneyRails, readyForLiveMoney, stripe modes, blockerCount
 ```
 
 ## Stripe cutover (scripted)
@@ -69,8 +66,10 @@ npm run stripe:golive -- --apply-vercel
 npm run stripe:golive -- --live-only --apply-vercel
 ```
 
-Then redeploy production and confirm `curl -s https://pymtx.com/api/health` shows
-`stripeSecret` / `stripePublishable` as `test` or `live` (not `placeholder`) and `webhook: ok`.
+Then redeploy production and confirm `curl -s https://pymtx.com/api/admin/golive`
+(with an ADMIN session) shows `stripeSecret` / `stripePublishable` as `test` or
+`live` (not `placeholder`) and `webhook: ok`. Public `GET /api/health` stays
+`{ ok, app }` only.
 
 ## First live Path B smoke
 

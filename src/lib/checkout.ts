@@ -39,7 +39,6 @@ export type CheckoutPreview = {
   lastName: string;
   email: string;
   customerAddress: string | null;
-  inviteToken: string;
   invoiceId: string;
   businessId: string;
   businessTradeName: string;
@@ -152,7 +151,6 @@ export async function getCheckoutByInvite(token: string): Promise<CheckoutPrevie
     lastName: customer.lastName,
     email: customer.email,
     customerAddress: customer.address,
-    inviteToken: customer.inviteToken,
     invoiceId: invoice.id,
     businessId: customer.businessId,
     businessTradeName: customer.business.tradeName,

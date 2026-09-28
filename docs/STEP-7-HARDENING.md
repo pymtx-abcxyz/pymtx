@@ -44,9 +44,13 @@ Client checkout / skip / invite require the invite `token` and verify ownership.
 
 ## HTTP
 
-Security headers via `next.config.ts` (CSP, HSTS, frame deny, nosniff, referrer, permissions).  
+Security headers via `next.config.ts` (CSP with `object-src`/`frame-ancestors`, HSTS, frame deny, nosniff, referrer, permissions).  
 Session cookie: `httpOnly`, `sameSite=lax`, `secure` in production / on Vercel.  
-`/api/health` returns `{ ok, app }` only in production (Redis detail is non-prod).
+Post-login `?next=` is sanitized (`safeNextPath`) — relative app paths only.  
+`/api/health` returns `{ ok, app }` only in production (rails detail on ADMIN `/api/admin/golive`).  
+Unauthenticated invite/checkout DTOs omit `inviteToken` (token stays in the URL your customer already has).  
+Orphan Stripe PIs (no `pymtx_installment_id`) are acked without writing a poison-pill idempotency row so Stripe can retry.  
+Demo webhook short-circuit never runs in production.
 
 ## Ops
 
