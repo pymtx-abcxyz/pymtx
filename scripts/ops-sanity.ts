@@ -79,9 +79,16 @@ async function main() {
 
   const rails = health.rails || {};
   const gaps: string[] = [];
-  if (!rails.readyForMoneyRails) gaps.push("money rails not ready");
-  if (rails.stripeSecret !== "live") gaps.push("still on test Stripe (expected until live cutover)");
-  if (!rails.inngest && rails.inngest !== undefined) gaps.push("inngest not reported ready");
+  if (health.rails === undefined && health.ok === true) {
+    gaps.push(
+      "prod health is lean ({ok,app}) — use ADMIN /api/admin/golive for rails detail",
+    );
+  }
+  if (rails.readyForMoneyRails === false) gaps.push("money rails not ready");
+  if (rails.stripeSecret && rails.stripeSecret !== "live") {
+    gaps.push("still on test Stripe (expected until live cutover)");
+  }
+  if (rails.inngest === false) gaps.push("inngest not reported ready");
   if (recentDebitJobs[0] && recentDebitJobs[0].status !== "SUCCEEDED") {
     gaps.push(`latest debit job status=${recentDebitJobs[0].status}`);
   }

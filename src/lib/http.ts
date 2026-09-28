@@ -1,6 +1,22 @@
 import type { NextRequest } from "next/server";
 
 /**
+ * Post-login redirect target — relative app paths only.
+ * Rejects protocol-relative (`//evil`), absolute URLs, and backslash tricks.
+ */
+export function safeNextPath(
+  raw: string | null | undefined,
+  fallback: string,
+): string {
+  if (!raw) return fallback;
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith("/") || trimmed.startsWith("//")) return fallback;
+  if (trimmed.includes("://") || trimmed.includes("\\")) return fallback;
+  if (!/^\/[a-zA-Z0-9/_-]*$/.test(trimmed)) return fallback;
+  return trimmed;
+}
+
+/**
  * Prefer platform-set headers over client-spoofable X-Forwarded-For.
  * Vercel sets x-real-ip / x-vercel-forwarded-for; fall back to last XFF hop
  * only when those are absent (local / unknown proxies).

@@ -34,7 +34,6 @@ type CheckoutPreview = {
   lastName: string;
   email: string;
   customerAddress: string | null;
-  inviteToken: string;
   invoiceId: string;
   businessTradeName: string;
   businessLegalName: string;

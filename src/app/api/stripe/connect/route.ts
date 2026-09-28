@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { assertBusinessAccess, isAuthUser, requireUser } from "@/lib/auth";
 import { UserRole } from "@/lib/domain";
 import { prisma } from "@/lib/db";
+import { clientIp, publicError } from "@/lib/http";
 import { canManageConnect } from "@/lib/permissions";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   createConnectLoginLink,
   provisionTestConnectAccount,
@@ -48,6 +50,22 @@ export async function POST(req: NextRequest) {
   if (!canManageConnect(user)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
+
+  const limited = await rateLimit({
+    key: `connect:${user.id}:${clientIp(req)}`,
+    limit: 30,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(limited.retryAfterSec) },
+      },
+    );
+  }
+
   const body = await req.json();
   const businessId = body.businessId as string | undefined;
   const action = (body.action as string | undefined) || "onboard";
@@ -83,9 +101,7 @@ export async function POST(req: NextRequest) {
     const result = await startConnectOnboarding(businessId);
     return NextResponse.json(result);
   } catch (e) {
-    return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Connect onboarding failed" },
-      { status: 400 },
-    );
+    const { error } = publicError(e, "Connect onboarding failed");
+    return NextResponse.json({ error }, { status: 400 });
   }
 }

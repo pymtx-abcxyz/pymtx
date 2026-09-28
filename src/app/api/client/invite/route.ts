@@ -35,7 +35,6 @@ export async function GET(req: NextRequest) {
       email: true,
       firstName: true,
       lastName: true,
-      inviteToken: true,
       activatedAt: true,
       business: { select: { id: true, tradeName: true, legalName: true } },
       invoices: {
@@ -98,7 +97,6 @@ export async function GET(req: NextRequest) {
     email: customer.email,
     firstName: customer.firstName,
     lastName: customer.lastName,
-    inviteToken: customer.inviteToken,
     business: customer.business,
     // PHIPA: never return clinical invoice description on unauth invite lookup.
     invoices: customer.invoices.map((inv) => ({

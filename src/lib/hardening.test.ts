@@ -18,7 +18,7 @@ import {
 } from "./permissions";
 import { UserRole } from "./domain";
 import type { AuthUser } from "./auth";
-import { clientIp } from "./http";
+import { clientIp, safeNextPath } from "./http";
 
 describe("rateLimit", () => {
   it("allows up to limit then blocks", async () => {
@@ -244,5 +244,44 @@ describe("env guards", () => {
     expect(stripePublishableMode()).toBe("test");
 
     process.env = prev;
+  });
+});
+
+describe("safeNextPath", () => {
+  it("allows relative app paths and rejects open redirects", () => {
+    expect(safeNextPath("/business", "/admin")).toBe("/business");
+    expect(safeNextPath("/admin/metrics", "/business")).toBe("/admin/metrics");
+    expect(safeNextPath("//evil.com", "/business")).toBe("/business");
+    expect(safeNextPath("https://evil.com", "/business")).toBe("/business");
+    expect(safeNextPath("/\\evil", "/business")).toBe("/business");
+    expect(safeNextPath("", "/business")).toBe("/business");
+    expect(safeNextPath(null, "/business")).toBe("/business");
+  });
+});
+
+describe("webhook idempotency orphans", () => {
+  it("skips record for orphan PIs; keeps rebind rejects", async () => {
+    const { shouldRecordWebhookIdempotency } = await import(
+      "./webhook-idempotency"
+    );
+    expect(
+      shouldRecordWebhookIdempotency(
+        "payment_intent without pymtx_installment_id",
+      ),
+    ).toBe(false);
+    expect(
+      shouldRecordWebhookIdempotency(
+        "payment_intent.processing without pymtx_installment_id",
+      ),
+    ).toBe(false);
+    expect(shouldRecordWebhookIdempotency("account.updated unmatched")).toBe(
+      false,
+    );
+    expect(
+      shouldRecordWebhookIdempotency("rejected: Connect rebind acct x"),
+    ).toBe(true);
+    expect(shouldRecordWebhookIdempotency("success inst_1 settled=true")).toBe(
+      true,
+    );
   });
 });

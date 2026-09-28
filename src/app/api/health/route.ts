@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * Lightweight ops probe — no secrets.
- * Production returns { ok, app, rails } with mode classifications only.
+ * Production returns { ok, app } only (rails detail via ADMIN /api/admin/golive).
  */
 export async function GET() {
   const configured = Boolean(
@@ -60,7 +60,7 @@ export async function GET() {
 
   if (isProduction()) {
     return NextResponse.json(
-      { ok: redisOk, app: "pymtx", rails },
+      { ok: redisOk, app: "pymtx" },
       { status: redisOk ? 200 : 503 },
     );
   }

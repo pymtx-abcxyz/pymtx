@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import {
   assertLiveWebhookOrDemoAllowed,
+  isProduction,
   isWebhookDemoMode,
   stripeWebhookSecret,
 } from "@/lib/env";
@@ -18,6 +19,7 @@ import {
 } from "@/lib/settlement";
 import { InstallmentStatus } from "@/lib/domain";
 import { assertWebhookSettlementBind } from "@/lib/webhook-bind";
+import { shouldRecordWebhookIdempotency } from "@/lib/webhook-idempotency";
 
 /**
  * Stripe webhook — Connect + ACSS Debit Direct Charges.
@@ -45,7 +47,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Never unsigned-ack in production, even if ALLOW_DEMO_MODE=true.
   if (isWebhookDemoMode()) {
+    if (isProduction()) {
+      return NextResponse.json(
+        { error: "Webhook misconfigured" },
+        { status: 503 },
+      );
+    }
     return NextResponse.json({ received: true, demo: true });
   }
 
@@ -204,12 +213,15 @@ export async function POST(req: NextRequest) {
       summary = "ignored type";
     }
 
-    await prisma.stripeWebhookEvent.create({
-      data: { eventId: event.id, type: event.type, summary },
-    });
+    if (shouldRecordWebhookIdempotency(summary)) {
+      await prisma.stripeWebhookEvent.create({
+        data: { eventId: event.id, type: event.type, summary },
+      });
+    }
   } catch (e) {
+    console.error("[webhook]", e instanceof Error ? e.message : e);
     return NextResponse.json(
-      { error: e instanceof Error ? e.message : "Webhook handler failed" },
+      { error: "Webhook handler failed" },
       { status: 500 },
     );
   }
