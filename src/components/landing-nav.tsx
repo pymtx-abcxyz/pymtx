@@ -59,8 +59,13 @@ export function LandingNav() {
     };
   }, [open]);
 
+  const wasOpen = useRef(false);
   useEffect(() => {
-    if (!open) triggerRef.current?.blur();
+    if (wasOpen.current && !open) {
+      // Restore focus to the menu trigger after close (not on first paint).
+      triggerRef.current?.focus({ preventScroll: true });
+    }
+    wasOpen.current = open;
   }, [open]);
 
   const sheet =
@@ -86,7 +91,7 @@ export function LandingNav() {
           role="dialog"
           aria-modal="true"
           aria-label="Menu"
-          className={`absolute right-0 top-0 z-10 flex h-full w-[min(20rem,88vw)] flex-col border-l border-border-subtle shadow-lg transition-transform duration-200 ease-out ${
+          className={`absolute right-0 top-0 z-10 flex h-full w-[min(20rem,88vw)] flex-col border-l border-border-subtle transition-transform duration-200 ease-out ${
             open ? "translate-x-0" : "translate-x-full"
           }`}
           style={{
@@ -150,17 +155,14 @@ export function LandingNav() {
 
   return (
     <>
-      <header className="portal-nav sticky top-0 z-30 border-b border-border-subtle">
+      <header className="swiss-nav sticky top-0 z-30">
         <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-2 sm:px-6 sm:py-3">
           <Link
             href="/"
-            className="flex items-baseline gap-3 text-[length:var(--text-xl)] text-text-primary"
+            className="text-[length:var(--text-xl)] text-text-primary"
             aria-label="pymtx home"
           >
             <PymtxLogotype />
-            <span className="hidden font-sans text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.14em] text-text-muted sm:inline">
-              Path B
-            </span>
           </Link>
 
           <div className="flex items-center gap-1 sm:gap-3">
