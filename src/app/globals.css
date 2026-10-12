@@ -76,6 +76,178 @@ body {
   color: var(--text-primary);
 }
 
+/* —— Swiss Design landing —— */
+.swiss-landing {
+  min-height: 100vh;
+  background:
+    linear-gradient(
+      105deg,
+      var(--canvas) 0%,
+      var(--canvas) 48%,
+      color-mix(in srgb, var(--action-primary) 14%, var(--canvas)) 48%,
+      color-mix(in srgb, var(--action-primary) 22%, var(--surface-subtle)) 100%
+    );
+  color: var(--text-primary);
+}
+
+@media (max-width: 1023px) {
+  .swiss-landing {
+    background:
+      linear-gradient(
+        180deg,
+        var(--canvas) 0%,
+        var(--canvas) 52%,
+        color-mix(in srgb, var(--action-primary) 16%, var(--surface-subtle)) 52%,
+        color-mix(in srgb, var(--action-primary) 24%, var(--canvas)) 100%
+      );
+  }
+}
+
+.swiss-kicker {
+  letter-spacing: -0.06em;
+}
+
+.swiss-rule {
+  height: 2px;
+  width: 3.5rem;
+  background: var(--action-primary);
+  transform-origin: left center;
+  animation: swiss-rule-in calc(var(--motion-duration) * 4) var(--motion-ease) both;
+}
+
+.swiss-plane {
+  overflow: hidden;
+  background: color-mix(in srgb, var(--action-primary) 18%, transparent);
+}
+
+.swiss-plane-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--text-primary) 12%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--text-primary) 12%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 48px 48px;
+}
+
+.swiss-plane-block {
+  position: absolute;
+  border: 2px solid color-mix(in srgb, var(--text-primary) 55%, transparent);
+  background: color-mix(in srgb, var(--surface-card) 55%, transparent);
+}
+
+.swiss-plane-block-a {
+  top: 12%;
+  right: 10%;
+  width: 42%;
+  height: 28%;
+  animation: swiss-block-in 0.7s var(--motion-ease) 0.15s both;
+}
+
+.swiss-plane-block-b {
+  top: 44%;
+  left: 14%;
+  width: 36%;
+  height: 22%;
+  background: color-mix(in srgb, var(--action-primary) 45%, var(--surface-card));
+  border-color: var(--text-primary);
+  animation: swiss-block-in 0.7s var(--motion-ease) 0.28s both;
+}
+
+.swiss-plane-block-c {
+  bottom: 10%;
+  right: 18%;
+  width: 28%;
+  height: 18%;
+  animation: swiss-block-in 0.7s var(--motion-ease) 0.4s both;
+}
+
+.swiss-flow {
+  position: absolute;
+  inset: 8% 6% auto 6%;
+  width: min(88%, 320px);
+  height: auto;
+  z-index: 1;
+  animation: rise-in 0.65s var(--motion-ease) 0.35s both;
+}
+
+.swiss-flow-label {
+  fill: var(--text-primary);
+  opacity: 0.75;
+  letter-spacing: 0.08em;
+}
+
+.swiss-flow-node {
+  fill: color-mix(in srgb, var(--surface-card) 88%, transparent);
+  stroke: var(--text-primary);
+  stroke-width: 2;
+}
+
+.swiss-flow-node-accent {
+  fill: color-mix(in srgb, var(--action-primary) 35%, var(--surface-card));
+  stroke: var(--text-primary);
+  stroke-width: 2.5;
+}
+
+.swiss-flow-node-muted {
+  fill: color-mix(in srgb, var(--surface-card) 70%, transparent);
+  stroke: color-mix(in srgb, var(--text-primary) 45%, transparent);
+  stroke-width: 1.5;
+}
+
+.swiss-flow-path {
+  stroke: var(--text-primary);
+}
+
+.swiss-flow-path-muted {
+  stroke: color-mix(in srgb, var(--text-primary) 45%, transparent);
+}
+
+@keyframes swiss-rule-in {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+@keyframes swiss-block-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-swiss-plane {
+  animation: rise-in 0.55s var(--motion-ease) 0.1s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swiss-rule,
+  .swiss-plane-block-a,
+  .swiss-plane-block-b,
+  .swiss-plane-block-c,
+  .swiss-flow,
+  .animate-swiss-plane {
+    animation: none !important;
+  }
+}
+
 /* Elevated surface — HIG regularMaterial analogue (defers to content) */
 .glass-panel {
   position: relative;

@@ -150,14 +150,17 @@ export function LandingNav() {
 
   return (
     <>
-      <header className="portal-nav sticky top-0 z-30">
+      <header className="portal-nav sticky top-0 z-30 border-b border-border-subtle">
         <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-2 sm:px-6 sm:py-3">
           <Link
             href="/"
-            className="text-[length:var(--text-xl)] text-text-primary"
+            className="flex items-baseline gap-3 text-[length:var(--text-xl)] text-text-primary"
             aria-label="pymtx home"
           >
             <PymtxLogotype />
+            <span className="hidden font-sans text-[length:var(--text-xs)] font-semibold uppercase tracking-[0.14em] text-text-muted sm:inline">
+              Path B
+            </span>
           </Link>
 
           <div className="flex items-center gap-1 sm:gap-3">
