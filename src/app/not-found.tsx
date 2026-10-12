@@ -4,9 +4,9 @@ import { PortalShell } from "@/components/ui";
 
 export default function NotFound() {
   return (
-    <PortalShell grain>
+    <PortalShell>
       <main className="flex min-h-screen flex-col items-center justify-center px-6">
-        <div className="glass-panel max-w-md px-8 py-10 text-center">
+        <div className="swiss-panel max-w-md px-8 py-10 text-center">
           <Link
             href="/"
             className="inline-block text-[length:var(--text-2xl)] text-text-primary"

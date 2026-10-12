@@ -438,23 +438,13 @@ function ClientCheckoutInner() {
                   ))}
                 </div>
 
-                <p className="mt-4 text-[length:var(--text-sm)] text-text-secondary">
-                  Selected: <strong>{term} months</strong>
-                  {selectedTerm ? (
-                    <>
-                      {" "}
-                      · <strong>{formatCad(selectedTerm.monthlyCents)}</strong> per debit
-                    </>
-                  ) : null}
-                </p>
-
                 <button
                   className="btn-primary mt-6"
                   type="button"
-                  disabled={busy || !preview.connectReady}
+                  disabled={busy || !preview.connectReady || !selectedTerm}
                   onClick={createPlan}
                 >
-                  Continue to PAD agreement
+                  Continue with {term}-month plan
                 </button>
               </section>
             ) : null}
@@ -653,7 +643,7 @@ function ClientCheckoutInner() {
                         : ""
                     }`}
                   />
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
                       className="btn-ghost"
                       type="button"
@@ -664,38 +654,53 @@ function ClientCheckoutInner() {
                         plan.status === "CANCELLED"
                       }
                       onClick={requestSkip}
-                      title={skipInfo && !skipInfo.ok ? skipInfo.reason : "Skip next payment"}
+                      title={
+                        skipInfo && !skipInfo.ok
+                          ? skipInfo.reason
+                          : "Skip next payment"
+                      }
                     >
                       Skip next payment
                     </button>
-                    <button
-                      className="btn-ghost"
-                      type="button"
-                      disabled={busy || Boolean(plan.disputeFrozenAt) || plan.status === "CANCELLED"}
-                      onClick={() => void requestPadLifecycle("dispute")}
-                    >
-                      Dispute &amp; freeze
-                    </button>
-                    <button
-                      className="btn-ghost"
-                      type="button"
-                      disabled={busy || plan.status === "CANCELLED"}
-                      onClick={() => void requestPadLifecycle("pause_comms")}
-                    >
-                      Pause notices
-                    </button>
-                    <button
-                      className="btn-ghost"
-                      type="button"
-                      disabled={
-                        busy ||
-                        plan.status === "CANCELLED" ||
-                        Boolean(plan.padMandate?.cancelledAt)
-                      }
-                      onClick={() => void requestPadLifecycle("cancel_pad")}
-                    >
-                      Cancel PAD
-                    </button>
+                    <details className="relative">
+                      <summary className="btn-ghost list-none [&::-webkit-details-marker]:hidden">
+                        More actions
+                      </summary>
+                      <div className="swiss-panel absolute right-0 z-10 mt-2 flex min-w-[12rem] flex-col gap-1 p-2">
+                        <button
+                          className="btn-ghost w-full justify-start"
+                          type="button"
+                          disabled={
+                            busy ||
+                            Boolean(plan.disputeFrozenAt) ||
+                            plan.status === "CANCELLED"
+                          }
+                          onClick={() => void requestPadLifecycle("dispute")}
+                        >
+                          Dispute &amp; freeze
+                        </button>
+                        <button
+                          className="btn-ghost w-full justify-start"
+                          type="button"
+                          disabled={busy || plan.status === "CANCELLED"}
+                          onClick={() => void requestPadLifecycle("pause_comms")}
+                        >
+                          Pause notices
+                        </button>
+                        <button
+                          className="btn-ghost w-full justify-start"
+                          type="button"
+                          disabled={
+                            busy ||
+                            plan.status === "CANCELLED" ||
+                            Boolean(plan.padMandate?.cancelledAt)
+                          }
+                          onClick={() => void requestPadLifecycle("cancel_pad")}
+                        >
+                          Cancel PAD
+                        </button>
+                      </div>
+                    </details>
                   </div>
                 </div>
                 {plan.disputeFrozenAt ? (

@@ -31,8 +31,8 @@ export function AuthShell({
   wide?: boolean;
 }) {
   return (
-    <PortalShell grain>
-      <header className="portal-nav sticky top-0 z-20">
+    <PortalShell>
+      <header className="swiss-nav sticky top-0 z-20">
         <div className="mx-auto flex w-full max-w-lg items-center justify-end px-6 py-2 sm:py-3">
           <AppearanceSettingSection compact />
         </div>
@@ -49,10 +49,10 @@ export function AuthShell({
         >
           <PymtxLogotype />
         </Link>
-        <div className="animate-rise-delay-1 glass-panel mt-6 px-6 py-7 sm:px-7">
+        <div className="animate-rise-delay-1 swiss-panel mt-6 px-6 py-7 sm:px-7">
           {children}
         </div>
-        <p className="animate-rise-delay-2 mt-10 text-[length:var(--text-xs)] leading-relaxed text-text-muted">
+        <p className="footer-links animate-rise-delay-2 mt-10 text-[length:var(--text-xs)] leading-relaxed text-text-muted">
           <Link href="/legal/saas" className="link-accent">
             SaaS Agreement
           </Link>

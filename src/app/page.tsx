@@ -3,17 +3,123 @@ import { LandingNav } from "@/components/landing-nav";
 import { PymtxLogotype } from "@/components/pymtx-mark";
 import { PROVIDER } from "@/lib/legal";
 
+function SettlementPlane() {
+  return (
+    <>
+      <div className="swiss-plane-grid" />
+      <div className="swiss-plane-block swiss-plane-block-a" />
+      <div className="swiss-plane-block swiss-plane-block-b" />
+      <div className="swiss-plane-block swiss-plane-block-c" />
+      <svg
+        className="swiss-flow"
+        viewBox="0 0 320 400"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <title>Direct settlement path</title>
+        <text
+          x="24"
+          y="48"
+          className="swiss-flow-label"
+          fontFamily="var(--font-monotype), monospace"
+          fontSize="11"
+        >
+          DEBTOR
+        </text>
+        <rect
+          x="24"
+          y="60"
+          width="88"
+          height="40"
+          rx="2"
+          className="swiss-flow-node"
+        />
+        <path d="M112 80 H168" className="swiss-flow-path" strokeWidth="2" />
+        <text
+          x="176"
+          y="48"
+          className="swiss-flow-label"
+          fontFamily="var(--font-monotype), monospace"
+          fontSize="11"
+        >
+          PAD / ACSS
+        </text>
+        <rect
+          x="176"
+          y="60"
+          width="100"
+          height="40"
+          rx="2"
+          className="swiss-flow-node"
+        />
+        <path
+          d="M226 100 V160 H120"
+          className="swiss-flow-path"
+          strokeWidth="2"
+        />
+        <text
+          x="24"
+          y="188"
+          className="swiss-flow-label"
+          fontFamily="var(--font-monotype), monospace"
+          fontSize="11"
+        >
+          MERCHANT BANK
+        </text>
+        <rect
+          x="24"
+          y="200"
+          width="140"
+          height="48"
+          rx="2"
+          className="swiss-flow-node swiss-flow-node-accent"
+        />
+        <text
+          x="24"
+          y="288"
+          className="swiss-flow-label"
+          fontFamily="var(--font-monotype), monospace"
+          fontSize="11"
+        >
+          FEE ONLY → {PROVIDER.brand}
+        </text>
+        <rect
+          x="24"
+          y="300"
+          width="100"
+          height="36"
+          rx="2"
+          className="swiss-flow-node-muted"
+        />
+        <path
+          d="M94 248 V300"
+          className="swiss-flow-path-muted"
+          strokeWidth="1.5"
+          strokeDasharray="4 4"
+        />
+      </svg>
+    </>
+  );
+}
+
 /**
  * Swiss Design landing — one composition:
- * brand (hero), headline, support, CTAs, full-bleed geometric plane.
+ * brand (hero), headline, support, CTAs, edge-to-edge geometric plane.
  */
 export default function HomePage() {
   return (
     <main className="swiss-landing relative min-h-screen overflow-x-hidden pb-[max(2rem,env(safe-area-inset-bottom))]">
       <LandingNav />
 
-      <section className="relative z-10 mx-auto grid min-h-[calc(100dvh-4.5rem)] w-full max-w-6xl grid-cols-1 lg:grid-cols-12 lg:gap-0">
-        <div className="flex flex-col justify-center px-4 py-10 sm:px-6 lg:col-span-6 lg:py-16 lg:pr-10">
+      {/* Desktop: true viewport-right bleed plane */}
+      <div className="swiss-plane-bleed animate-swiss-plane" aria-hidden>
+        <div className="swiss-plane absolute inset-0">
+          <SettlementPlane />
+        </div>
+      </div>
+
+      <section className="relative z-10 mx-auto flex min-h-[calc(100dvh-4.5rem)] w-full max-w-6xl flex-col lg:flex-row">
+        <div className="flex flex-1 flex-col justify-center px-4 py-6 sm:px-6 sm:py-10 lg:max-w-[50%] lg:py-16 lg:pr-12">
           <p className="animate-rise swiss-kicker font-display text-[length:var(--text-display)] leading-none text-text-primary">
             <PymtxLogotype />
           </p>
@@ -45,96 +151,30 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Full-bleed geometric plane — settlement flow as visual anchor */}
+        {/* Mobile / tablet: plane band under copy */}
         <div
-          className="animate-swiss-plane relative min-h-[42vh] lg:col-span-6 lg:min-h-0"
+          className="animate-swiss-plane relative min-h-[36vh] w-full lg:hidden"
           aria-hidden
         >
-          <div className="swiss-plane absolute inset-0 lg:inset-y-0 lg:right-0 lg:left-0">
-            <div className="swiss-plane-grid" />
-            <div className="swiss-plane-block swiss-plane-block-a" />
-            <div className="swiss-plane-block swiss-plane-block-b" />
-            <div className="swiss-plane-block swiss-plane-block-c" />
-            <svg
-              className="swiss-flow"
-              viewBox="0 0 320 400"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <title>Direct settlement path</title>
-              <text
-                x="24"
-                y="48"
-                className="swiss-flow-label"
-                fontFamily="var(--font-monotype), monospace"
-                fontSize="11"
-              >
-                DEBTOR
-              </text>
-              <rect x="24" y="60" width="88" height="40" rx="2" className="swiss-flow-node" />
-              <path
-                d="M112 80 H168"
-                className="swiss-flow-path"
-                strokeWidth="2"
-              />
-              <text
-                x="176"
-                y="48"
-                className="swiss-flow-label"
-                fontFamily="var(--font-monotype), monospace"
-                fontSize="11"
-              >
-                PAD / ACSS
-              </text>
-              <rect x="176" y="60" width="100" height="40" rx="2" className="swiss-flow-node" />
-              <path
-                d="M226 100 V160 H120"
-                className="swiss-flow-path"
-                strokeWidth="2"
-              />
-              <text
-                x="24"
-                y="188"
-                className="swiss-flow-label"
-                fontFamily="var(--font-monotype), monospace"
-                fontSize="11"
-              >
-                MERCHANT BANK
-              </text>
-              <rect x="24" y="200" width="140" height="48" rx="2" className="swiss-flow-node swiss-flow-node-accent" />
-              <text
-                x="24"
-                y="288"
-                className="swiss-flow-label"
-                fontFamily="var(--font-monotype), monospace"
-                fontSize="11"
-              >
-                FEE ONLY → {PROVIDER.brand}
-              </text>
-              <rect x="24" y="300" width="100" height="36" rx="2" className="swiss-flow-node-muted" />
-              <path
-                d="M94 248 V300"
-                className="swiss-flow-path-muted"
-                strokeWidth="1.5"
-                strokeDasharray="4 4"
-              />
-            </svg>
+          <div className="swiss-plane absolute inset-0">
+            <SettlementPlane />
           </div>
         </div>
       </section>
 
-      <footer className="relative z-10 mx-auto w-full max-w-6xl px-4 pt-2 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:px-6">
-        <div className="swiss-rule pt-0" />
-        <p className="mt-5 max-w-xl font-sans text-[length:var(--text-xs)] font-normal leading-relaxed text-text-muted">
-          {PROVIDER.brand} · {PROVIDER.email} ·{" "}
-          <Link href="/legal/saas" className="link-accent">
-            SaaS Agreement
-          </Link>{" "}
-          ·{" "}
-          <Link href="/legal/privacy" className="link-accent">
-            Privacy &amp; CASL
-          </Link>
-        </p>
+      <footer className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-2 sm:px-6">
+        <div className="border-t border-border-subtle pt-5">
+          <p className="footer-links max-w-xl font-sans text-[length:var(--text-xs)] font-normal leading-relaxed text-text-muted">
+            {PROVIDER.brand} · {PROVIDER.email} ·{" "}
+            <Link href="/legal/saas" className="link-accent">
+              SaaS Agreement
+            </Link>{" "}
+            ·{" "}
+            <Link href="/legal/privacy" className="link-accent">
+              Privacy &amp; CASL
+            </Link>
+          </p>
+        </div>
       </footer>
     </main>
   );
